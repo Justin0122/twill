@@ -2,94 +2,293 @@
 
 All notable changes to `twill` will be documented in this file.
 
+## 3.5.1
+
+### Fixed
+
+- Fix file library uploader regression by [@joyceverheije](https://github.com/joyceverheije) in https://github.com/area17/twill/pull/2740
+- Fix `timeOnly` variant of the `Datepicker` field by [@MamlukiSn](https://github.com/MamlukiSn) in https://github.com/area17/twill/pull/2739 
+
+### Improved
+
+- Add a warning during the `twill:update` and `twill:build` commands for developers that have `twill.load_default_migrations` set to false by [@ifox](https://github.com/ifox) in [de274175](https://github.com/area17/twill/commit/de274175)
+
+## 3.5.0
+
+### Added
+
+- Add a `ModuleController::setPreviewView()` method by @zachgarwood in https://github.com/area17/twill/pull/2724
+- Add a `disableCrop()` method to `medias` fields by @ifox in https://github.com/area17/twill/pull/2686
+
+### Fixed
+
+- Fix position management in `medias` and `files` fields by @zeezo887 in https://github.com/area17/twill/pull/2694
+- Fix issues with touch actions by @13twelve in https://github.com/area17/twill/pull/2713
+- Fix issue with `Relation` column by @zachgarwood in https://github.com/area17/twill/pull/2720
+- Fix endpoints initialization for `Browser` component by @zeezo887 in https://github.com/area17/twill/pull/2722
+- Fix image cropper for erroneous EXIF orientation: Use JS to read image dimensions on upload by @13twelve in https://github.com/area17/twill/pull/2705
+- Fix square crops having mismatching width/height values by @13twelve in https://github.com/area17/twill/pull/2706
+- Fix `hideActiveCrop()` not working for medias form field when max is greater than 1 by @zeezo887 in https://github.com/area17/twill/pull/2686
+- Fix #2641: `InlineRepeater` updates by @13twelve in https://github.com/area17/twill/pull/2714
+- Fix Vue dropdown console warnings: update useCapture param for removeEventListener to match addEventListener by @zeezo887 in https://github.com/area17/twill/pull/2687
+- Fix #2657: adds missing Vue draggable deprecations by @13twelve in https://github.com/area17/twill/pull/2707
+
+### Docs
+
+- Added instructions to disable publish switch in create modal by @ordigital in https://github.com/area17/twill/pull/2698
+- Added instructions for `MultiSelect` field with dynamic values in form builder by @ordigital in https://github.com/area17/twill/pull/2699
+- Added instructions for free cropping with `null` or `0` ratio value by @LucaRed in https://github.com/area17/twill/pull/2715
+
+### Translations
+
+- Fix #2619: adds missing iso languages by @13twelve in https://github.com/area17/twill/pull/2708
+
+## 3.4.1
+
+### Improved
+
+- Allow media and file library disk configuration using an environement variable by [@antonioribeiro](https://github.com/antonioribeiro) in https://github.com/area17/twill/pull/2676
+
+### Fixed
+
+- Fix #2671: 3.4.0 regression on related browsers previews by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2672
+- Fix #2674: 3.4.0 regression on relation column using a one-to-one relationship by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2675
+
+## 3.4.0
+
+### Added
+
+- Add `searchQuery` method to controller for finer control over the search by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2614
+- Add `clearable` method to select form field by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2581
+
+### Improved
+
+- Rethink the way the error handler works by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2612
+- Improve related save by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2599
+- Limits Access Key exposition to S3 storage by [@luislavena](https://github.com/luislavena) in https://github.com/area17/twill/pull/2611
+- Don't load relation for each column and allow dot notation in field name for index table by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2603
+- Filter - Select: expand to the longest option by [@mrdoinel](https://github.com/mrdoinel) in https://github.com/area17/twill/pull/2627
+- Preview: Update default width value for the mobile preview (to a more realistic value) by [@mrdoinel](https://github.com/mrdoinel) in https://github.com/area17/twill/pull/2624
+
+### Fixed
+
+- Fix trim function to get corresponding input by [@DCrepper](https://github.com/DCrepper) in https://github.com/area17/twill/pull/2609
+- Fix published scope by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2606
+- Fix sync of medias and files with multiple fields by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2628
+- Fix positioning of the close button in media library tags by [@mrdoinel](https://github.com/mrdoinel) in https://github.com/area17/twill/pull/2626
+- Fix search functionality for buckets by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2661
+- Fix #2650: Added parentheses to fix the order of evaluation between t… by [@HarryThe3rd](https://github.com/HarryThe3rd) in https://github.com/area17/twill/pull/2651
+- Fix deleted users causes error 500 by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2643
+- Fix wrong crops for Blocks in `twill:refresh-crops` by [@ptrckvzn](https://github.com/ptrckvzn) in https://github.com/area17/twill/pull/2642
+- Fix server error in the dashboard when a nested module has a deleted parent by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2633
+- Fix slugs are not created when saving models outside of Twill or when duplicating by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2618
+- Fix repeaters are registered without a populated item by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2605
+- Fix block previews don't update when browser items are added or changed by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2535
+- Fix weird behaviour of slugs table active column by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2531
+- Fix blocks take crop settings from parent model if name is the same by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2542
+- Use strict check for is null, as it otherwise causes empty arrays to not have any field by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2604
+- Rename moduleName variable in permissionModules loop by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2635
+- Ensure catch-all routes do not take precedence by [@ifox](https://github.com/ifox) in https://github.com/area17/twill/pull/2669
+
+### Docs
+
+- Update one-to-many docs to use correct Artisan command by [@daisonth](https://github.com/daisonth) in https://github.com/area17/twill/pull/2615
+- Fix basic page builder guide block file reference by [@amiraezz](https://github.com/amiraezz) in https://github.com/area17/twill/pull/2630
+
+### Translations
+
+- Update both Portuguese from Brazil and Portugal by [@antonioribeiro](https://github.com/antonioribeiro) in https://github.com/area17/twill/pull/2602
+- Improved i18n: added missing translation key (#2616) and improved German translations by [@C2H6-383](https://github.com/C2H6-383) in https://github.com/area17/twill/pull/2634
+
+### Chores
+
+- Upgrade GitHub Actions artefact upload to v4 by [@ifox](https://github.com/ifox)
+- Bump webpack from 5.91.0 to 5.95.0 by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2665
+- Bump body-parser and express by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2659
+- Bump cookie and express by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2664
+
+## 3.3.2
+ 
+### Fixed
+ 
+- Backport fix from 3.5.1: `timeOnly` variant of the `Datepicker` field by [@MamlukiSn](https://github.com/MamlukiSn) in https://github.com/area17/twill/pull/2739
+
+## 3.3.1
+
+### Fixed
+- Fix dbal 4 conflict by [@ifox](https://github.com/ifox) in https://github.com/area17/twill/pull/2596
+
+## 3.3.0
+
+### Added
+
+- Laravel 11 support by [@ifox](https://github.com/ifox) in https://github.com/area17/twill/pull/2473
+- Add support for `medias` fields in JSON repeaters by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2554
+- Add support for multiple JSON repeaters (of the same type) in one form by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2517
+- Add support for nested module on the dashboard by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2547
+- Add `connectedTo` for inline repeater and documentation about `connectedTo` by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2565
+- Add error reporting to block rendering by [@AidasK](https://github.com/AidasK) in https://github.com/area17/twill/pull/2580
+- Allow `buttonAsLink` option on inline repeaters by [@danieldevine](https://github.com/danieldevine) in https://github.com/area17/twill/pull/2522
+- Allow singular capsules on navigation by [@antonioribeiro](https://github.com/antonioribeiro) in https://github.com/area17/twill/pull/2572
+
+### Fixed
+
+- Tags in media library are not refreshed while updating & browsing images by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2523
+- Clicking cancel in the block editor deletes all the unsaved blocks by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2578
+- Allow single deletion in form builder inline repeater by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2504
+- Allow deleting media after records bulk destroy by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2519
+- Allow case-insensitive search for translated models for postgres by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2528
+- 404 error when restoring revision in nested modules by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2541
+- Fix alt text stripping accents and single quotes by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2514
+- Changing twill user password in admin to use the laravel algo by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2582
+- Undefined variable $formBuilder error when extending form layout in custom pages by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2577
+- Error with time-picker when `allowInput` is true by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2576
+- Don't delete and recreate existing `mediables` and `fileables` by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2567
+- Make `twillTrans` exportable so it can be used in config by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2563
+- Table builder `Browser` column overrides parent module field by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2506
+- Disable heading extension if it's not in the Tiptap toolbar by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2511
+- Relation field of datatable does not allow sorting by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2526
+- Default login redirect to admin url by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2569
+- Different datetime parsing for publish date on listing and edit screen by [@zeezo887](https://github.com/zeezo887) in https://github.com/area17/twill/pull/2510
+- Fix created at is null in slug table by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2588
+
+### Docs
+
+- Fix typo by [@k-msalehi](https://github.com/k-msalehi) in https://github.com/area17/twill/pull/2564
+- Change `admin.` route to `twill.` by [@LucaRed](https://github.com/LucaRed) in https://github.com/area17/twill/pull/2585
+- Prettify instructions and add the capsules>list array keys to improve DX by [@antonioribeiro](https://github.com/antonioribeiro) in https://github.com/area17/twill/pull/2527
+- Update twill version during installation by [@Mavv3006](https://github.com/Mavv3006) in https://github.com/area17/twill/pull/2584
+
+### Chores
+
+- Refactor form services to avoid repeating code by [@Tofandel](https://github.com/Tofandel) in https://github.com/area17/twill/pull/2553
+- Bump express from 4.18.2 to 4.19.2 by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2560
+- Bump webpack-dev-middleware from 5.3.3 to 5.3.4 by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2556
+- Bump follow-redirects from 1.15.5 to 1.15.6 by [@dependabot](https://github.com/dependabot) in https://github.com/area17/twill/pull/2545
+
+## 3.2.1
+
+### Fixed
+- Fix datatable and buckets filters error caused by Axios breaking changes in 0.28.0 by @zeezo887 in https://github.com/area17/twill/pull/2520
+
+
+## 3.2.0
+
+### Added
+- Allow dynamic title on `InlineRepeater` by @Tofandel in https://github.com/area17/twill/pull/2493
+- Add command to update morph references in Twill tables by @joyceverheije in https://github.com/area17/twill/pull/2482
+- Allow behaviors to load classes without being the main model of a capsule by @Tofandel in https://github.com/area17/twill/pull/2423
+- Add missing step method on Twill 3 form builder input field by @zeezo887 in https://github.com/area17/twill/pull/2496
+
+### Fixed
+- Fix error when updating a model after having enabled a new language in the config by @Tofandel in https://github.com/area17/twill/pull/2487
+- Fix Twill model extensibility by @Tofandel in https://github.com/area17/twill/pull/2498
+- Fix shrinking block counter by @Tofandel in https://github.com/area17/twill/pull/2501
+- Fix single module browser definition by @Tofandel in https://github.com/area17/twill/pull/2474
+- Fix incorrect method argument order when registering Twill capsule translation by @emanueljacob in https://github.com/area17/twill/pull/2477
+- Fix preview mode when trying to preview a revision that contains a block that itself uses a blockable relation by @emanueljacob in https://github.com/area17/twill/pull/2484
+- Fix custom callback of Image column by @Tofandel in https://github.com/area17/twill/pull/2494
+- Fix js error if you grab a block but don't move it anywhere by @Tofandel in https://github.com/area17/twill/pull/2488
+- Fix `getModulePermalinkBase` by @Tofandel in https://github.com/area17/twill/pull/2471
+- Fix `getBaseNamespace` by @Tofandel in https://github.com/area17/twill/pull/2420
+- Fix relative path traversal in docs dev server command by @ouuan in https://github.com/area17/twill/pull/2469
+- Fix Vue draggable deprecations by @Tofandel in https://github.com/area17/twill/pull/2491
+- Remove duplicate extensions already included in the TipTap starterKit by @Tofandel in https://github.com/area17/twill/pull/2486
+
+### Improved
+- Fix documentation issues reported in https://github.com/area17/twill/pull/1804
+- Remove HTML 4 and srcset polyfills by @Tofandel in https://github.com/area17/twill/pull/2430
+- Remove deprecated zh, ji, iw and in locales to integrate Weblate (see https://github.com/area17/twill/pull/2492)
+- Bump axios from 0.27.2 to 0.28.0 by @dependabot in https://github.com/area17/twill/pull/2480
+
 ## 3.1.0
 
 ### Added
-- PHP 8.3 support by @antonioribeiro in #2374
-- Form builder connected fields support by @joyceverheije in #2323
-- Glide image rendering service improvements for remote disks by @ifox in #2422
-- Google Analytics 4 support in the dashboard by @lewiswharf in #2288
-- Configurable preview breakpoints by @florrie-90 in #2299
-- Automatically add `active` to `$translatedAttributes` by @driftingly in #2401
-- Block component classes support in the `BlockEditor` `blocks` array by @joyceverheije in 8778ab7e
-- Add `excludeBlocks` option to the `BlockEditor` fields by @pauldwight in #2409
-- Add `readOnly` support to form builder `Input` field by @zachgarwood in #2331
-- Add `searchable` support to form builder `Select` field by @iedex in #2415
-- Add `max` support to form builder `InlineRepeater` field by @joyceverheije in 4a773869
-- Add `direction` option to `Input` and `Wysiwyg` fields by @13twelve in #2295
-- Add alignment buttons to `TipTap` editor by @florrie-90 in #2305
-- Add predefined class selection to `TipTap` link component by @zipavlin in #2336
-- Add support for `titleInBrowser` and `adminEditUrl` accessors in `browsers` by @joyceverheije in 02ac019e, ab8635fe and 160e9165
-- Add `--factory` and `--seeder` to `twill:make:module` by @driftingly in #2402
-- Add `Link` column type to table builder by @agnonym in #2376
-- Add `routePrefix` support to nested breadcrumbs by @yamaha252 in #2312
-- Add DI support for Twill Block `getData` method by @Afting in #2292
-- Allow `QuickFilter` extension by @joyceverheije in 9c15b017
-- Configurable permissions and roles table names  by @Keania-Eric in #2350
-- Configurable user creation with default role when using OAuth SSO by @joyceverheije in 14f8dd29
-- Customizable title column's label by @Phiosss in #2318
-- Current request only tertiary nav links support by @joyceverheije in d1c06992
-- Multiple `nested` table columns support in the table builder by @yamaha252 and @joyceverheije in #2314 and 1edbfbb1
-- Store position and render selected values ordered on multi selects fields by @haringsrob in #2204
-- Update migration stub and existing migrations to use anonymous class by @driftingly in #2406
+- PHP 8.3 support by @antonioribeiro in https://github.com/area17/twill/pull/2374
+- Form builder connected fields support by @joyceverheije in https://github.com/area17/twill/pull/2323
+- Glide image rendering service improvements for remote disks by @ifox in https://github.com/area17/twill/pull/2422
+- Google Analytics 4 support in the dashboard by @lewiswharf in https://github.com/area17/twill/pull/2288
+- Configurable preview breakpoints by @florrie-90 in https://github.com/area17/twill/pull/2299
+- Automatically add `active` to `$translatedAttributes` by @driftingly in https://github.com/area17/twill/pull/2401
+- Block component classes support in the `BlockEditor` `blocks` array by @joyceverheije in [8778ab7e](https://github.com/area17/twill/commit/8778ab7e)
+- Add `excludeBlocks` option to the `BlockEditor` fields by @pauldwight in https://github.com/area17/twill/pull/2409
+- Add `readOnly` support to form builder `Input` field by @zachgarwood in https://github.com/area17/twill/pull/2331
+- Add `searchable` support to form builder `Select` field by @iedex in https://github.com/area17/twill/pull/2415
+- Add `max` support to form builder `InlineRepeater` field by @joyceverheije in [4a773869](https://github.com/area17/twill/commit/4a773869)
+- Add `direction` option to `Input` and `Wysiwyg` fields by @13twelve in https://github.com/area17/twill/pull/2295
+- Add alignment buttons to `TipTap` editor by @florrie-90 in https://github.com/area17/twill/pull/2305
+- Add predefined class selection to `TipTap` link component by @zipavlin in https://github.com/area17/twill/pull/2336
+- Add support for `titleInBrowser` and `adminEditUrl` accessors in `browsers` by @joyceverheije in [02ac019e](https://github.com/area17/twill/commit/02ac019e), ab8635fe and 160e9165
+- Add `--factory` and `--seeder` to `twill:make:module` by @driftingly in https://github.com/area17/twill/pull/2402
+- Add `Link` column type to table builder by @agnonym in https://github.com/area17/twill/pull/2376
+- Add `routePrefix` support to nested breadcrumbs by @yamaha252 in https://github.com/area17/twill/pull/2312
+- Add DI support for Twill Block `getData` method by @Afting in https://github.com/area17/twill/pull/2292
+- Allow `QuickFilter` extension by @joyceverheije in [9c15b017](https://github.com/area17/twill/commit/9c15b017)
+- Configurable permissions and roles table names  by @Keania-Eric in https://github.com/area17/twill/pull/2350
+- Configurable user creation with default role when using OAuth SSO by @joyceverheije in [14f8dd29](https://github.com/area17/twill/commit/14f8dd29)
+- Customizable title column's label by @Phiosss in https://github.com/area17/twill/pull/2318
+- Current request only tertiary nav links support by @joyceverheije in [d1c06992](https://github.com/area17/twill/commit/d1c06992)
+- Multiple `nested` table columns support in the table builder by @yamaha252 and @joyceverheije in https://github.com/area17/twill/pull/2314 and 1edbfbb1
+- Store position and render selected values ordered on multi selects fields by @haringsrob in https://github.com/area17/twill/pull/2204
+- Update migration stub and existing migrations to use anonymous class by @driftingly in https://github.com/area17/twill/pull/2406
 
 ### Fixed
-- Fix `DatePicker` date selection by @ifox in 0e751723
-- Fix Tiptap `Wysiwyg` click to focus area by @TimBlanchard in #2418
-- Fix custom components registration by @joyceverheije in 7c233334
-- Fix position value for blocks in non-default `BlockEditor` fields by @joyceverheije in #2381
-- Fix incorrect order of nested items slug when item is more than 2 levels deep by @pauldwight in #2388
-- Fix `parseInternalLinks` helper issues by @avinash403 in #2338
-- Fix to reduce excessive number of queries when using Twill 3 settings by @bonroyage in #2369
-- Fix legacy settings in Twill 3 by @joyceverheije in #2417
-- Fix user list errors when deleting roles by @antonioribeiro in #2372
-- Fix build error with custom icons by @emanueljacob in #2392
-- Fix x-position of full height crops being reset at some ratios/screen sizes by @13twelve in #2297
-- Fix fields/blocks/repeaters spacings by @ifox in 1a93fe47
-- Fix active navigation check when a child module uses the same name as another module by @joyceverheije in f22eb35a
-- Fix create button alignment in listings by @ifox in 006f478f
-- Fix duplication when translated media fields are enabled by @petertsoisstuff in #2320
-- Fix `getCapsuleForModel()` for when passing a Model object by @antonioribeiro in #2400
-- Fix `keepAlive` on connected non localized fields by @joyceverheije in b1593c75
-- Fix optional feature migrations publication by @Tofandel in #2384
-- Fix related table name in migration down method by @droplister in #2290
-- Fix scheduled filter label by @droplister in #2291
-- Fix type of `$forceLocale` in `translatedInput()` by @pvdbroek in #2315
-- Fix user role filter when using the standard permissions setup by @ifox in 6e893232
-- Fix vselect component to align with design by @ifox in 6e893232
-- Fix error when running `php artisan migrate:reset` by @NuktukDev in #2413
-- Allow dashboard modules to wrap onto the next line by @florrie-90 in #2298
-- Always include locale in the `mediables` pivot by @bonroyage in #2368
-- Avoid unused data and hooks when using the default role level by @joyceverheije in 5d4060b5
-- Check user permission when displaying activity log items by @joyceverheije in 3526dca5
-- Don't load `DuskServiceProvider` if Dusk doesn't exist by @Tofandel in #2366
-- Preserve default vselect value when undefined by @bwat-dev in #2311
-- Prevent multi select options from being selected more than once by @florrie-90 in #2296
-- Remove block actions in settings blocks by @ifox in 0bc5e754
-- Support using a dot as `fieldsGroupsFormFieldNameSeparator` by @yamaha252 in #2277
-- Turn move dropdowns off for settings blocks by @droplister in #2293
-- Update migration helper for translations table by @sauron in #2327
-- Updated namespace paths from `Admin` to `Twill` on custom pages by @pauldwight in #2317
-- Use custom model configuration in the relationship morph map by @redelschaap in #2408
-- Use `pushOnce` builtin, remove custom `pushonce` directive by @mikerockett in #2301
-- Use `twill.admin_route_name_prefix` configuration for all internal routes by @ifox and @raymondtri in #2286
+- Fix `DatePicker` date selection by @ifox in [0e751723](https://github.com/area17/twill/commit/0e751723)
+- Fix Tiptap `Wysiwyg` click to focus area by @TimBlanchard in https://github.com/area17/twill/pull/2418
+- Fix custom components registration by @joyceverheije in [7c233334](https://github.com/area17/twill/commit/7c233334)
+- Fix position value for blocks in non-default `BlockEditor` fields by @joyceverheije in https://github.com/area17/twill/pull/2381
+- Fix incorrect order of nested items slug when item is more than 2 levels deep by @pauldwight in https://github.com/area17/twill/pull/2388
+- Fix `parseInternalLinks` helper issues by @avinash403 in https://github.com/area17/twill/pull/2338
+- Fix to reduce excessive number of queries when using Twill 3 settings by @bonroyage in https://github.com/area17/twill/pull/2369
+- Fix legacy settings in Twill 3 by @joyceverheije in https://github.com/area17/twill/pull/2417
+- Fix user list errors when deleting roles by @antonioribeiro in https://github.com/area17/twill/pull/2372
+- Fix build error with custom icons by @emanueljacob in https://github.com/area17/twill/pull/2392
+- Fix x-position of full height crops being reset at some ratios/screen sizes by @13twelve in https://github.com/area17/twill/pull/2297
+- Fix fields/blocks/repeaters spacings by @ifox in [1a93fe47](https://github.com/area17/twill/commit/1a93fe47)
+- Fix active navigation check when a child module uses the same name as another module by @joyceverheije in [f22eb35a](https://github.com/area17/twill/commit/f22eb35a)
+- Fix create button alignment in listings by @ifox in [006f478f](https://github.com/area17/twill/commit/006f478f)
+- Fix duplication when translated media fields are enabled by @petertsoisstuff in https://github.com/area17/twill/pull/2320
+- Fix `getCapsuleForModel()` for when passing a Model object by @antonioribeiro in https://github.com/area17/twill/pull/2400
+- Fix `keepAlive` on connected non localized fields by @joyceverheije in [b1593c75](https://github.com/area17/twill/commit/b1593c75)
+- Fix optional feature migrations publication by @Tofandel in https://github.com/area17/twill/pull/2384
+- Fix related table name in migration down method by @droplister in https://github.com/area17/twill/pull/2290
+- Fix scheduled filter label by @droplister in https://github.com/area17/twill/pull/2291
+- Fix type of `$forceLocale` in `translatedInput()` by @pvdbroek in https://github.com/area17/twill/pull/2315
+- Fix user role filter when using the standard permissions setup by @ifox in [6e893232](https://github.com/area17/twill/commit/6e893232)
+- Fix vselect component to align with design by @ifox in [435c6a92](https://github.com/area17/twill/commit/435c6a92)
+- Fix error when running `php artisan migrate:reset` by @NuktukDev in https://github.com/area17/twill/pull/2413
+- Allow dashboard modules to wrap onto the next line by @florrie-90 in https://github.com/area17/twill/pull/2298
+- Always include locale in the `mediables` pivot by @bonroyage in https://github.com/area17/twill/pull/2368
+- Avoid unused data and hooks when using the default role level by @joyceverheije in [5d4060b5](https://github.com/area17/twill/commit/5d4060b5)
+- Check user permission when displaying activity log items by @joyceverheije in [3526dca5](https://github.com/area17/twill/commit/3526dca5)
+- Don't load `DuskServiceProvider` if Dusk doesn't exist by @Tofandel in https://github.com/area17/twill/pull/2366
+- Preserve default vselect value when undefined by @bwat-dev in https://github.com/area17/twill/pull/2311
+- Prevent multi select options from being selected more than once by @florrie-90 in https://github.com/area17/twill/pull/2296
+- Remove block actions in settings blocks by @ifox in [0bc5e754](https://github.com/area17/twill/commit/0bc5e754)
+- Support using a dot as `fieldsGroupsFormFieldNameSeparator` by @yamaha252 in https://github.com/area17/twill/pull/2277
+- Turn move dropdowns off for settings blocks by @droplister in https://github.com/area17/twill/pull/2293
+- Update migration helper for translations table by @sauron in https://github.com/area17/twill/pull/2327
+- Updated namespace paths from `Admin` to `Twill` on custom pages by @pauldwight in https://github.com/area17/twill/pull/2317
+- Use custom model configuration in the relationship morph map by @redelschaap in https://github.com/area17/twill/pull/2408
+- Use `pushOnce` builtin, remove custom `pushonce` directive by @mikerockett in https://github.com/area17/twill/pull/2301
+- Use `twill.admin_route_name_prefix` configuration for all internal routes by @ifox and @raymondtri in https://github.com/area17/twill/pull/2286
 
 ### Docs
-- Add instructions on how to use the `browser` field with a custom pivot table by @poncianodiego and @ifox in #2385
-- Changed example value to better reflect given example in fields group docs by @Viliasas in #2283
-- Fix artisan command by @thecrazybob in #2365
-- Fix typo in Building a frontend guide by @driftingly in #2396
-- Fix typo in Content - Modules - TableBuilder by @agnonym in #2375
-- Fix typo in create page module guide by @colegeissinger in #2367
-- Fix wrong property name in nested modules docs by @Viliasas in #2282
-- Updates to the docs for nested modules by @pauldwight in #2389
+- Add instructions on how to use the `browser` field with a custom pivot table by @poncianodiego and @ifox in https://github.com/area17/twill/pull/2385
+- Changed example value to better reflect given example in fields group docs by @Viliasas in https://github.com/area17/twill/pull/2283
+- Fix artisan command by @thecrazybob in https://github.com/area17/twill/pull/2365
+- Fix typo in Building a frontend guide by @driftingly in https://github.com/area17/twill/pull/2396
+- Fix typo in Content - Modules - TableBuilder by @agnonym in https://github.com/area17/twill/pull/2375
+- Fix typo in create page module guide by @colegeissinger in https://github.com/area17/twill/pull/2367
+- Fix wrong property name in nested modules docs by @Viliasas in https://github.com/area17/twill/pull/2282
+- Updates to the docs for nested modules by @pauldwight in https://github.com/area17/twill/pull/2389
 
 ### Translations
-- Added Slovenian language to translations by @Neoglyph in #2373
-- Update Dutch translations by @lindeVW in #2378
-- Update German translations by @florianschrottenloher-iu in #2411
-- Add all locales with translations to the user locale selector by @ifox in 6e893232
-- Configure all locales with translations for date rendering and datepicker configuration by @ifox in eb21fa9f
+- Added Slovenian language to translations by @Neoglyph in https://github.com/area17/twill/pull/2373
+- Update Dutch translations by @lindeVW in https://github.com/area17/twill/pull/2378
+- Update German translations by @florianschrottenloher-iu in https://github.com/area17/twill/pull/2411
+- Add all locales with translations to the user locale selector by @ifox in [6e893232](https://github.com/area17/twill/commit/6e893232)
+- Configure all locales with translations for date rendering and datepicker configuration by @ifox in [eb21fa9f](https://github.com/area17/twill/commit/eb21fa9f)
 
 ## 3.0.2
 
@@ -101,7 +300,7 @@ All notable changes to `twill` will be documented in this file.
 - Icon support in component blocks by @agnonym in https://github.com/area17/twill/pull/2238
 - Columns support for checkboxes and radios in form builder by @bonroyage in https://github.com/area17/twill/pull/2232
 - `Options::fromArray` argument order by @bonroyage in https://github.com/area17/twill/pull/2231
-- Update package generator stub by @ifox in https://github.com/area17/twill/commit/78cc5b5dc023134356210f8c8940f77ff7745ea3
+- Update package generator stub by @ifox in [78cc5b5d](https://github.com/area17/twill/commit/78cc5b5dc023134356210f8c8940f77ff7745ea3)
 
 ### Improved
 

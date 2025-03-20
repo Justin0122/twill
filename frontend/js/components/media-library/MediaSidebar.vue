@@ -428,6 +428,10 @@
                 return mediaFromResp.id === media.id
               })
             })
+          } else if (!this.hasMultipleMedias && resp.data.item) {
+            this.medias.forEach(function (media) {
+              media.tags = resp.data.item.tags;
+            })
           }
         }, (error) => {
           this.loading = false

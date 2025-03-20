@@ -83,8 +83,7 @@ trait HandleRevisions
 
         $fields = json_decode($object->revisions->where('id', $revisionId)->first()->payload, true);
 
-        $hydratedObject = $this->hydrateObject($this->model->newInstance(), $fields);
-        $hydratedObject->id = $id;
+        $hydratedObject = $this->hydrateObject($this->model->newInstance()->setAttribute('id', $id), $fields);
 
         return $hydratedObject;
     }
@@ -158,11 +157,9 @@ trait HandleRevisions
 
         foreach ($relatedBrowsers as $browser) {
             $browserField = $fields['browsers'][$browser['browserName']] ?? [];
-
+            $position = 1;
             foreach ($browserField as $values) {
-                $position = 1;
-
-                $relatedBrowserItems->push(RelatedItem::make([
+                $relatedBrowserItems->push(new RelatedItem([
                     'subject_id' => $object->getKey(),
                     'subject_type' => $object->getMorphClass(),
                     'related_id' => $values['id'],

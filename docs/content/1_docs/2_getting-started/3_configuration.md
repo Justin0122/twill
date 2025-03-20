@@ -79,31 +79,6 @@ return [
 ];
 ```
 
-Twill registers its own exception handler in all controllers. If you need to customize it (to report errors on a 3rd party service like Sentry or Rollbar for example), you can opt-out from it in your `config/twill.php` file:
-
-```php
-<?php
-
-return [
-    'bind_exception_handler' => false,
-];
-```
-
-And then extend it from your own `app/Exceptions/Handler.php` class:
-
-```php
-<?php
-
-namespace App\Exceptions;
-
-use A17\Twill\Exceptions\Handler as ExceptionHandler;
-use Exception;
-use Illuminate\Auth\AuthenticationException;
-
-class Handler extends ExceptionHandler
-...
-```
-
 If you would like to provide custom tables names, use the following configuration options:
 
 ```php
@@ -530,7 +505,7 @@ S3_BUCKET=bucket-name
 Optionally, you can use the `S3_REGION` variable to specify a region other than S3's default region (`us-east-1`).
 
 When uploading files to S3, Twill sets the `acl` parameter to `public-read`. This is because Twill's default file service produces direct S3 urls. If you do not intend to access files uploaded to S3 directly, set
-the `FILE_LIBRARY_ACL` variable or `acl` configuration option to `public-read`.
+the `FILE_LIBRARY_ACL` variable or `acl` configuration option to `private`.
 
 ### Cascading uploads deletions
 
