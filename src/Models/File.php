@@ -35,6 +35,12 @@ class File extends Model
 
     public function toCmsArray()
     {
+        $uploadedDate = [];
+        if (config('twill.file-library.show_uploaded_date')) {
+            $uploadedDate = [
+                'uploadedDate' => $this->created_at->format(config("twill.file-library.format_uploaded_date", "d/m/Y H:i"))
+            ];
+        }
         return [
             'id' => $this->id,
             'name' => $this->filename,
@@ -42,8 +48,7 @@ class File extends Model
             'original' => FileService::getUrl($this->uuid),
             'size' => $this->size,
             'filesizeInMb' => number_format($this->attributes['size'] / 1048576, 2),
-        ] + ((config('twill.file-library.show_uploaded_date')
-            ? ['uploadedDate' => $this->created_at->format(config("twill.file-library.format_uploaded_date", "d/m/Y H:i"))]);
+        ] + $uploadedDate;
     }
 
     public function getTable()
