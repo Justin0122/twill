@@ -2,6 +2,13 @@
 
 All notable changes to `twill` will be documented in this file.
 
+## 3.5.2
+
+### Fixed
+
+- Fix cropper regression (likely a from a recent browser update) by [@13twelve](https://github.com/13twelve) in [#2744](https://github.com/area17/twill/pull/2744)
+
+
 ## 3.5.1
 
 ### Fixed
