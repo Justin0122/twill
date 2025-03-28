@@ -119,6 +119,16 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-${{ matrix.laravel }}-${{ matrix.php }}-${{ matrix.dbal }}-composer-
 
+      - name: Adjust composer.json PHP requirement based on Laravel version
+        run: |
+          if [[ "${{ matrix.laravel }}" == "12.*" || "${{ matrix.laravel }}" == "11.*" ]]; then
+            composer config platform.php ${{ matrix.php }}
+            # For Laravel 11 and 12, keep the PHP ^8.2 requirement
+          else
+            # For Laravel 10, temporarily modify the composer.json to accept PHP 8.1
+            sed -i 's/"php": "\^8.2"/"php": "\^8.1"/g' composer.json
+          fi
+
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "doctrine/dbal:${{ matrix.dbal }}" --no-interaction --no-update
