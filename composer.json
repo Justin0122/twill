@@ -23,7 +23,7 @@
     "chat": "https://discord.gg/cnWk7EFv8R"
   },
   "require": {
-    "php": "^8.2",
+    "php": "^8.0",
     "ext-json": "*",
     "ext-pdo": "*",
     "astrotomic/laravel-translatable": "^v11.16",
