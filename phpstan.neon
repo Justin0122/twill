@@ -3,6 +3,8 @@ includes:
   - phpstan-baseline.neon
 
 parameters:
+  configDirectories:
+    - config
 
   paths:
     - src
