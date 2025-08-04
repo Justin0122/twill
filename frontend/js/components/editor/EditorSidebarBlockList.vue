@@ -209,6 +209,10 @@
     color: $color__text--light;
     text-align: center;
 
+    &--full-width {
+      width: 100%;
+    }
+
     .icon {
       flex-grow: 1;
       width: 100%;
@@ -232,10 +236,6 @@
         color: $color__text;
       }
     }
-  }
-
-  &--full-width {
-    width: 100%;
   }
 
   .editorPreview__content {
