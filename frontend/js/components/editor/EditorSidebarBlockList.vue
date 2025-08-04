@@ -129,7 +129,7 @@
         // Create a very light, desaturated color
         return tinycolor({
           h: hash % 360,
-          s: 15, // Very low saturation for subtlety
+          s: 30, // Very low saturation for subtlety
           l: 97  // Very light
         }).toHexString()
       }
@@ -181,22 +181,23 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    transition: all 0.3s ease-out;
-    max-height: 1000px;
-    opacity: 1;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
     border-radius: $border-radius;
     padding: 10px;
     border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: height 0.2s ease-out;
+    height: auto;
+    visibility: visible;
 
     &.is-collapsed {
-      max-height: 0;
-      opacity: 0;
-      margin: 0;
       padding: 0;
-      overflow: hidden;
+      margin: 0;
+      height: 0;
+      visibility: hidden;
+      border: none;
     }
   }
 
