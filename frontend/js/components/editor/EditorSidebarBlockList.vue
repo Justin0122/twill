@@ -1,26 +1,26 @@
 <template>
   <div class="editorSidebar__listItems">
-    <!-- eslint-disable vue/no-mutating-props -->
-    <draggable class="editorSidebar__blocks"
-               :class="editorSidebarClasses"
-               v-model="blocks"
-               v-bind="{
-                    group: {
-                      name: 'editorBlocks',
-                      pull: 'clone',
-                      put: false
-                    },
-                    handle: '.editorSidebar__button'
-                    }">
-      <!--eslint-enable-->
-      <div v-for="(categoryData, category) in categorizedBlocks"
-           :key="category"
-           class="block-category">
-        <div class="category-header" @click="toggleCategory(category)">
-          <span class="category-title">{{ category }}</span>
-          <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
-        </div>
-        <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
+    <div v-for="(categoryData, category) in categorizedBlocks"
+         :key="category"
+         class="block-category">
+      <div class="category-header" @click="toggleCategory(category)">
+        <span class="category-title">{{ category }}</span>
+        <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
+      </div>
+      <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
+        <!-- eslint-disable vue/no-mutating-props -->
+        <draggable class="editorSidebar__blocks"
+                   :class="editorSidebarClasses"
+                   v-model="blocks"
+                   v-bind="{
+                      group: {
+                        name: 'editorBlocks',
+                        pull: 'clone',
+                        put: false
+                      },
+                      handle: '.editorSidebar__button'
+                      }">
+          <!--eslint-enable-->
           <div class="editorSidebar__button"
                v-for="block in categoryData"
                :key="block.component"
@@ -30,9 +30,9 @@
             <span v-svg :symbol="iconSymbol(block.icon)"></span>
             <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
           </div>
-        </div>
+        </draggable>
       </div>
-    </draggable>
+    </div>
   </div>
 </template>
 
