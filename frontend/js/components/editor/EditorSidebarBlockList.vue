@@ -1,55 +1,46 @@
 <template>
   <div class="editorSidebar__listItems">
-    <!-- eslint-disable vue/no-mutating-props -->
-    <draggable
-      class="editorSidebar__blocks"
-      :class="editorSidebarClasses"
-      v-model="blocks"
-      @change="handleBlocksChange"
-      v-bind="{
-        group: {
-          name: 'editorBlocks',
-          pull: 'clone',
-          put: false
-        },
-        handle: '.editorSidebar__button',
-        // Add this clone transforming function
-        ghostClass: 'ghost',
-        clone: original => ({
-          ...original,
-          type: original.component, // Ensure type is set when cloning
-          id: Date.now(),
-          attributes: {}
-        })
-      }">
-      <!--eslint-enable-->
-      <template v-for="(categoryData, category) in categorizedBlocks">
-        <div :key="category" class="block-category">
-          <div class="category-header" @click="toggleCategory(category)">
-            <span class="category-title">{{ category }}</span>
-            <span class="category-indicator">{{
-              isCategoryCollapsed(category) ? '+' : '-'
-            }}</span>
-          </div>
-          <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
-            <div
-              class="editorSidebar__button"
-              v-for="block in categoryData"
-              :key="block.component"
-              :data-title="block.title"
-              :data-icon="block.icon"
-              :data-component="block.component"
-              :data-type="block.component"
-            >
-              <span v-svg :symbol="iconSymbol(block.icon)"></span>
-              <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
-            </div>
-          </div>
+    <div v-for="(categoryBlocks, category) in groupedBlocks"
+         :key="category"
+         x-data="{ open: true }"
+         class="editorSidebar__category">
+      <button @click="open = !open"
+              class="editorSidebar__categoryHeader"
+              type="button">
+        <span class="editorSidebar__categoryTitle">{{ category }}</span>
+        <span class="editorSidebar__categoryIcon"
+              :class="{ 'is-open': open }">
+          ▼
+        </span>
+      </button>
+
+      <!-- eslint-disable vue/no-mutating-props -->
+      <draggable class="editorSidebar__blocks"
+                 :class="[editorSidebarClasses, { 'is-collapsed': !open }]"
+                 :list="blocks"
+                 :group="{
+                   name: 'editorBlocks',
+                   pull: 'clone',
+                   put: false
+                 }"
+                 handle=".editorSidebar__button">
+        <!--eslint-enable-->
+        <div
+          v-for="block in categoryBlocks"
+          :key="block.component"
+          class="editorSidebar__button"
+          :data-title="block.title"
+          :data-icon="block.icon"
+          :data-component="block.component"
+        >
+          <span v-svg :symbol="iconSymbol(block.icon)"></span>
+          <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
         </div>
-      </template>
-    </draggable>
+      </draggable>
+    </div>
   </div>
 </template>
+
 
 <script>
   import draggable from 'vuedraggable'
@@ -71,32 +62,21 @@
     components: {
       draggable
     },
-    data() {
-      return {
-        collapsedCategories: {}
-      }
-    },
     computed: {
+      groupedBlocks() {
+        return this.blocks.reduce((acc, block) => {
+          const category = block.title.split(' ')[0]
+          if (!acc[category]) {
+            acc[category] = []
+          }
+          acc[category].push(block)
+          return acc
+        }, {})
+      },
       editorSidebarClasses() {
         return {
           'editorSidebar__blocks--in-fieldset': this.inFieldset
         }
-      },
-      categorizedBlocks() {
-        const categories = {}
-
-        this.blocks.forEach(block => {
-          const categoryName = this.getCategoryName(block.title)
-          if (!categories[categoryName]) {
-            categories[categoryName] = []
-          }
-          categories[categoryName].push({
-            ...block,
-            type: block.component
-          })
-        })
-
-        return categories
       }
     },
     methods: {
@@ -105,39 +85,6 @@
       },
       hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
-      },
-      getCategoryName(title) {
-        const words = title.split(' ')
-        return words[0]
-      },
-      toggleCategory(category) {
-        this.$set(
-          this.collapsedCategories,
-          category,
-          !this.collapsedCategories[category]
-        )
-      },
-      isCategoryCollapsed(category) {
-        return Boolean(this.collapsedCategories[category])
-      },
-      handleBlocksChange(event) {
-        if (event.added) {
-          const addedBlock = event.added.element
-          addedBlock.type = addedBlock.component
-
-          const updatedBlocks = this.blocks.map(block => ({
-            ...block,
-            type: block.type || block.component,
-            id: block.id || Date.now(),
-            attributes: block.attributes || {}
-          }))
-
-          this.$emit('update:blocks', updatedBlocks)
-        }
-
-        if (event.moved) {
-          this.$emit('update:blocks', this.blocks)
-        }
       }
     }
   }
@@ -145,6 +92,54 @@
 
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
+
+  .editorSidebar__category {
+    margin-bottom: 15px;
+  }
+
+  .editorSidebar__categoryHeader {
+    @include btn-reset;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: $color__background;
+    border-radius: $border-radius;
+    border: 1px solid $color__border;
+    margin-bottom: 10px;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $color__border--focus;
+    }
+  }
+
+  .editorSidebar__categoryTitle {
+    font-weight: 600;
+    color: $color__text;
+  }
+
+  .editorSidebar__categoryIcon {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    color: $color__text--light;
+
+    &.is-open {
+      transform: rotate(180deg);
+    }
+  }
+
+  .editorSidebar__blocks {
+    transition: max-height 0.3s ease-out;
+    overflow: hidden;
+
+    &.is-collapsed {
+      max-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
 
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
@@ -156,46 +151,8 @@
 
   .editorSidebar__listItems > div {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .block-category {
-    border-radius: $border-radius;
-    border: 1px solid $color__border;
-    overflow: hidden;
-
-    .category-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 15px;
-      background: $color__background;
-      cursor: pointer;
-
-      &:hover {
-        background: darken($color__background, 2%);
-      }
-    }
-
-    .category-title {
-      font-weight: 600;
-      color: $color__text;
-    }
-
-    .category-indicator {
-      color: $color__text--light;
-      font-size: 1.2em;
-      line-height: 1;
-    }
-
-    .category-blocks {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px;
-      background: white;
-    }
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .editorSidebar__button {
@@ -207,6 +164,7 @@
     width: calc(50% - 5px);
     height: 100px;
     padding: 8px 20px;
+    margin-bottom: 10px;
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
