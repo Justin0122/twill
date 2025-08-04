@@ -1,6 +1,5 @@
 <template>
   <div class="editorSidebar__listItems">
-    <!-- eslint-disable vue/no-mutating-props -->
     <draggable class="editorSidebar__blocks"
                :class="editorSidebarClasses"
                v-model="blocks"
@@ -12,17 +11,24 @@
                     },
                     handle: '.editorSidebar__button'
                     }">
-      <!--eslint-enable-->
-      <div
-          class="editorSidebar__button"
-          :data-title="block.title"
-          :data-icon="block.icon"
-          :data-component="block.component"
-          v-for="block in blocks"
-          :key="block.component"
-      >
-        <span v-svg :symbol="iconSymbol(block.icon)"></span>
-        <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+      <div v-for="(categoryData, category) in categorizedBlocks"
+           :key="category"
+           class="block-category">
+        <div class="category-header" @click="toggleCategory(category)">
+          <span class="category-title">{{ category }}</span>
+          <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
+        </div>
+        <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
+          <div class="editorSidebar__button"
+               v-for="block in categoryData"
+               :key="block.component"
+               :data-title="block.title"
+               :data-icon="block.icon"
+               :data-component="block.component">
+            <span v-svg :symbol="iconSymbol(block.icon)"></span>
+            <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+          </div>
+        </div>
       </div>
     </draggable>
   </div>
@@ -30,7 +36,6 @@
 
 <script>
   import draggable from 'vuedraggable'
-
   import { DraggableMixin } from '@/mixins'
 
   export default {
@@ -49,22 +54,51 @@
     components: {
       draggable
     },
+    data() {
+      return {
+        collapsedCategories: new Set()
+      }
+    },
     computed: {
-      editorSidebarClasses () {
+      editorSidebarClasses() {
         return {
           'editorSidebar__blocks--in-fieldset': this.inFieldset
         }
+      },
+      categorizedBlocks() {
+        const categories = {}
+
+        this.blocks.forEach(block => {
+          const categoryName = this.getCategoryName(block.title)
+          if (!categories[categoryName]) {
+            categories[categoryName] = []
+          }
+          categories[categoryName].push(block)
+        })
+
+        return categories
       }
     },
     methods: {
-      iconSymbol: function (icon) {
-        // Future block editor icons will have two variations: small and large.
-        // Small formats will be used by default in the dropdown, and large
-        // formats (named with `-lg` suffix) will be used in the sidebar.
+      iconSymbol(icon) {
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
-      hasLgIconVariation: function (icon) {
+      hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
+      },
+      getCategoryName(title) {
+        const words = title.split(' ')
+        return words[0] // Use first word as category
+      },
+      toggleCategory(category) {
+        if (this.collapsedCategories.has(category)) {
+          this.collapsedCategories.delete(category)
+        } else {
+          this.collapsedCategories.add(category)
+        }
+      },
+      isCategoryCollapsed(category) {
+        return this.collapsedCategories.has(category)
       }
     }
   }
@@ -83,8 +117,46 @@
 
   .editorSidebar__listItems > div {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .block-category {
+    border-radius: $border-radius;
+    border: 1px solid $color__border;
+    overflow: hidden;
+
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      background: $color__background;
+      cursor: pointer;
+
+      &:hover {
+        background: darken($color__background, 2%);
+      }
+    }
+
+    .category-title {
+      font-weight: 600;
+      color: $color__text;
+    }
+
+    .category-indicator {
+      color: $color__text--light;
+      font-size: 1.2em;
+      line-height: 1;
+    }
+
+    .category-blocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+    }
   }
 
   .editorSidebar__button {
@@ -96,7 +168,6 @@
     width: calc(50% - 5px);
     height: 100px;
     padding: 8px 20px;
-    margin-bottom: 10px;
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
@@ -130,7 +201,6 @@
 
   .editorPreview__content {
     .editorSidebar__button {
-      // use full width instead of half for buttons being dragged to the content area
       width: 100%;
     }
   }
