@@ -26,6 +26,7 @@
           editorSidebarClasses,
           { 'is-collapsed': isCollapsed(category) }
         ]"
+        :style="{ backgroundColor: getCategoryColor(category) }"
         :list="blocks"
         :group="{
           name: 'editorBlocks',
@@ -57,6 +58,7 @@
 <script>
   import draggable from 'vuedraggable'
   import { DraggableMixin } from '@/mixins'
+  import tinycolor from 'tinycolor2'
 
   export default {
     name: 'A17EditorSidebarBlockList',
@@ -117,6 +119,19 @@
       },
       isCollapsed(category) {
         return !!this.collapsedCategories[category]
+      },
+      getCategoryColor(category) {
+        // Generate a consistent hash from the category name
+        const hash = category.split('').reduce((acc, char) => {
+          return char.charCodeAt(0) + ((acc << 5) - acc)
+        }, 0)
+
+        // Create a very light, desaturated color
+        return tinycolor({
+          h: hash % 360,
+          s: 15, // Very low saturation for subtlety
+          l: 97  // Very light
+        }).toHexString()
       }
     }
   }
@@ -167,11 +182,14 @@
     flex-wrap: wrap;
     justify-content: space-between;
     transition: all 0.3s ease-out;
-    max-height: 1000px; /* Arbitrary large value */
+    max-height: 1000px;
     opacity: 1;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
+    border-radius: $border-radius;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 
     &.is-collapsed {
       max-height: 0;
@@ -181,7 +199,6 @@
       overflow: hidden;
     }
   }
-
 
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
