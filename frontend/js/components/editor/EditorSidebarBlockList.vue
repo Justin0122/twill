@@ -2,21 +2,23 @@
   <div class="editorSidebar__listItems">
     <div v-for="(categoryBlocks, category) in groupedBlocks"
          :key="category"
-         x-data="{ open: true }"
          class="editorSidebar__category">
-      <button @click="open = !open"
+      <button @click="toggleCollapse(category)"
               class="editorSidebar__categoryHeader"
               type="button">
         <span class="editorSidebar__categoryTitle">{{ category }}</span>
         <span class="editorSidebar__categoryIcon"
-              :class="{ 'is-open': open }">
+              :class="{ 'is-open': !isCollapsed(category) }">
           ▼
         </span>
       </button>
 
       <!-- eslint-disable vue/no-mutating-props -->
       <draggable class="editorSidebar__blocks"
-                 :class="[editorSidebarClasses, { 'is-collapsed': !open }]"
+                 :class="[
+                   editorSidebarClasses,
+                   { 'is-collapsed': isCollapsed(category) }
+                 ]"
                  :list="blocks"
                  :group="{
                    name: 'editorBlocks',
@@ -41,7 +43,6 @@
   </div>
 </template>
 
-
 <script>
   import draggable from 'vuedraggable'
   import { DraggableMixin } from '@/mixins'
@@ -61,6 +62,11 @@
     mixins: [DraggableMixin],
     components: {
       draggable
+    },
+    data() {
+      return {
+        collapsedCategories: {}
+      }
     },
     computed: {
       groupedBlocks() {
@@ -85,6 +91,12 @@
       },
       hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
+      },
+      toggleCollapse(category) {
+        this.$set(this.collapsedCategories, category, !this.isCollapsed(category))
+      },
+      isCollapsed(category) {
+        return !!this.collapsedCategories[category]
       }
     }
   }
@@ -131,13 +143,19 @@
   }
 
   .editorSidebar__blocks {
-    transition: max-height 0.3s ease-out;
-    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    transition: all 0.3s ease-out;
+    max-height: 1000px; /* Arbitrary large value */
+    opacity: 1;
 
     &.is-collapsed {
       max-height: 0;
+      opacity: 0;
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
   }
 
