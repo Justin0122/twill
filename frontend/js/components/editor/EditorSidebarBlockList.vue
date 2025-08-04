@@ -20,37 +20,37 @@
       </button>
 
       <!-- eslint-disable vue/no-mutating-props -->
-      <draggable
-        class="editorSidebar__blocks"
-        :class="[
-          editorSidebarClasses,
-          { 'is-collapsed': isCollapsed(category) }
-        ]"
-        :style="{ backgroundColor: getCategoryColor(category) }"
-        :list="blocks"
-        :group="{
-          name: 'editorBlocks',
-          pull: 'clone',
-          put: false
-        }"
-        handle=".editorSidebar__button"
-      >
-        <!--eslint-enable-->
-        <div
-          v-for="block in categoryBlocks"
-          :key="block.component"
-          class="editorSidebar__button"
-          :class="{
-            'editorSidebar__button--full-width': hasOnlyOneBlock(category)
+      <transition name="collapse">
+        <draggable
+          v-show="!isCollapsed(category)"
+          class="editorSidebar__blocks"
+          :class="[editorSidebarClasses]"
+          :style="{ backgroundColor: getCategoryColor(category) }"
+          :list="blocks"
+          :group="{
+            name: 'editorBlocks',
+            pull: 'clone',
+            put: false
           }"
-          :data-title="block.title"
-          :data-icon="block.icon"
-          :data-component="block.component"
+          handle=".editorSidebar__button"
         >
-          <span v-svg :symbol="iconSymbol(block.icon)"></span>
-          <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
-        </div>
-      </draggable>
+          <!--eslint-enable-->
+          <div
+            v-for="block in categoryBlocks"
+            :key="block.component"
+            class="editorSidebar__button"
+            :class="{
+              'editorSidebar__button--full-width': hasOnlyOneBlock(category)
+            }"
+            :data-title="block.title"
+            :data-icon="block.icon"
+            :data-component="block.component"
+          >
+            <span v-svg :symbol="iconSymbol(block.icon)"></span>
+            <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+          </div>
+        </draggable>
+      </transition>
     </div>
   </div>
 </template>
@@ -130,7 +130,7 @@
         return tinycolor({
           h: hash % 360,
           s: 30, // Very low saturation for subtlety
-          l: 97  // Very light
+          l: 97 // Very light
         }).toHexString()
       }
     }
@@ -176,11 +176,26 @@
     }
   }
 
+  .collapse-enter-active,
+  .collapse-leave-active {
+    transition: all 0.3s ease-out;
+    max-height: 1000px;
+    overflow: hidden;
+  }
+
+  .collapse-enter-from,
+  .collapse-leave-to {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+  }
+
   .editorSidebar__blocks {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    transition: opacity 0.25s ease-out;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
@@ -188,13 +203,6 @@
     padding: 10px;
     border: 1px solid rgba(0, 0, 0, 0.05);
     overflow: hidden;
-
-    &.is-collapsed {
-      padding: 0;
-      margin: 0;
-      height: 0;
-      border: none;
-    }
   }
 
   .editorSidebar__blocks--in-fieldset {
