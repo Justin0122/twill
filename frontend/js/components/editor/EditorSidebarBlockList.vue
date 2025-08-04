@@ -26,9 +26,9 @@
                  v-for="block in categoryData"
                  :key="block.component"
                  :data-title="block.title"
-                 :data-type="block.component"
                  :data-icon="block.icon"
-                 :data-component="block.component">
+                 :data-component="block.component"
+                 :data-type="block.component">
               <span v-svg :symbol="iconSymbol(block.icon)"></span>
               <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
             </div>
@@ -109,7 +109,9 @@
         if (event.moved) {
           const updatedBlocks = this.blocks.map(block => ({
             ...block,
-            type: block.component
+            type: block.component,
+            id: block.id || Date.now(),
+            attributes: block.attributes || {}
           }));
           this.$emit('update:blocks', updatedBlocks);
         }
