@@ -7,24 +7,24 @@
              :component-data="draggableGetComponentData">
     <li class="nested-datatable__item"
         v-for="(row, index) in rows"
-        :class="[haveChildren(row.children), { 'is-collapsed': isCollapsed(row.id) }]"
+        :class="haveChildren(row.children)"
         :key="depth + '-' +  row.id">
-      <div class="nested-item__header" v-if="row.children && row.children.length">
-        <button class="nested-item__collapse-btn" @click="toggleCollapse(row.id)">
-          {{ isCollapsed(row.id) ? '+' : '-' }}
+      <div class="nested-item-header">
+        <button v-if="row.children && row.children.length"
+                @click="toggleCollapse(row)">
+          {{ isCollapsed(row) ? '+' : '-' }}
         </button>
+        <a17-nested-item :index="index"
+                         :row="row"
+                         :columns="columns" />
       </div>
-      <a17-nested-item :index="index"
-                       :row="row"
-                       :columns="columns"/>
-      <a17-nested-list v-if="row.children && depth < maxDepth"
-                       v-show="!isCollapsed(row.id)"
+      <a17-nested-list v-if="row.children && depth < maxDepth && !isCollapsed(row)"
                        :maxDepth="maxDepth"
                        :depth="depth + 1"
                        :parentId="row.id"
                        :items="row.children"
                        :nested="true"
-                       :draggable="true"/>
+                       :draggable="true" />
     </li>
   </draggable>
 </template>
@@ -54,24 +54,24 @@
         default: () => []
       }
     },
-    data: function () {
+    data() {
       return {
         handle: '.tablecell__handle',
-        collapsedItems: new Set()
+        collapsedRows: {}
       }
     },
     computed: {
-      styleDepth: function () {
+      styleDepth: function() {
         return {
           marginLeft: this.depth === 0 ? '0px' : '60px'
         }
       },
       rows: {
-        get () {
+        get() {
           // return this.items
           return this.parentId > -1 ? this.items : this.$store.state.datatable.data
         },
-        set (value) {
+        set(value) {
           const data = {
             parentId: this.parentId,
             val: value
@@ -87,13 +87,13 @@
           this.saveNewTree(isChangingParents)
         }
       },
-      nestedDropAreaClasses: function () {
+      nestedDropAreaClasses: function() {
         return [
           this.rows.length === 0 ? 'nested__dropArea--empty' : '',
           this.depth ? `nested__dropArea--depth nested__dropArea--depth${Math.min(10, this.depth)}` : ''
         ]
       },
-      draggableOptions: function () {
+      draggableOptions: function() {
         return {
           ...this.dragOptions,
           fallbackTolerance: 5,
@@ -104,24 +104,16 @@
       }
     },
     methods: {
-      haveChildren: function (children) {
+      haveChildren(children) {
         return {
-          // children may be undefined and not an array
-          // if it's undefined the component wouldn't load anything
-          // without providing a fallback value
           'nested-datatable__item--empty': (children || []).length === 0 && this.depth < this.maxDepth
         }
       },
-      isCollapsed(id) {
-        return this.collapsedItems.has(id)
+      toggleCollapse(row) {
+        this.$set(this.collapsedRows, row.id, !this.isCollapsed(row))
       },
-      toggleCollapse(id) {
-        console.log('toggleCollapse', id)
-        if (this.collapsedItems.has(id)) {
-          this.collapsedItems.delete(id)
-        } else {
-          this.collapsedItems.add(id)
-        }
+      isCollapsed(row) {
+        return !!this.collapsedRows[row.id]
       }
     }
   }
@@ -229,31 +221,16 @@
       }
     }
   }
-
-  .nested-item__collapse-btn {
-    width: 16px;
-    height: 16px;
-    border: 1px solid #D9D9D9;
-    background: white;
-    border-radius: 2px;
-    cursor: pointer;
+  .nested-item-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0;
-
-    &:hover {
-      background-color: #f5f5f5;
-    }
+    gap: 8px;
   }
-
-  .nested-datatable__item {
-    &.is-collapsed {
-      > .nested__dropArea {
-        display: none;
-      }
-    }
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 0 4px;
   }
 </style>
