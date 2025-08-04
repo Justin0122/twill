@@ -143,9 +143,9 @@
   }
 
   .editorSidebar__blocks {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(50% - 5px), 1fr));
+    gap: 10px;
     transition: all 0.3s ease-out;
     max-height: 1000px; /* Arbitrary large value */
     opacity: 1;
@@ -179,15 +179,14 @@
     cursor: move;
     display: flex;
     flex-direction: column;
-    width: calc(50% - 5px);
     height: 100px;
     padding: 8px 20px;
-    margin-bottom: 10px;
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
     color: $color__text--light;
     text-align: center;
+    margin: 0;
 
     .icon {
       flex-grow: 1;
