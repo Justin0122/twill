@@ -3,7 +3,7 @@
     <!-- eslint-disable vue/no-mutating-props -->
     <draggable class="editorSidebar__blocks"
                :class="editorSidebarClasses"
-               :list="blocks"
+               v-model="blocks"
                @change="handleBlocksChange"
                v-bind="{
                     group: {
@@ -26,6 +26,7 @@
                  v-for="block in categoryData"
                  :key="block.component"
                  :data-title="block.title"
+                 :data-type="block.component"
                  :data-icon="block.icon"
                  :data-component="block.component">
               <span v-svg :symbol="iconSymbol(block.icon)"></span>
@@ -78,7 +79,10 @@
           if (!categories[categoryName]) {
             categories[categoryName] = []
           }
-          categories[categoryName].push(block)
+          categories[categoryName].push({
+            ...block,
+            type: block.component
+          })
         })
 
         return categories
@@ -103,7 +107,11 @@
       },
       handleBlocksChange(event) {
         if (event.moved) {
-          this.$emit('update:blocks', this.blocks)
+          const updatedBlocks = this.blocks.map(block => ({
+            ...block,
+            type: block.component
+          }));
+          this.$emit('update:blocks', updatedBlocks);
         }
       }
     }
