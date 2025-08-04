@@ -1,26 +1,26 @@
 <template>
   <div class="editorSidebar__listItems">
-    <div v-for="(categoryData, category) in categorizedBlocks"
-         :key="category"
-         class="block-category">
-      <div class="category-header" @click="toggleCategory(category)">
-        <span class="category-title">{{ category }}</span>
-        <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
-      </div>
-      <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
-        <!-- eslint-disable vue/no-mutating-props -->
-        <draggable class="editorSidebar__blocks"
-                   :class="editorSidebarClasses"
-                   v-model="blocks"
-                   v-bind="{
-                      group: {
-                        name: 'editorBlocks',
-                        pull: 'clone',
-                        put: false
-                      },
-                      handle: '.editorSidebar__button'
-                      }">
-          <!--eslint-enable-->
+    <!-- eslint-disable vue/no-mutating-props -->
+    <draggable class="editorSidebar__blocks"
+               :class="editorSidebarClasses"
+               v-model="blocks"
+               v-bind="{
+                    group: {
+                      name: 'editorBlocks',
+                      pull: 'clone',
+                      put: false
+                    },
+                    handle: '.editorSidebar__button'
+                    }">
+      <!--eslint-enable-->
+      <div v-for="(categoryData, category) in categorizedBlocks"
+           :key="category"
+           class="block-category">
+        <div class="category-header" @click="toggleCategory(category)">
+          <span class="category-title">{{ category }}</span>
+          <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
+        </div>
+        <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
           <div class="editorSidebar__button"
                v-for="block in categoryData"
                :key="block.component"
@@ -30,9 +30,9 @@
             <span v-svg :symbol="iconSymbol(block.icon)"></span>
             <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
           </div>
-        </draggable>
+        </div>
       </div>
-    </div>
+    </draggable>
   </div>
 </template>
 
@@ -58,7 +58,7 @@
     },
     data() {
       return {
-        collapsedCategories: new Set()
+        collapsedCategories: {}
       }
     },
     computed: {
@@ -90,21 +90,18 @@
       },
       getCategoryName(title) {
         const words = title.split(' ')
-        return words[0] // Use first word as category
+        return words[0]
       },
       toggleCategory(category) {
-        if (this.collapsedCategories.has(category)) {
-          this.collapsedCategories.delete(category)
-        } else {
-          this.collapsedCategories.add(category)
-        }
+        this.$set(this.collapsedCategories, category, !this.collapsedCategories[category])
       },
       isCategoryCollapsed(category) {
-        return this.collapsedCategories.has(category)
+        return Boolean(this.collapsedCategories[category])
       }
     }
   }
 </script>
+
 
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
