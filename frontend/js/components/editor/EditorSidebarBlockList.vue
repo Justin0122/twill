@@ -3,7 +3,8 @@
     <!-- eslint-disable vue/no-mutating-props -->
     <draggable class="editorSidebar__blocks"
                :class="editorSidebarClasses"
-               v-model="blocks"
+               :list="blocks"
+               @change="handleBlocksChange"
                v-bind="{
                     group: {
                       name: 'editorBlocks',
@@ -13,28 +14,30 @@
                     handle: '.editorSidebar__button'
                     }">
       <!--eslint-enable-->
-      <div v-for="(categoryData, category) in categorizedBlocks"
-           :key="category"
-           class="block-category">
-        <div class="category-header" @click="toggleCategory(category)">
-          <span class="category-title">{{ category }}</span>
-          <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
-        </div>
-        <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
-          <div class="editorSidebar__button"
-               v-for="block in categoryData"
-               :key="block.component"
-               :data-title="block.title"
-               :data-icon="block.icon"
-               :data-component="block.component">
-            <span v-svg :symbol="iconSymbol(block.icon)"></span>
-            <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+      <template v-for="(categoryData, category) in categorizedBlocks">
+        <div :key="category"
+             class="block-category">
+          <div class="category-header" @click="toggleCategory(category)">
+            <span class="category-title">{{ category }}</span>
+            <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
+          </div>
+          <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
+            <div class="editorSidebar__button"
+                 v-for="block in categoryData"
+                 :key="block.component"
+                 :data-title="block.title"
+                 :data-icon="block.icon"
+                 :data-component="block.component">
+              <span v-svg :symbol="iconSymbol(block.icon)"></span>
+              <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
     </draggable>
   </div>
 </template>
+
 
 <script>
   import draggable from 'vuedraggable'
@@ -97,6 +100,11 @@
       },
       isCategoryCollapsed(category) {
         return Boolean(this.collapsedCategories[category])
+      },
+      handleBlocksChange(event) {
+        if (event.moved) {
+          this.$emit('update:blocks', this.blocks)
+        }
       }
     }
   }
