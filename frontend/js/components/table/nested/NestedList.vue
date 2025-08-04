@@ -9,14 +9,18 @@
         v-for="(row, index) in rows"
         :class="haveChildren(row.children)"
         :key="depth + '-' +  row.id">
-      <div class="nested-item-header">
+      <div class="nested-item-header"
+           @click="handleRowClick(row)"
+           :class="{ 'has-children': row.children && row.children.length }">
         <button v-if="row.children && row.children.length"
-                @click="toggleCollapse(row)">
+                class="collapse-indicator"
+                @click.stop="toggleCollapse(row)">
           {{ isCollapsed(row) ? '+' : '-' }}
         </button>
         <a17-nested-item :index="index"
                          :row="row"
-                         :columns="columns" />
+                         :columns="columns"
+                         @click.stop />
       </div>
       <a17-nested-list v-if="row.children && depth < maxDepth && !isCollapsed(row)"
                        :maxDepth="maxDepth"
@@ -28,6 +32,7 @@
     </li>
   </draggable>
 </template>
+
 
 <script>
   import draggable from 'vuedraggable'
@@ -114,6 +119,11 @@
       },
       isCollapsed(row) {
         return !!this.collapsedRows[row.id]
+      },
+      handleRowClick(row) {
+        if (row.children && row.children.length) {
+          this.toggleCollapse(row)
+        }
       }
     }
   }
@@ -221,11 +231,28 @@
       }
     }
   }
+
   .nested-item-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    cursor: default;
+    position: relative;
+
+    &.has-children {
+      cursor: pointer;
+    }
   }
+
+  .collapse-indicator {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .nested-item {
+    position: relative;
+    z-index: 1;
+  }
+
   button {
     background: none;
     border: none;
