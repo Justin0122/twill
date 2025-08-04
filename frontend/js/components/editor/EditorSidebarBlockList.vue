@@ -169,6 +169,9 @@
     transition: all 0.3s ease-out;
     max-height: 1000px; /* Arbitrary large value */
     opacity: 1;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: stretch;
 
     &.is-collapsed {
       max-height: 0;
@@ -178,6 +181,7 @@
       overflow: hidden;
     }
   }
+
 
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
@@ -210,7 +214,9 @@
     text-align: center;
 
     &--full-width {
-      width: 100%;
+      width: -moz-available;
+      width: -webkit-fill-available;
+      width: stretch;
     }
 
     .icon {
