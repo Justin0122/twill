@@ -116,6 +116,7 @@
         return this.collapsedItems.has(id)
       },
       toggleCollapse(id) {
+        console.log('toggleCollapse', id)
         if (this.collapsedItems.has(id)) {
           this.collapsedItems.delete(id)
         } else {
@@ -227,15 +228,6 @@
         margin-bottom: 0;
       }
     }
-  }
-
-  .nested-item__header {
-    display: inline-block;
-    position: absolute;
-    left: -20px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
   }
 
   .nested-item__collapse-btn {
