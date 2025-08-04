@@ -20,12 +20,7 @@
       </button>
 
       <!-- eslint-disable vue/no-mutating-props -->
-      <transition
-        name="collapse"
-        @enter="onEnter"
-        @after-enter="onAfterEnter"
-        @leave="onLeave"
-      >
+      <transition name="collapse">
         <draggable
           v-show="!isCollapsed(category)"
           class="editorSidebar__blocks"
@@ -109,21 +104,6 @@
       }
     },
     methods: {
-      onEnter(el) {
-        el.style.height = '0'
-        el.offsetHeight = 0
-        el.style.height = el.scrollHeight + 'px'
-      },
-
-      onAfterEnter(el) {
-        el.style.height = null
-      },
-
-      onLeave(el) {
-        el.style.height = el.scrollHeight + 'px'
-        el.offsetHeight = 0
-        el.style.height = '0'
-      },
       iconSymbol(icon) {
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
@@ -196,27 +176,34 @@
     }
   }
 
+  .collapse-enter-active,
+  .collapse-leave-active {
+    transition: all 0.3s ease-out;
+    max-height: 1000px;
+    overflow: hidden;
+  }
+
+  .collapse-enter,
+  .collapse-leave-to {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+  }
+
   .editorSidebar__blocks {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    transition: all 0.3s ease-out;
+    max-height: 1000px;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
     border-radius: $border-radius;
     padding: 10px;
     border: 1px solid rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    transition: height 0.3s ease-out, opacity 0.3s ease-out;
-  }
-
-  .collapse-enter-from,
-  .collapse-leave-to {
-    opacity: 0;
-  }
-
-  .collapse-enter-active,
-  .collapse-leave-active {
     overflow: hidden;
   }
 
