@@ -1,34 +1,46 @@
 <template>
   <div class="editorSidebar__listItems">
     <!-- eslint-disable vue/no-mutating-props -->
-    <draggable class="editorSidebar__blocks"
-               :class="editorSidebarClasses"
-               v-model="blocks"
-               @change="handleBlocksChange"
-               v-bind="{
-                    group: {
-                      name: 'editorBlocks',
-                      pull: 'clone',
-                      put: false
-                    },
-                    handle: '.editorSidebar__button'
-                    }">
+    <draggable
+      class="editorSidebar__blocks"
+      :class="editorSidebarClasses"
+      v-model="blocks"
+      @change="handleBlocksChange"
+      v-bind="{
+        group: {
+          name: 'editorBlocks',
+          pull: 'clone',
+          put: false
+        },
+        handle: '.editorSidebar__button',
+        // Add this clone transforming function
+        ghostClass: 'ghost',
+        clone: original => ({
+          ...original,
+          type: original.component, // Ensure type is set when cloning
+          id: Date.now(),
+          attributes: {}
+        })
+      }">
       <!--eslint-enable-->
       <template v-for="(categoryData, category) in categorizedBlocks">
-        <div :key="category"
-             class="block-category">
+        <div :key="category" class="block-category">
           <div class="category-header" @click="toggleCategory(category)">
             <span class="category-title">{{ category }}</span>
-            <span class="category-indicator">{{ isCategoryCollapsed(category) ? '+' : '-' }}</span>
+            <span class="category-indicator">{{
+              isCategoryCollapsed(category) ? '+' : '-'
+            }}</span>
           </div>
           <div class="category-blocks" v-show="!isCategoryCollapsed(category)">
-            <div class="editorSidebar__button"
-                 v-for="block in categoryData"
-                 :key="block.component"
-                 :data-title="block.title"
-                 :data-icon="block.icon"
-                 :data-component="block.component"
-                 :data-type="block.component">
+            <div
+              class="editorSidebar__button"
+              v-for="block in categoryData"
+              :key="block.component"
+              :data-title="block.title"
+              :data-icon="block.icon"
+              :data-component="block.component"
+              :data-type="block.component"
+            >
               <span v-svg :symbol="iconSymbol(block.icon)"></span>
               <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
             </div>
@@ -38,7 +50,6 @@
     </draggable>
   </div>
 </template>
-
 
 <script>
   import draggable from 'vuedraggable'
@@ -100,26 +111,37 @@
         return words[0]
       },
       toggleCategory(category) {
-        this.$set(this.collapsedCategories, category, !this.collapsedCategories[category])
+        this.$set(
+          this.collapsedCategories,
+          category,
+          !this.collapsedCategories[category]
+        )
       },
       isCategoryCollapsed(category) {
         return Boolean(this.collapsedCategories[category])
       },
       handleBlocksChange(event) {
-        if (event.moved) {
+        if (event.added) {
+          const addedBlock = event.added.element
+          addedBlock.type = addedBlock.component
+
           const updatedBlocks = this.blocks.map(block => ({
             ...block,
-            type: block.component,
+            type: block.type || block.component,
             id: block.id || Date.now(),
             attributes: block.attributes || {}
-          }));
-          this.$emit('update:blocks', updatedBlocks);
+          }))
+
+          this.$emit('update:blocks', updatedBlocks)
+        }
+
+        if (event.moved) {
+          this.$emit('update:blocks', this.blocks)
         }
       }
     }
   }
 </script>
-
 
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
