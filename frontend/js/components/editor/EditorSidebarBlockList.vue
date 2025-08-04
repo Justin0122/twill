@@ -1,5 +1,6 @@
 <template>
   <div class="editorSidebar__listItems">
+    <!-- eslint-disable vue/no-mutating-props -->
     <draggable class="editorSidebar__blocks"
                :class="editorSidebarClasses"
                v-model="blocks"
@@ -11,6 +12,7 @@
                     },
                     handle: '.editorSidebar__button'
                     }">
+      <!--eslint-enable-->
       <div v-for="(categoryData, category) in categorizedBlocks"
            :key="category"
            class="block-category">
