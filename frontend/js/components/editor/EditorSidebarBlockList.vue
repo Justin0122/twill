@@ -1,36 +1,47 @@
 <template>
   <div class="editorSidebar__listItems">
-    <div v-for="(categoryBlocks, category) in groupedBlocks"
-         :key="category"
-         class="editorSidebar__category">
-      <button @click="toggleCollapse(category)"
-              class="editorSidebar__categoryHeader"
-              type="button">
+    <div
+      v-for="(categoryBlocks, category) in groupedBlocks"
+      :key="category"
+      class="editorSidebar__category"
+    >
+      <button
+        @click="toggleCollapse(category)"
+        class="editorSidebar__categoryHeader"
+        type="button"
+      >
         <span class="editorSidebar__categoryTitle">{{ category }}</span>
-        <span class="editorSidebar__categoryIcon"
-              :class="{ 'is-open': !isCollapsed(category) }">
+        <span
+          class="editorSidebar__categoryIcon"
+          :class="{ 'is-open': !isCollapsed(category) }"
+        >
           ▼
         </span>
       </button>
 
       <!-- eslint-disable vue/no-mutating-props -->
-      <draggable class="editorSidebar__blocks"
-                 :class="[
-                   editorSidebarClasses,
-                   { 'is-collapsed': isCollapsed(category) }
-                 ]"
-                 :list="blocks"
-                 :group="{
-                   name: 'editorBlocks',
-                   pull: 'clone',
-                   put: false
-                 }"
-                 handle=".editorSidebar__button">
+      <draggable
+        class="editorSidebar__blocks"
+        :class="[
+          editorSidebarClasses,
+          { 'is-collapsed': isCollapsed(category) }
+        ]"
+        :list="blocks"
+        :group="{
+          name: 'editorBlocks',
+          pull: 'clone',
+          put: false
+        }"
+        handle=".editorSidebar__button"
+      >
         <!--eslint-enable-->
         <div
           v-for="block in categoryBlocks"
           :key="block.component"
           class="editorSidebar__button"
+          :class="{
+            'editorSidebar__button--full-width': hasOnlyOneBlock(category)
+          }"
           :data-title="block.title"
           :data-icon="block.icon"
           :data-component="block.component"
@@ -79,6 +90,11 @@
           return acc
         }, {})
       },
+      hasOnlyOneBlock() {
+        return category => {
+          return this.groupedBlocks[category].length === 1
+        }
+      },
       editorSidebarClasses() {
         return {
           'editorSidebar__blocks--in-fieldset': this.inFieldset
@@ -93,7 +109,11 @@
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
       },
       toggleCollapse(category) {
-        this.$set(this.collapsedCategories, category, !this.isCollapsed(category))
+        this.$set(
+          this.collapsedCategories,
+          category,
+          !this.isCollapsed(category)
+        )
       },
       isCollapsed(category) {
         return !!this.collapsedCategories[category]
@@ -212,6 +232,10 @@
         color: $color__text;
       }
     }
+  }
+
+  &--full-width {
+    width: 100%;
   }
 
   .editorPreview__content {
