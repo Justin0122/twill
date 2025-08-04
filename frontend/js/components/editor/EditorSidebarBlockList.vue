@@ -154,7 +154,6 @@
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
-    margin-bottom: 10px;
     cursor: pointer;
 
     &:hover {
@@ -181,6 +180,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    transition: opacity 0.25s ease-out;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
@@ -188,15 +188,11 @@
     padding: 10px;
     border: 1px solid rgba(0, 0, 0, 0.05);
     overflow: hidden;
-    transition: height 0.2s ease-out;
-    height: auto;
-    visibility: visible;
 
     &.is-collapsed {
       padding: 0;
       margin: 0;
       height: 0;
-      visibility: hidden;
       border: none;
     }
   }
