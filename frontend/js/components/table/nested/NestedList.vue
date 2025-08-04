@@ -7,12 +7,18 @@
              :component-data="draggableGetComponentData">
     <li class="nested-datatable__item"
         v-for="(row, index) in rows"
-        :class="haveChildren(row.children)"
+        :class="[haveChildren(row.children), { 'is-collapsed': isCollapsed(row.id) }]"
         :key="depth + '-' +  row.id">
+      <div class="nested-item__header" v-if="row.children && row.children.length">
+        <button class="nested-item__collapse-btn" @click="toggleCollapse(row.id)">
+          {{ isCollapsed(row.id) ? '+' : '-' }}
+        </button>
+      </div>
       <a17-nested-item :index="index"
                        :row="row"
                        :columns="columns"/>
       <a17-nested-list v-if="row.children && depth < maxDepth"
+                       v-show="!isCollapsed(row.id)"
                        :maxDepth="maxDepth"
                        :depth="depth + 1"
                        :parentId="row.id"
@@ -50,7 +56,8 @@
     },
     data: function () {
       return {
-        handle: '.tablecell__handle'
+        handle: '.tablecell__handle',
+        collapsedItems: new Set()
       }
     },
     computed: {
@@ -103,6 +110,16 @@
           // if it's undefined the component wouldn't load anything
           // without providing a fallback value
           'nested-datatable__item--empty': (children || []).length === 0 && this.depth < this.maxDepth
+        }
+      },
+      isCollapsed(id) {
+        return this.collapsedItems.has(id)
+      },
+      toggleCollapse(id) {
+        if (this.collapsedItems.has(id)) {
+          this.collapsedItems.delete(id)
+        } else {
+          this.collapsedItems.add(id)
         }
       }
     }
@@ -208,6 +225,42 @@
     &.nested-datatable__item--empty {
       > .nested-item {
         margin-bottom: 0;
+      }
+    }
+  }
+
+  .nested-item__header {
+    display: inline-block;
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+
+  .nested-item__collapse-btn {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #D9D9D9;
+    background: white;
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+
+  .nested-datatable__item {
+    &.is-collapsed {
+      > .nested__dropArea {
+        display: none;
       }
     }
   }
