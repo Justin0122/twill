@@ -74,7 +74,9 @@
         presetRatios: [
           { name: 'Square', ratio: 1 },
           { name: 'Thumbnail', ratio: 1.5 },
-          { name: 'Wide', ratio: 2 }
+          { name: 'Wide', ratio: 2 },
+          { name: '3/4', ratio: 0.75 },
+          { name: '4/3', ratio: 1.333 },
         ],
         currentPreset: null
       }
