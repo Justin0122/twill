@@ -4,6 +4,13 @@
       <ul v-if="multiCrops" class="cropper__breakpoints">
         <li v-for="(crop, key, index) in cropOptions" :key="key" :class="{ 's--active' : toggleBreakpoint === index }" @click="changeCrop(key, index)">{{ key | capitalize }}</li>
       </ul>
+      <!-- Preset Ratios Section -->
+      <ul class="cropper__presets">
+        <li v-for="preset in presetRatios" :key="preset.name" :class="{ 's--active': currentPreset && currentPreset.name === preset.name }" @click="selectPreset(preset)">
+          {{ preset.name }}
+        </li>
+        <li v-if="currentPreset" class="cropper__clear" @click="clearPreset">Clear</li>
+      </ul>
     </header>
     <div class="cropper__content">
       <div class="cropper__wrapper" ref="cropWrapper">
@@ -63,7 +70,13 @@
           width: 0,
           height: 0
         },
-        currentRatioName: this.media.crops[Object.keys(this.media.crops)[0]].name
+        currentRatioName: this.media.crops[Object.keys(this.media.crops)[0]].name,
+        presetRatios: [
+          { name: 'Square', ratio: 1 },
+          { name: 'Thumbnail', ratio: 1.5 },
+          { name: 'Wide', ratio: 2 }
+        ],
+        currentPreset: null
       }
     },
     watch: {
@@ -142,6 +155,12 @@
     },
     methods: {
       initAspectRatio: function () {
+        if (this.currentPreset) {
+          this.minCropValues.width = 0
+          this.minCropValues.height = 0
+          this.cropper.setAspectRatio(this.currentPreset.ratio)
+          return
+        }
         const filtered = this.ratiosByContext
         const filter = filtered.find((r) => r.name === this.currentRatioName)
 
@@ -155,8 +174,6 @@
       },
       changeCrop: function (cropName, index) {
         this.currentCrop = cropName
-        // If the current crop doesn't exist on the current media, the cropper will
-        // be set at the center of the image, using the first available ratio.
         this.currentRatioName = this.crop.name || this.cropOptions[cropName][0].name
         this.toggleBreakpoint = index
 
@@ -164,7 +181,18 @@
         this.sendCropperValues()
       },
       changeRatio: function (ratioObj) {
+        if (this.currentPreset) return // Ignore if preset is active
         this.currentRatioName = ratioObj.name
+        this.updateCrop()
+        this.sendCropperValues()
+      },
+      selectPreset: function (preset) {
+        this.currentPreset = preset
+        this.cropper.setAspectRatio(preset.ratio)
+        this.sendCropperValues()
+      },
+      clearPreset: function () {
+        this.currentPreset = null
         this.updateCrop()
         this.sendCropperValues()
       },
@@ -181,17 +209,6 @@
       },
       initCrop: function () {
         const crop = this.toNaturalCrop(this.crop)
-        // Mike (mike@area17.com) --
-        //
-        // it seems due to rounding errors(?) that sometimes
-        // the x position can be reset incorrectly
-        // see: https://github.com/fengyuanchen/cropperjs/issues/1057
-        //
-        // from my testing it seems to be a little inconsistent and unpredictable
-        // I guess you just need for the rounding error to happen
-        // But, it seems re-setting the properties individually avoids this...
-        //
-        // -- Mike (mike@area17.com)
         this.cropper.setData(crop)
         this.cropper.setData({ x: crop.x })
         this.cropper.setData({ y: crop.y })
@@ -205,7 +222,8 @@
         const data = {}
         data.values = {}
         data.values[this.currentCrop] = this.toOriginalCrop(this.cropper.getData(true))
-        data.values[this.currentCrop].name = this.currentRatioName
+        // If preset is active, use its name
+        data.values[this.currentCrop].name = this.currentPreset ? this.currentPreset.name : this.currentRatioName
 
         this.$emit('crop-end', data)
       },
@@ -223,7 +241,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   $height_li: 35px;
 
   .cropper {
@@ -237,15 +254,12 @@
     justify-content: center;
     align-items: center;
     flex-grow:1;
-    // display: block;
     height: 430px;
     background-color: $color__light;
 
-    //override cropper.js style
     .cropper-modal {
       background-color: $color__light;
     }
-
   }
 
   .cropper__wrapper {
@@ -289,6 +303,38 @@
 
       &:last-child {
         margin-right: 0;
+      }
+    }
+  }
+
+  .cropper__presets {
+    padding: 10px 0;
+    li {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 5px 15px;
+      background: $color__background;
+      border-radius: 5px;
+      cursor: pointer;
+      &.s--active {
+        background: $color__light;
+        color: $color__text;
+        cursor: default;
+      }
+      &:hover:not(.s--active) {
+        text-decoration: underline;
+      }
+    }
+    .cropper__clear {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 5px 15px;
+      background: $color__error;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      &:hover {
+        background: darken($color__error, 10%);
       }
     }
   }
