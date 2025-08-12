@@ -7,17 +7,17 @@
         :min="min"
         :max="max"
         :step="step"
-        :value="value"
+        v-model="internalValue"
         @input="onInput"
       />
-      <span class="range-picker__value">{{ value }}</span>
+      <span class="range-picker__value">{{ internalValue }}</span>
     </div>
-    <div class="range-picker__snaps">
+    <div class="range-picker__ticks">
       <span
-        v-for="point in snapPoints"
-        :key="point"
-        class="range-picker__snap"
-        :style="{ left: ((point - min) / (max - min) * 100) + '%' }"
+        v-for="tick in ticks"
+        :key="tick"
+        class="range-picker__tick"
+        :style="{ left: tickPosition(tick) + '%' }"
       >|</span>
     </div>
   </div>
@@ -33,21 +33,31 @@
       value: { type: Number, default: 0 },
       step: { type: Number, default: 1 }
     },
-    methods: {
-      onInput(event) {
-        this.$emit('input', Number(event.target.value))
+    data() {
+      return {
+        internalValue: this.value
+      }
+    },
+    watch: {
+      value(val) {
+        this.internalValue = val
       }
     },
     computed: {
-      snapPoints() {
-        const points = [];
+      ticks() {
+        const ticks = []
         for (let i = this.min; i <= this.max; i += this.step) {
-          points.push(i);
+          ticks.push(i)
         }
-        if (points[points.length - 1] !== this.max) {
-          points.push(this.max);
-        }
-        return points;
+        return ticks
+      }
+    },
+    methods: {
+      onInput() {
+        this.$emit('input', Number(this.internalValue))
+      },
+      tickPosition(tick) {
+        return ((tick - this.min) / (this.max - this.min)) * 100
       }
     }
   }
@@ -68,25 +78,22 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    position: relative;
   }
   .range-picker__value {
     min-width: 40px;
     text-align: center;
     font-weight: bold;
   }
-  .range-picker__snaps {
+  .range-picker__ticks {
     position: relative;
-    height: 10px;
+    height: 12px;
     margin-top: 4px;
-    width: 100%;
   }
-  .range-picker__snap {
+  .range-picker__tick {
     position: absolute;
     top: 0;
     transform: translateX(-50%);
     color: #888;
-    font-size: 1em;
-    pointer-events: none;
+    font-size: 12px;
   }
 </style>
