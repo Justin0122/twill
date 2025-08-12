@@ -7,10 +7,10 @@
         :min="min"
         :max="max"
         :step="step"
-        v-model="internalValue"
+        v-model="currentValue"
         @input="onInput"
       />
-      <span class="range-picker__value">{{ internalValue }}</span>
+      <span class="range-picker__value">{{ currentValue }}</span>
     </div>
     <div class="range-picker__ticks">
       <span
@@ -35,12 +35,12 @@
     },
     data() {
       return {
-        internalValue: this.value
+        currentValue: this.value
       }
     },
     watch: {
       value(val) {
-        this.internalValue = val
+        this.currentValue = val
       }
     },
     computed: {
@@ -54,7 +54,7 @@
     },
     methods: {
       onInput() {
-        this.$emit('input', Number(this.internalValue))
+        this.$emit('input', Number(this.currentValue))
       },
       tickPosition(tick) {
         return ((tick - this.min) / (this.max - this.min)) * 100
