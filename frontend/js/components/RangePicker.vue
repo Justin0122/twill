@@ -8,8 +8,7 @@
         :min="min"
         :max="max"
         :step="step"
-        :value="modelValue"
-        @input="onInput"
+        v-model="internalValue"
       />
       <span class="range-picker__max">{{ max }}</span>
       <span class="range-picker__value">{{ modelValue }}</span>
@@ -30,6 +29,19 @@
     methods: {
       onInput(event) {
         this.$emit('update:modelValue', Number(event.target.value))
+      }
+    },
+    data() {
+      return {
+        internalValue: this.modelValue
+      }
+    },
+    watch: {
+      modelValue(newVal) {
+        this.internalValue = newVal
+      },
+      internalValue(newVal) {
+        this.$emit('update:modelValue', Number(newVal))
       }
     }
   }
