@@ -11,7 +11,7 @@
         v-model="internalValue"
       />
       <span class="range-picker__max">{{ max }}</span>
-      <span class="range-picker__value">{{ modelValue }}</span>
+      <span class="range-picker__value">{{ internalValue }}</span>
     </div>
   </div>
 </template>
