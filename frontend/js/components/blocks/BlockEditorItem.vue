@@ -135,8 +135,8 @@
       },
       blockColor () {
         const hue = (this.block.id || this.index) * 37 % 360
-        return tinycolor({ h: hue, s: 0.5, l: 0.85 }).toHexString()
-      },
+        return tinycolor({ h: hue, s: 0.3, l: 0.92 }).toHexString()
+      }
       ...mapState({
         currentLocale: state => state.language.active
       }),
@@ -184,7 +184,6 @@
   .block__content {
     display: none;
     padding: 25px 15px 15px 15px;
-    background: $color__background;
   }
 
   .block--open {
