@@ -144,8 +144,8 @@
       },
       blockHeaderColor () {
         const hue = (this.block.id || this.index) * 37 % 360
-        const rgb = tinycolor({ h: hue, s: 0.7, l: 0.65 }).toRgb()
-        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`
+        const rgb = tinycolor({ h: hue, s: 0.45, l: 0.75 }).toRgb()
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.7)`
       },
       ...mapState({
         currentLocale: state => state.language.active
