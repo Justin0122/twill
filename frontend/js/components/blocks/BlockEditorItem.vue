@@ -178,7 +178,7 @@
     display: none;
     padding: 25px 15px 15px 15px;
     background: $color__background;
-    border-left: 12px solid rgba(128, 128, 128, 0.82);
+    border-left: 12px solid hsla(0, 0%, 50.2%, 0.41);
   }
 
   .block--open {
