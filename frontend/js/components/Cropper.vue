@@ -210,10 +210,26 @@
         this.cropValues.original.height = originalCrop.height
       },
       initCrop: function () {
-        const crop = this.toNaturalCrop(this.crop)
-        this.cropper.setData(crop)
-        this.cropper.setData({ x: crop.x })
-        this.cropper.setData({ y: crop.y })
+        let crop;
+        if (this.currentPreset) {
+          const natural = this.cropValues.natural;
+          let width = natural.width;
+          let height = Math.round(width / this.currentPreset.ratio);
+
+          if (height > natural.height) {
+            height = natural.height;
+            width = Math.round(height * this.currentPreset.ratio);
+          }
+
+          crop = { x: 0, y: 0, width, height };
+          this.cropper.setData(crop);
+          this.cropper.setAspectRatio(this.currentPreset.ratio);
+        } else {
+          crop = this.toNaturalCrop(this.crop);
+          this.cropper.setData(crop);
+          this.cropper.setData({ x: crop.x });
+          this.cropper.setData({ y: crop.y });
+        }
       },
       test: function () {
         const crop = this.toNaturalCrop({ x: 0, y: 0, width: 380, height: 475 })
