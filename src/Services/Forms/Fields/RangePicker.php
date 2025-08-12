@@ -7,6 +7,8 @@ use A17\Twill\Services\Forms\Fields\Traits\IsTranslatable;
 class RangePicker extends BaseFormField
 {
     use IsTranslatable;
+    use HasMax;
+    use HasMin;
 
     public static function make(): static
     {
