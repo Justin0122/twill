@@ -199,6 +199,7 @@
     position: relative;
     display: flex;
     background-clip: padding-box;
+    border-left: 12px solid hsla(0, 0%, 50.2%, 0.41);
   }
 
   .block__handle {
