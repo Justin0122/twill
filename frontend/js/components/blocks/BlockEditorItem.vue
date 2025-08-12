@@ -1,14 +1,6 @@
 <template>
-  <div
-    class="block"
-    :class="blockClasses"
-    :style="{ backgroundColor: blockColor }"
-  >
-    <div
-      class="block__header"
-      @dblclick.prevent="toggleExpand()"
-      :style="{ backgroundColor: blockHeaderColor }"
-    >
+  <div class="block" :class="blockClasses">
+    <div class="block__header" @dblclick.prevent="toggleExpand()">
       <span v-if="withHandle" class="block__handle"></span>
       <div class="block__toggle">
         <a17-dropdown :ref="moveDropdown" class="f--small" position="bottom-left" v-if="withMoveDropdown && withActions" :maxHeight="270">
@@ -46,15 +38,16 @@
       <component v-bind:is="`${block.type}`" :name="componentName(block.id)" v-bind="block.attributes" :key="`form_${block.type}_${block.id}`">
         <!-- dynamic components -->
       </component>
+      <!-- Block validation input frame, to display errors -->
       <a17-inputframe size="small" label="" :name="`block.${block.id}`"></a17-inputframe>
     </div>
   </div>
 </template>
 
 <script>
-  import { mapGetters, mapState } from 'vuex'
+  import { mapGetters,mapState } from 'vuex'
+
   import a17VueFilters from '@/utils/filters.js'
-  import tinycolor from 'tinycolor2'
 
   export default {
     name: 'A17BlockEditorItem',
@@ -137,16 +130,6 @@
       addDropdown () {
         return `add${this.block.id}Dropdown`
       },
-      blockColor () {
-        const hue = (this.block.id || this.index) * 37 % 360
-        const rgb = tinycolor({ h: hue, s: 0.3, l: 0.92 }).toRgb()
-        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
-      },
-      blockHeaderColor () {
-        const hue = (this.block.id || this.index) * 37 % 360
-        const rgb = tinycolor({ h: hue, s: 0.45, l: 0.75 }).toRgb()
-        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.7)`
-      },
       ...mapState({
         currentLocale: state => state.language.active
       }),
@@ -194,6 +177,8 @@
   .block__content {
     display: none;
     padding: 25px 15px 15px 15px;
+    background: $color__background;
+    border-left: 12px solid rgba(128, 128, 128, 0.82);
   }
 
   .block--open {
