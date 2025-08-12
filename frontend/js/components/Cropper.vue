@@ -172,7 +172,7 @@
           this.cropper.setAspectRatio(filter.ratio)
           return
         }
-        this.cropper.setAspectRatio(this.aspectRatio)
+        this.cropper.setAspectRatio(NaN)
       },
       changeCrop: function (cropName, index) {
         this.currentCrop = cropName
