@@ -4,7 +4,11 @@
     :class="blockClasses"
     :style="{ backgroundColor: blockColor }"
   >
-    <div class="block__header" @dblclick.prevent="toggleExpand()">
+    <div
+      class="block__header"
+      @dblclick.prevent="toggleExpand()"
+      :style="{ backgroundColor: blockHeaderColor }"
+    >
       <span v-if="withHandle" class="block__handle"></span>
       <div class="block__toggle">
         <a17-dropdown :ref="moveDropdown" class="f--small" position="bottom-left" v-if="withMoveDropdown && withActions" :maxHeight="270">
@@ -137,6 +141,11 @@
         const hue = (this.block.id || this.index) * 37 % 360
         const rgb = tinycolor({ h: hue, s: 0.3, l: 0.92 }).toRgb()
         return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
+      },
+      blockHeaderColor () {
+        const hue = (this.block.id || this.index) * 37 % 360
+        const rgb = tinycolor({ h: hue, s: 0.7, l: 0.65 }).toRgb()
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`
       },
       ...mapState({
         currentLocale: state => state.language.active
