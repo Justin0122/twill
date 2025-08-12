@@ -21,6 +21,7 @@ import a17HiddenField from '@/components/HiddenField.vue'
 import a17Infotip from '@/components/Infotip.vue'
 import a17Inputframe from '@/components/InputFrame.vue'
 import a17Locale from '@/components/LocaleField.vue'
+import a17RangePicker from '@/components/RangePicker.vue'
 // Media Library
 import a17MediaLibrary from '@/components/media-library/MediaLibrary.vue'
 import a17MediaField from '@/components/MediaField.vue'
@@ -74,6 +75,7 @@ const A17Config = {
     Vue.component('a17-select', a17Select)
     Vue.component('a17-vselect', a17VSelect)
     Vue.component('a17-locale', a17Locale)
+    Vue.component('a17-rangepicker', a17RangePicker)
     Vue.component('a17-dropdown', a17Dropdown)
     Vue.component('a17-buttonbar', a17Buttonbar)
     Vue.component('a17-modal', a17Modal)
