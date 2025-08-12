@@ -7,10 +7,10 @@
         :min="min"
         :max="max"
         :step="step"
-        :value="value"
+        :value="modelValue"
         @input="onInput"
       />
-      <span class="range-picker__value">{{ value }}</span>
+      <span class="range-picker__value">{{ modelValue }}</span>
     </div>
   </div>
 </template>
@@ -19,30 +19,15 @@
   export default {
     name: 'A17RangePicker',
     props: {
-      title: {
-        type: String,
-        default: ''
-      },
-      min: {
-        type: Number,
-        default: 0
-      },
-      max: {
-        type: Number,
-        default: 100
-      },
-      value: {
-        type: Number,
-        default: 0
-      },
-      step: {
-        type: Number,
-        default: 1
-      }
+      title: { type: String, default: '' },
+      min: { type: Number, default: 0 },
+      max: { type: Number, default: 100 },
+      modelValue: { type: Number, default: 0 },
+      step: { type: Number, default: 1 }
     },
     methods: {
       onInput(event) {
-        this.$emit('input', Number(event.target.value))
+        this.$emit('update:modelValue', Number(event.target.value))
       }
     }
   }
