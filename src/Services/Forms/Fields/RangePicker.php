@@ -2,6 +2,8 @@
 
 namespace A17\Twill\Services\Forms\Fields;
 
+use A17\Twill\Services\Forms\Fields\Traits\HasMax;
+use A17\Twill\Services\Forms\Fields\Traits\HasMin;
 use A17\Twill\Services\Forms\Fields\Traits\IsTranslatable;
 
 class RangePicker extends BaseFormField
