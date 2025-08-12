@@ -375,3 +375,11 @@ img {
     font-size: 15px;
     text-align: center;
 }
+
+
+@media screen and (min-width: 1540px) {
+  .col--primary {
+    width: 1100.3333333333px;
+    margin-left: 20px;
+  }
+}
