@@ -7,10 +7,10 @@
         :min="min"
         :max="max"
         :step="step"
-        v-model="currentValue"
+        :value="value"
         @input="onInput"
       />
-      <span class="range-picker__value">{{ currentValue }}</span>
+      <span class="range-picker__value">{{ value }}</span>
     </div>
     <div class="range-picker__ticks">
       <span
@@ -33,16 +33,6 @@
       value: { type: Number, default: 0 },
       step: { type: Number, default: 1 }
     },
-    data() {
-      return {
-        currentValue: this.value
-      }
-    },
-    watch: {
-      value(val) {
-        this.currentValue = val
-      }
-    },
     computed: {
       ticks() {
         const ticks = []
@@ -53,8 +43,8 @@
       }
     },
     methods: {
-      onInput() {
-        this.$emit('input', Number(this.currentValue))
+      onInput(event) {
+        this.$emit('input', Number(event.target.value))
       },
       tickPosition(tick) {
         return ((tick - this.min) / (this.max - this.min)) * 100
@@ -62,38 +52,3 @@
     }
   }
 </script>
-
-<style scoped>
-  .range-picker {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-  }
-  .range-picker__label {
-    font-size: 1em;
-    margin-bottom: 4px;
-  }
-  .range-picker__slider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .range-picker__value {
-    min-width: 40px;
-    text-align: center;
-    font-weight: bold;
-  }
-  .range-picker__ticks {
-    position: relative;
-    height: 12px;
-    margin-top: 4px;
-  }
-  .range-picker__tick {
-    position: absolute;
-    top: 0;
-    transform: translateX(-50%);
-    color: #888;
-    font-size: 12px;
-  }
-</style>
