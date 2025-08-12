@@ -314,6 +314,7 @@
 
   .blocks__item {
     border: 1px solid $color__border;
+    border-left: 12px solid hsla(0, 0%, 50.2%, 0.41);
     border-top: 0 none;
 
     &.sortable-ghost {
