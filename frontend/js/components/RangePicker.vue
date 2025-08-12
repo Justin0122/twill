@@ -2,6 +2,7 @@
   <div class="range-picker">
     <label v-if="title" class="range-picker__label">{{ title }}</label>
     <div class="range-picker__slider">
+      <span class="range-picker__min">{{ min }}</span>
       <input
         type="range"
         :min="min"
@@ -10,6 +11,7 @@
         :value="modelValue"
         @input="onInput"
       />
+      <span class="range-picker__max">{{ max }}</span>
       <span class="range-picker__value">{{ modelValue }}</span>
     </div>
   </div>
