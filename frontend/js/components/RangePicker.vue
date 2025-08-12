@@ -8,11 +8,11 @@
         :min="min"
         :max="max"
         :step="step"
-        v-model="modelValue"
+        v-model="internalValue"
         @input="onInput"
       />
       <span class="range-picker__max">{{ max }}</span>
-      <span class="range-picker__value">{{ modelValue }}</span>
+      <span class="range-picker__value">{{ internalValue }}</span>
     </div>
   </div>
 </template>
@@ -27,12 +27,6 @@
       modelValue: { type: Number, default: 0 },
       step: { type: Number, default: 1 }
     },
-    methods: {
-      onInput(event) {
-        this.$emit('update:modelValue', Number(event.target.value))
-        this.$emit('change', Number(event.target.value))
-      }
-    },
     data() {
       return {
         internalValue: this.modelValue
@@ -41,16 +35,13 @@
     watch: {
       modelValue(newVal) {
         this.internalValue = newVal
-        this.$emit('update:modelValue', newVal)
-        this.$emit('change', newVal)
-      },
-      internalValue(newVal) {
-        this.$emit('update:modelValue', newVal)
-        this.$emit('change', newVal)
       }
     },
-    mounted: function () {
-      this.$emit('change', this.value)
+    methods: {
+      onInput(event) {
+        this.$emit('update:modelValue', Number(event.target.value))
+        this.$emit('change', Number(event.target.value))
+      }
     }
   }
 </script>
