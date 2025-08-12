@@ -1,5 +1,9 @@
 <template>
-  <div class="block" :class="blockClasses">
+  <div
+    class="block"
+    :class="blockClasses"
+    :style="{ backgroundColor: blockColor }"
+  >
     <div class="block__header" @dblclick.prevent="toggleExpand()">
       <span v-if="withHandle" class="block__handle"></span>
       <div class="block__toggle">
@@ -38,16 +42,15 @@
       <component v-bind:is="`${block.type}`" :name="componentName(block.id)" v-bind="block.attributes" :key="`form_${block.type}_${block.id}`">
         <!-- dynamic components -->
       </component>
-      <!-- Block validation input frame, to display errors -->
       <a17-inputframe size="small" label="" :name="`block.${block.id}`"></a17-inputframe>
     </div>
   </div>
 </template>
 
 <script>
-  import { mapGetters,mapState } from 'vuex'
-
+  import { mapGetters, mapState } from 'vuex'
   import a17VueFilters from '@/utils/filters.js'
+  import tinycolor from 'tinycolor2'
 
   export default {
     name: 'A17BlockEditorItem',
@@ -129,6 +132,10 @@
       },
       addDropdown () {
         return `add${this.block.id}Dropdown`
+      },
+      blockColor () {
+        const hue = (this.block.id || this.index) * 37 % 360
+        return tinycolor({ h: hue, s: 0.5, l: 0.85 }).toHexString()
       },
       ...mapState({
         currentLocale: state => state.language.active
