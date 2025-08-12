@@ -17,6 +17,9 @@ class RangePicker extends TwillFormComponent
         bool $disabled = false,
         bool $readOnly = false,
         ?string $note = '',
+        public int|float $minValue = 0,
+        public int|float $maxValue = 100,
+        public int|float $stepValue = 1,
     ) {
         parent::__construct(
             name: $name,
@@ -28,11 +31,9 @@ class RangePicker extends TwillFormComponent
             readOnly: $readOnly,
         );
 
-        $this->withMeta([
-            'min' => $min,
-            'max' => $max,
-            'step' => $step,
-        ]);
+        $this->minValue = $min;
+        $this->maxValue = $max;
+        $this->stepValue = $step;
     }
 
     public function render(): View
