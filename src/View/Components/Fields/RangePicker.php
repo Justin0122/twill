@@ -4,7 +4,7 @@ namespace A17\Twill\View\Components\Fields;
 
 use Illuminate\Contracts\View\View;
 
-class RangePicker extends Field
+class RangePicker extends TwillFormComponent
 {
     public function __construct(
         string $name,
