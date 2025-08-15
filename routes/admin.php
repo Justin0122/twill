@@ -24,6 +24,9 @@ if (config('twill.enabled.media-library')) {
         Route::put('medias/bulk-delete', ['as' => 'medias.bulk-delete', 'uses' => 'MediaLibraryController@bulkDelete']);
         Route::get('medias/tags', ['as' => 'medias.tags', 'uses' => 'MediaLibraryController@tags']);
         Route::resource('medias', 'MediaLibraryController', ['only' => ['index', 'store', 'destroy']]);
+        Route::get('medias/folders', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'index']);
+        Route::post('medias/folders', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'store']);
+        Route::post('medias/folders/move', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'move']);
     });
 }
 
@@ -36,6 +39,9 @@ if (config('twill.enabled.file-library')) {
         Route::put('files/bulk-delete', ['as' => 'files.bulk-delete', 'uses' => 'FileLibraryController@bulkDelete']);
         Route::get('files/tags', ['as' => 'files.tags', 'uses' => 'FileLibraryController@tags']);
         Route::resource('files', 'FileLibraryController', ['only' => ['index', 'store', 'destroy']]);
+        Route::get('files/folders', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'index']);
+        Route::post('files/folders', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'store']);
+        Route::post('files/folders/move', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'move']);
     });
 }
 
