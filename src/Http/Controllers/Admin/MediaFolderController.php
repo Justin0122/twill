@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use A17\Twill\Models\Media;
 use A17\Twill\Models\Block;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class MediaFolderController extends Controller
 {
@@ -112,6 +114,44 @@ class MediaFolderController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    private function adminEditUrlFor(?string $modelClass, ?int $id): ?string
+    {
+        if (!$modelClass || !$id || !class_exists($modelClass)) {
+            return null;
+        }
+
+        // Prefer the Eloquent table name for the module segment
+        try {
+            $model = app($modelClass); // handles IoC/constructor defaults
+            if ($model instanceof \Illuminate\Database\Eloquent\Model) {
+                $module = $model->getTable(); // e.g. "partners", "news", "pages"
+            } else {
+                $module = Str::snake(Str::pluralStudly(class_basename($modelClass)));
+            }
+        } catch (\Throwable $e) {
+            // Fallback if instantiation fails
+            $module = Str::snake(Str::pluralStudly(class_basename($modelClass)));
+        }
+
+        // Optional: check the conventional slug table exists (partner_slugs, news_slugs, page_slugs, …)
+        // Not strictly needed for the admin URL, but proves the module is a Twill module.
+        $slugTable = Str::singular($module) . '_slugs';
+        $hasSlugTable = Schema::hasTable($slugTable); // true for Twill modules; you can use this if you want guards
+
+        // Prefer the named Twill route if it exists (TwillRoute::module('partners') registers admin.partners.edit)
+        $routeName = "admin.$module.edit";
+        if (app('router')->has($routeName)) {
+            try {
+                return route($routeName, $id);
+            } catch (\Throwable $e) {
+                // fall through to URL fallback
+            }
+        }
+
+        // Fallback: conventional admin URL
+        return url("/admin/{$module}/{$id}/edit");
+    }
+
     public function destroy(Request $request, LibraryFolder $folder)
     {
         abort_unless($folder->library === 'media', 404);
@@ -151,14 +191,11 @@ class MediaFolderController extends Controller
         $usedCount = $usages->count();
 
         if ($usedCount > 0) {
-            // Map media id -> filename for a nicer report
             $mediaMeta = DB::table('twill_medias')
                 ->whereIn('id', $mediaIds)
                 ->pluck('filename', 'id');
 
-            // Build a detailed usage report that resolves to the owning page/model
             $usedReport = $usages->groupBy('media_id')->map(function ($rows, $mediaId) use ($mediaMeta) {
-
                 $places = $rows->map(function ($row) {
                     [$pageType, $pageId] = $this->resolveUsageToPage($row->mediable_type, (int)$row->mediable_id);
 
@@ -167,32 +204,26 @@ class MediaFolderController extends Controller
                         try {
                             $model = $pageType::find($pageId);
                             if ($model) {
-                                // best-effort title
                                 $title = $model->title
                                     ?? $model->name
                                     ?? (method_exists($model, 'getTitle') ? $model->getTitle() : null)
                                     ?? (method_exists($model, '__toString') ? (string) $model : null);
                             }
-                        } catch (\Throwable $e) {
-                            // ignore resolution errors
-                        }
+                        } catch (\Throwable $e) { /* ignore */ }
                     }
 
                     return [
-                        // what page it's used on:
-                        'type'  => $pageType ?: $row->mediable_type,
-                        'id'    => $pageId   ?: $row->mediable_id,
-                        // keep the role (image field name within that page/block)
-                        'role'  => $row->role,
-                        'title' => $title,
-                        // optional raw location for debugging:
-                        'via'   => [
+                        'type'      => $pageType ?: $row->mediable_type,
+                        'id'        => $pageId   ?: $row->mediable_id,
+                        'role'      => $row->role,
+                        'title'     => $title,
+                        'admin_url' => $this->adminEditUrlFor($pageType, $pageId), // << add this
+                        'via'       => [
                             'mediable_type' => $row->mediable_type,
                             'mediable_id'   => $row->mediable_id,
                         ],
                     ];
                 })
-                    // same page might appear multiple times (e.g. same media twice in same page)
                     ->unique(fn($p) => ($p['type'] ?? '').'#'.($p['id'] ?? '').'|'.($p['role'] ?? ''))
                     ->values();
 
@@ -204,7 +235,7 @@ class MediaFolderController extends Controller
             })->values();
 
             return response()->json([
-                'message' => "This folder (or its subfolders) contains used media. Remove usages first.",
+                'message' => "This folder (or its subfolders) contains {$usedCount} used media. Remove usages first.",
                 'used'    => $usedReport,
             ], 422);
         }
