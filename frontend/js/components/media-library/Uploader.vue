@@ -30,11 +30,17 @@
       folder: {
         type: String,
         default: ''
+      },
+      folderId: {
+        type: [Number, String],
+        default: null
       }
     },
     data: function() {
       return {
-        loadingMedias: []
+        loadingMedias: [],
+        unique_folder_name: null,
+        media_to_replace_id: null
       }
     },
     computed: {
@@ -61,9 +67,7 @@
           debug: true,
           maxConnections: 5,
           button: buttonEl,
-          retry: {
-            enableAuto: false
-          },
+          retry: { enableAuto: false },
           callbacks: {
             onSubmit: this._onSubmitCallback.bind(this),
             onProgress: this._onProgressCallback.bind(this),
@@ -73,18 +77,12 @@
             onStatusChange: this._onStatusChangeCallback.bind(this),
             onTotalProgress: this._onTotalProgressCallback.bind(this)
           },
-          text: {
-            fileInputTitle: 'Browse...'
-          },
+          text: { fileInputTitle: 'Browse...' },
           messages: {
-            // Todo: need to translate this in uploaderConfig
-            retryFailTooManyItemsError:
-              'Retry failed - you have reached your file limit.',
+            retryFailTooManyItemsError: 'Retry failed - you have reached your file limit.',
             sizeError: '{file} is too large, maximum file size is {sizeLimit}.',
-            tooManyItemsError:
-              'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
-            typeError:
-              '{file} has an invalid extension. Valid extension(s): {extensions}.'
+            tooManyItemsError: 'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
+            typeError: '{file} has an invalid extension. Valid extension(s): {extensions}.'
           }
         }
 
@@ -93,9 +91,7 @@
             ? new FineUploaderS3({
               options: {
                 ...sharedConfig,
-                validation: {
-                  ...this.uploaderValidation
-                },
+                validation: { ...this.uploaderValidation },
                 objectProperties: {
                   key: id => {
                     return (
@@ -115,15 +111,11 @@
                 signature: {
                   endpoint: this.uploaderConfig.signatureEndpoint,
                   version: 4,
-                  customHeaders: {
-                    'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                  }
+                  customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
                 },
                 uploadSuccess: {
                   endpoint: this.uploaderConfig.successEndpoint,
-                  customHeaders: {
-                    'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                  }
+                  customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
                 }
               }
             })
@@ -131,39 +123,28 @@
               ? new FineUploaderAzure({
                 options: {
                   ...sharedConfig,
-                  validation: {
-                    ...this.uploaderValidation
-                  },
-                  cors: {
-                    expected: true,
-                    sendCredentials: true
-                  },
+                  validation: { ...this.uploaderValidation },
+                  cors: { expected: true, sendCredentials: true },
                   blobProperties: {
                     name: id => {
                       return new Promise(resolve => {
                         resolve(
                           this.unique_folder_name +
-                            '/' +
-                            sanitizeFilename(this._uploader.methods.getName(id))
+                          '/' +
+                          sanitizeFilename(this._uploader.methods.getName(id))
                         )
                       })
                     }
                   },
-                  request: {
-                    endpoint: this.uploaderConfig.endpoint
-                  },
+                  request: { endpoint: this.uploaderConfig.endpoint },
                   signature: {
                     endpoint: this.uploaderConfig.signatureEndpoint,
                     version: 4,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
+                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
                   },
                   uploadSuccess: {
                     endpoint: this.uploaderConfig.successEndpoint,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
+                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
                   }
                 }
               })
@@ -176,25 +157,20 @@
                   },
                   request: {
                     endpoint: this.uploaderConfig.endpoint,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
+                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
                   }
                 }
               })
       },
       replaceMedia: function(id) {
         this.media_to_replace_id = id
-        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll(
-          '[name = "qqfile"]'
-        )
+        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll('[name = "qqfile"]')
         qqinputs[Array.from(qqinputs).length - 1].click()
       },
       loadingProgress: function(media) {
         this.$store.commit(MEDIA_LIBRARY.PROGRESS_UPLOAD_MEDIA, media)
       },
       loadingFinished: function(loadingMedia, savedMedia) {
-        // add the saved image to the main image list
         this.$emit('loaded', savedMedia)
         this.$store.commit(MEDIA_LIBRARY.DONE_UPLOAD_MEDIA, loadingMedia)
       },
@@ -204,44 +180,36 @@
       uploadProgress: function(uploadProgress) {
         this.$store.commit(MEDIA_LIBRARY.PROGRESS_UPLOAD, uploadProgress)
       },
-      _onCompleteCallback(id, name, responseJSON, xhr) {
+      _onCompleteCallback(id, name, responseJSON) {
         const index = this.loadingMedias.findIndex(
           m => m.id === this._uploader.methods.getUuid(id)
         )
-
         if (responseJSON.success) {
           this.loadingFinished(this.loadingMedias[index], responseJSON.media)
         } else {
           this.loadingError(this.loadingMedias[index])
         }
       },
-      _onAllCompleteCallback(succeeded, failed) {
-        // reset folder name for next upload session
+      _onAllCompleteCallback() {
         this.unique_folder_name = null
         this.uploadProgress(0)
       },
       _onSubmitCallback(id, name) {
         const file = this._uploader.methods.getFile(id)
 
-        if (!file.type.startsWith('image/')) {
+        if (!file.type || !file.type.startsWith('image/')) {
           this.prepareUpload(id, name)
           return
         }
 
         return new Promise((resolve, reject) => {
-          // halt fine uploader upload until image is loaded
-          // so we can send image dimensions with the upload
           const img = new Image()
           img.onload = () => {
-            this.prepareUpload(id, name, {
-              width: img.width,
-              height: img.height
-            })
-            // resolve the promise, allow the upload to continue
+            this.prepareUpload(id, name, { width: img.width, height: img.height })
             resolve(img)
           }
           img.onerror = err => {
-            console.error(err) // eslint-disable-line
+            console.error(err)
             reject(err)
           }
           img.src = URL.createObjectURL(file)
@@ -249,16 +217,33 @@
       },
 
       prepareUpload(id, name, additionalParams = {}) {
-        this.$emit('clear');
-        this.unique_folder_name = this.unique_folder_name || this.uploaderConfig.endpointRoot + qq.getUniqueId();
+        this.$emit('clear')
 
-        this._uploader.methods.setParams({
+        // one temp folder per upload session
+        this.unique_folder_name =
+          this.unique_folder_name || this.uploaderConfig.endpointRoot + qq.getUniqueId()
+
+        // Build params without leaking "undefined"/"null" strings
+        const params = {
           unique_folder_name: this.unique_folder_name,
-          media_to_replace_id: this.media_to_replace_id,
-          folder: this.folder || '',
-          folder_id: this.folderId ?? null,
           ...additionalParams
-        }, id);
+        }
+
+        // legacy path (optional)
+        if (this.folder && this.folder.trim() !== '') {
+          params.folder = this.folder
+        }
+
+        // only include if set (use string for safety in multipart)
+        if (this.folderId !== null && this.folderId !== '' && this.folderId !== undefined) {
+          params.folder_id = String(this.folderId)
+        }
+
+        if (this.media_to_replace_id !== null && this.media_to_replace_id !== undefined) {
+          params.media_to_replace_id = String(this.media_to_replace_id)
+        }
+
+        this._uploader.methods.setParams(params, id)
 
         const media = {
           id: this._uploader.methods.getUuid(id),
@@ -270,6 +255,7 @@
           replacementId: this.media_to_replace_id
         }
 
+        // reset for next file
         this.media_to_replace_id = null
 
         this.loadingMedias.push(media)
@@ -287,11 +273,9 @@
           this.loadingProgress(media)
         }
       },
-      _onErrorCallback(id, name, errorReason, xhr) {
+      _onErrorCallback(id, name, errorReason) {
         const index = id
-          ? this.loadingMedias.findIndex(
-            m => m.id === this._uploader.methods.getUuid(id)
-          )
+          ? this.loadingMedias.findIndex(m => m.id === this._uploader.methods.getUuid(id))
           : -1
 
         if (index >= 0) {
@@ -299,9 +283,7 @@
           this.loadingError(this.loadingMedias[index])
         } else {
           const media = {
-            id: id
-              ? this._uploader.methods.getUuid(id)
-              : Math.floor(Math.random() * 1000),
+            id: id ? this._uploader.methods.getUuid(id) : Math.floor(Math.random() * 1000),
             name: sanitizeFilename(name),
             progress: 0,
             error: true,
@@ -318,7 +300,6 @@
           const index = this.loadingMedias.findIndex(function(m) {
             return m.id === id
           })
-
           if (index >= 0) {
             const media = this.loadingMedias[index]
             media.progress = 0
@@ -328,9 +309,7 @@
         }
       },
       _onTotalProgressCallback(totalUploadedBytes, totalBytes) {
-        const uploadProgress = Math.floor(
-          (totalUploadedBytes / totalBytes) * 100
-        )
+        const uploadProgress = Math.floor((totalUploadedBytes / totalBytes) * 100)
         this.uploadProgress(uploadProgress)
       },
       _onDropError(errorCode, errorData) {
@@ -359,9 +338,7 @@
         allowMultipleItems: true,
         callbacks: {
           dropError: this._onDropError.bind(this),
-          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(
-            this
-          )
+          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(this)
         }
       })
     },
@@ -374,9 +351,7 @@
 <style lang="scss" scoped>
   $height_small_btn: 35px;
 
-  .uploader {
-    margin: 10px;
-  }
+  .uploader { margin: 10px; }
 
   .uploader__dropzone {
     border: 1px dashed $color__border--hover;
@@ -396,25 +371,11 @@
       color: $color__text--light;
       padding: 0 20px;
       text-align: center;
-      transition: color 0.2s linear, border-color 0.2s linear,
-        background-color 0.2s linear;
+      transition: color 0.2s linear, border-color 0.2s linear, background-color 0.2s linear;
 
-      &.qq-upload-button-hover,
-      &:hover {
-        border-color: $color__text;
-        color: $color__text;
-      }
-
-      &.qq-upload-button-focus,
-      &:focus {
-        border-color: $color__text;
-        color: $color__text;
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        pointer-events: none;
-      }
+      &.qq-upload-button-hover, &:hover { border-color: $color__text; color: $color__text; }
+      &.qq-upload-button-focus, &:focus { border-color: $color__text; color: $color__text; }
+      &:disabled { opacity: 0.5; pointer-events: none; }
     }
   }
 
@@ -422,8 +383,6 @@
     display: inline-block;
     vertical-align: top;
     margin-top: 8px;
-    @include breakpoint(small-) {
-      display: none;
-    }
+    @include breakpoint(small-) { display: none; }
   }
 </style>
