@@ -250,7 +250,7 @@
     },
     template: `
     <div class="folder-node">
-      <div class="folder-node__row" :style="{ paddingLeft: (level * 12) + 'px' }">
+      <div class="folder-node__row" :style="{ paddingLeft: (level * 24) + 'px' }">
         <button class="folder-node__toggle" v-if="node.children && node.children.length"
                 @click="open = !open" :aria-expanded="open.toString()">
           <span v-if="open">▾</span><span v-else>▸</span>
@@ -804,7 +804,30 @@
   }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+  .medialibrary__filter-item {
+    .vselect {
+      min-width: 200px;
+    }
+  }
+  .medialibrary__filter-item.checkbox {
+    margin-top: 8px;
+    margin-right: 45px !important;
+  }
+  .medialibrary__header {
+    @include breakpoint(small-) {
+      .filter__inner {
+        flex-direction: column;
+      }
+      .filter__search {
+        padding-top: 10px;
+        display: flex;
+      }
+      .filter__search input {
+        flex-grow: 1;
+      }
+    }
+  }
   $width_sidebar: (default: 290px, small: 250px, xsmall: 200px);
 
   .medialibrary {
@@ -993,30 +1016,4 @@
   .breadcrumbs .is-active { font-weight: 600; }
   .ml-2 { margin-left: 8px; }
   .mt-2 { margin-top: 8px; }
-</style>
-
-<style lang="scss">
-  .medialibrary__filter-item {
-    .vselect {
-      min-width: 200px;
-    }
-  }
-  .medialibrary__filter-item.checkbox {
-    margin-top: 8px;
-    margin-right: 45px !important;
-  }
-  .medialibrary__header {
-    @include breakpoint(small-) {
-      .filter__inner {
-        flex-direction: column;
-      }
-      .filter__search {
-        padding-top: 10px;
-        display: flex;
-      }
-      .filter__search input {
-        flex-grow: 1;
-      }
-    }
-  }
 </style>
