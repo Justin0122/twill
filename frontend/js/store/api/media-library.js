@@ -7,15 +7,10 @@ const component = 'MEDIA-LIBRARY'
 export default {
 
   get (endpoint, params, callback, errorCallback) {
-    // Params
-    //
-    // Form datas : query, page
-
-    // Set endpoint in global config
+    // Params: query, page, type, folder, etc.
     axios.get(endpoint, { params }).then(function (resp) {
       if (callback && typeof callback === 'function') callback(resp)
     }, function (resp) {
-      // error callback
       const error = {
         message: 'Media library get error.',
         value: resp
@@ -29,7 +24,6 @@ export default {
     axios.put(endpoint, params).then(function (resp) {
       if (callback && typeof callback === 'function') callback(resp)
     }, function (resp) {
-      // error callback
       const error = {
         message: 'Media library update error.',
         value: resp
@@ -43,7 +37,6 @@ export default {
     axios.delete(endpoint).then(function (resp) {
       if (callback && typeof callback === 'function') callback(resp)
     }, function (resp) {
-      // error callback
       const error = {
         message: 'Media library delete error.',
         value: resp
@@ -57,9 +50,57 @@ export default {
     axios.put(endpoint, params).then(function (resp) {
       if (callback && typeof callback === 'function') callback(resp)
     }, function (resp) {
-      // error callback
       const error = {
         message: 'Media library bulk delete error.',
+        value: resp
+      }
+      globalError(component, error)
+      if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+    })
+  },
+
+  // -----------------------------
+  // Folder support
+  // -----------------------------
+
+  // Fetch nested folder tree for the given media type
+  // GET {endpoint}/folders?type=image
+  getFolders (endpoint, params, callback, errorCallback) {
+    axios.get(`${endpoint}/folders`, { params }).then(function (resp) {
+      if (callback && typeof callback === 'function') callback(resp)
+    }, function (resp) {
+      const error = {
+        message: 'Media library folders get error.',
+        value: resp
+      }
+      globalError(component, error)
+      if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+    })
+  },
+
+  // Create a folder under a parent path
+  // POST {endpoint}/folders  body: { type, parent: 'tuwi/sub', name: 'newfolder' }
+  createFolder (endpoint, body, callback, errorCallback) {
+    axios.post(`${endpoint}/folders`, body).then(function (resp) {
+      if (callback && typeof callback === 'function') callback(resp)
+    }, function (resp) {
+      const error = {
+        message: 'Media library create folder error.',
+        value: resp
+      }
+      globalError(component, error)
+      if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+    })
+  },
+
+  // Move media items to a target folder
+  // POST {endpoint}/folders/move  body: { type, target: 'tuwi/sub', mediaIds: [1,2,3] }
+  moveToFolder (endpoint, body, callback, errorCallback) {
+    axios.post(`${endpoint}/folders/move`, body).then(function (resp) {
+      if (callback && typeof callback === 'function') callback(resp)
+    }, function (resp) {
+      const error = {
+        message: 'Media library move to folder error.',
         value: resp
       }
       globalError(component, error)
