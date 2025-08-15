@@ -16,8 +16,7 @@
                     href="#"
                     @click.prevent="goToRoot"
                     :class="{ 'is-active': currentFolderPath.length === 0 }"
-                  >All</a
-                  >
+                  >All</a>
                   <span
                     v-for="(seg, i) in currentFolderPath"
                     :key="currentFolderPath.slice(0, i + 1).join('/')"
@@ -27,8 +26,7 @@
                       href="#"
                       @click.prevent="goToIndex(i)"
                       :class="{ 'is-active': i === currentFolderPath.length - 1 }"
-                    >{{ seg }}</a
-                    >
+                    >{{ seg }}</a>
                   </span>
                 </nav>
                 <a17-button size="small" variant="secondary" @click="promptNewFolder">
@@ -121,13 +119,23 @@
           <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
             <aside class="medialibrary__foldertree">
-              <folder-node
-                v-if="folderTree"
-                :node="folderTree"
-                :active-path="currentFolderPath"
-                @select="selectFolderPath"
-                @create="createFolderAtPath"
-              />
+              <div class="foldertree__header">
+                <div class="foldertree__title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 4l2 2h8a1 1 0 0 1 1 1v10.5A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5V6.5A2.5 2.5 0 0 1 5.5 4H10z"/></svg>
+                  <span>Folders</span>
+                </div>
+                <a17-button size="small" variant="secondary" @click="promptNewFolder">New</a17-button>
+              </div>
+
+              <div class="foldertree__scroll">
+                <folder-node
+                  v-if="folderTree"
+                  :node="folderTree"
+                  :active-path="currentFolderPath"
+                  @select="selectFolderPath"
+                  @create="createFolderAtPath"
+                />
+              </div>
             </aside>
 
             <!-- RIGHT: selected media details -->
@@ -229,7 +237,7 @@
       isActiveHere () {
         return this.level < this.activePath.length
           ? this.node.name === this.activePath[this.level]
-          : false
+          : (this.level === 0 && this.activePath.length === 0)
       },
       pathHere () {
         const path = []
@@ -249,31 +257,40 @@
       }
     },
     template: `
-    <div class="folder-node">
-      <div class="folder-node__row" :style="{ paddingLeft: (level * 12) + 'px' }">
-        <button class="folder-node__toggle" v-if="node.children && node.children.length"
-                @click="open = !open" :aria-expanded="open.toString()">
-          <span v-if="open">▾</span><span v-else>▸</span>
-        </button>
-        <button class="folder-node__name"
-                :class="{ 'is-active': isActiveHere() || (level===0 && activePath.length===0) }"
-                @click="selectSelf">
-          <span v-if="level===0">All</span>
-          <span v-else>{{ node.name }}</span>
-        </button>
-        <button class="folder-node__create" title="New subfolder" @click="createHere">＋</button>
+      <div class="folder-node" role="treeitem" :aria-level="level + 1">
+        <div class="folder-node__row" :style="{ '--indent': (level * 14) + 'px' }" :class="{ 'is-active': isActiveHere() }">
+          <button class="folder-node__toggle" v-if="node.children && node.children.length"
+                  @click="open = !open"
+                  :aria-expanded="open.toString()"
+                  :title="open ? 'Collapse' : 'Expand'">
+            <svg class="chev" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <span v-else class="folder-node__toggle folder-node__toggle--spacer"></span>
+
+          <button class="folder-node__name" @click="selectSelf" :title="level === 0 ? 'All' : node.name">
+            <svg class="folder-ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M10 4l2 2h8a1 1 0 0 1 1 1v10.5A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5V6.5A2.5 2.5 0 0 1 5.5 4H10z"/>
+            </svg>
+            <span class="folder-label" v-if="level===0">All</span>
+            <span class="folder-label" v-else>{{ node.name }}</span>
+          </button>
+
+          <button class="folder-node__create" title="New subfolder" @click="createHere">＋</button>
+        </div>
+
+        <transition name="folder-slide">
+          <div v-show="open" class="folder-node__children" role="group">
+            <folder-node v-for="child in node.children"
+                         :key="child.name"
+                         :node="child"
+                         :level="level+1"
+                         :active-path="activePath"
+                         @select="$emit('select', $event)"
+                         @create="$emit('create', $event)"/>
+          </div>
+        </transition>
       </div>
-      <div v-show="open" class="folder-node__children">
-        <folder-node v-for="child in node.children"
-                     :key="child.name"
-                     :node="child"
-                     :level="level+1"
-                     :active-path="activePath"
-                     @select="$emit('select', $event)"
-                     @create="$emit('create', $event)"/>
-      </div>
-    </div>
-  `
+    `
   }
 
   export default {
@@ -349,8 +366,8 @@
         tags: [],
         lastScrollTop: 0,
         gridLoaded: false,
-        folderTree: null,           // nested folder tree
-        currentFolderPath: []       // e.g. ['folder','sub']
+        folderTree: null,
+        currentFolderPath: []
       }
     },
     computed: {
@@ -415,7 +432,7 @@
         filesizeMax: state => state.mediaLibrary.filesizeMax,
         widthMin: state => state.mediaLibrary.widthMin,
         heightMin: state => state.mediaLibrary.heightMin,
-        type: state => state.mediaLibrary.type, // image, video, file
+        type: state => state.mediaLibrary.type,
         types: state => state.mediaLibrary.types,
         strict: state => state.mediaLibrary.strict,
         selected: state => state.mediaLibrary.selected,
@@ -445,10 +462,8 @@
 
         this.listenScrollPosition()
 
-        // empty selected medias (to avoid bugs when adding)
         this.selectedMedias = []
 
-        // in replace mode : select the media to replace when opening
         if (this.connector && this.indexToReplace > -1) {
           const mediaInitSelect = this.selected[this.connector][this.indexToReplace]
           if (mediaInitSelect) {
@@ -462,7 +477,6 @@
         if (this.type === newType) return
 
         this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_TYPE, newType)
-        // filter submit will reload grid; folders will be reloaded by watcher
         this.submitFilter()
       },
       addMedia: function (media) {
@@ -470,7 +484,6 @@
           return item.id === media.id
         })
 
-        // Check if the media item exists i.e replacement
         if (index > -1) {
           for (const mediaRole in this.selected) {
             this.selected[mediaRole].forEach((mediaCrop, index) => {
@@ -504,10 +517,8 @@
           this.$set(this.mediaItems, index, media)
           this.selectedMedias.unshift(media)
         } else {
-          // add media in first position of the available media
           this.mediaItems.unshift(media)
           this.$store.commit(MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL, this.type)
-          // select it
           this.updateSelectedMedias(media.id)
         }
       },
@@ -517,7 +528,6 @@
           return media.id === id
         })
 
-        // not already selected
         if (alreadySelectedMedia.length === 0) {
           if (this.max === 1) this.clearSelectedMedias()
           if (this.selectedMedias.length >= this.max && this.max > 0) return
@@ -551,12 +561,9 @@
             const mediaToSelect = this.mediaItems.filter(function (media) {
               return media.id === id
             })
-
-            // Add one media to the selected media
             if (mediaToSelect.length) this.selectedMedias.push(mediaToSelect[0])
           }
         } else {
-          // Remove one item from the selected media
           this.selectedMedias = this.selectedMedias.filter(function (media) {
             return media.id !== id
           })
@@ -564,7 +571,6 @@
       },
       getFormData: function (form) {
         let data = FormDataAsObj(form)
-
         if (data) data.page = this.page
         else data = { page: this.page }
 
@@ -581,14 +587,11 @@
       },
       clearFilters: function () {
         const self = this
-        // reset tags
         if (this.$refs.filter) this.$refs.filter.value = null
-        // reset unused field
         if (this.$refs.unused) {
           const input = this.$refs.unused.$el.querySelector('input')
           input && input.checked && input.click()
         }
-
         this.$nextTick(function () {
           self.submitFilter()
         })
@@ -596,12 +599,10 @@
 
       // ------- FOLDERS -------
       loadFolderTree () {
-        // Fetch a nested tree for the current type
         api.getFolders(
           this.endpoint,
           { type: this.type },
           (resp) => {
-            // Expect { name: '', children: [ { name: 'folder', children: [...] } ] }
             this.folderTree = resp.data.tree || { name: '', children: [] }
           },
           (error) => {
@@ -641,9 +642,7 @@
             name
           },
           () => {
-            // stay in the same folder and reload the list
             this.submitFilter()
-            // refresh tree
             this.loadFolderTree()
           },
           (error) => {
@@ -668,7 +667,6 @@
               message: this.$trans('media-library.moved', 'Moved to folder'),
               variant: 'success'
             })
-            // reload items for current folder
             this.page = 1
             this.clearMediaItems()
             this.reloadGrid()
@@ -711,12 +709,10 @@
         const form = this.$refs.form
         const formdata = this.getFormData(form)
 
-        // see api/media-library for actual ajax
         api.get(
           this.endpoint,
           formdata,
           (resp) => {
-            // add medias here
             resp.data.items.forEach(item => {
               if (!this.mediaItems.find(media => media.id === item.id)) {
                 this.mediaItems.push(item)
@@ -746,7 +742,6 @@
       submitFilter: function () {
         const self = this
         const el = this.$refs.list
-        // when changing filters, reset the page to 1
         this.page = 1
 
         this.clearMediaItems()
@@ -767,10 +762,8 @@
         })
       },
       listenScrollPosition: function () {
-        // re-listen for scroll position
         this.$nextTick(function () {
           if (!this.gridLoaded) return
-
           const list = this.$refs.list
           if (this.gridHeight !== list.scrollHeight) {
             list.addEventListener('scroll', this.scrollToPaginate)
@@ -806,6 +799,7 @@
 
 <style lang="scss" scoped>
   $width_sidebar: (default: 290px, small: 250px, xsmall: 200px);
+  $width_foldertree: 240px;
 
   .medialibrary {
     display: block;
@@ -821,18 +815,13 @@
     padding: 0 20px;
 
     @include breakpoint(small-) {
-      .secondarynav {
-        padding-bottom: 10px;
-      }
+      .secondarynav { padding-bottom: 10px; }
     }
   }
 
   .medialibrary__frame {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     display: flex;
     flex-flow: column nowrap;
   }
@@ -855,15 +844,37 @@
     top: 0;
     bottom: 0;
     left: 0;
-    width: 220px;
-    max-height: calc(100vh - 220px);
-    overflow: auto;
+    width: $width_foldertree;
     border-right: 1px solid #eee;
-    padding: 8px 0;
+    background: #fafbfc;
 
-    @media screen and (max-width: 700px) {
-      display: none; /* hide on small screens */
+    @media screen and (max-width: 700px) { display: none; }
+  }
+
+  .foldertree__header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px 8px 12px;
+    background: #fafbfc;
+    border-bottom: 1px solid #eee;
+
+    .foldertree__title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #333;
     }
+  }
+
+  .foldertree__scroll {
+    height: calc(100% - 46px);
+    overflow: auto;
+    padding: 8px 4px 12px 4px;
   }
 
   /* RIGHT: footer under right sidebar width */
@@ -879,75 +890,44 @@
     background: $color__border--light;
     border-top: 1px solid $color__border;
 
-    > button {
-      display: block;
-      width: 100%;
-    }
+    > button { display: block; width: 100%; }
 
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
 
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-
-    @media screen and (max-width: 550px) {
-      width: 100%;
-    }
+    @media screen and (max-width: 550px) { width: 100%; }
   }
 
   /* RIGHT: details panel */
   .medialibrary__sidebar {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; right: 0; bottom: 0;
     width: map-get($width_sidebar, default);
     padding: 0 0 80px 0;
     z-index: 75;
     background: $color__border--light;
     overflow: auto;
 
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-
-    @media screen and (max-width: 550px) {
-      display: none;
-    }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 550px) { display: none; }
   }
 
   /* CENTER: list fits between left tree and right sidebar */
   .medialibrary__list {
     margin: 0;
     position: absolute;
-    top: 0;
-    left: 220px; /* leave room for folder tree */
+    top: 0; bottom: 0;
+    left: $width_foldertree; /* leave room for folder tree */
     right: map-get($width_sidebar, default);
-    bottom: 0;
     overflow: auto;
     padding: 10px;
 
-    @include breakpoint(small) {
-      right: map-get($width_sidebar, small);
-    }
+    @include breakpoint(small) { right: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { right: map-get($width_sidebar, xsmall); }
 
-    @include breakpoint(xsmall) {
-      right: map-get($width_sidebar, xsmall);
-    }
-
-    @media screen and (max-width: 700px) {
-      left: 0; /* when tree is hidden */
-    }
-
-    @media screen and (max-width: 550px) {
-      right: 0; /* when right sidebar hidden */
-    }
+    @media screen and (max-width: 700px) { left: 0; } /* when tree hidden */
+    @media screen and (max-width: 550px) { right: 0; } /* when right sidebar hidden */
   }
 
   .medialibrary__list-items {
@@ -957,29 +937,73 @@
     min-height: 100%;
   }
 
-  /* simple folder tree styles */
+  /* ======= Folder tree styles ======= */
+  .folder-node { position: relative; }
+
   .folder-node__row {
+    --indent: 0px;
     display: flex;
     align-items: center;
     gap: 6px;
-    line-height: 1.8;
-    padding: 2px 6px;
+    line-height: 1.9;
+    padding: 2px 6px 2px calc(8px + var(--indent));
+    border-radius: 8px;
+    margin: 2px 6px;
+    color: #3b4151;
+
+    &:hover {
+      background: #eef2f6;
+    }
+
+    &.is-active {
+      background: #e6f0ff;
+      color: #1b4dff;
+      font-weight: 600;
+    }
   }
-  .folder-node__toggle,
-  .folder-node__name,
+
+  .folder-node__toggle {
+    width: 18px; height: 18px;
+    border: 0; background: transparent;
+    display: grid; place-items: center;
+    cursor: pointer; opacity: .75;
+
+    &:hover { opacity: 1; }
+
+    .chev { transform: rotate(0deg); transition: transform .16s ease; }
+    [aria-expanded="true"] & .chev { transform: rotate(90deg); }
+  }
+  /* spacer when no toggle */
+  .folder-node__toggle--spacer { pointer-events: none; opacity: 0; }
+
+  .folder-node__name {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; border: 0; cursor: pointer;
+    padding: 2px 4px; color: inherit; font: inherit;
+    text-align: left;
+
+    .folder-ic { opacity: .8; }
+    .folder-label { white-space: nowrap; }
+  }
+
   .folder-node__create {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
+    margin-left: auto;
+    background: transparent; border: 0; cursor: pointer;
+    color: #6b7280; padding: 2px 6px; border-radius: 6px;
+    font-size: 14px; line-height: 1;
+
+    &:hover { background: #eaeef3; color: #374151; }
   }
-  .folder-node__name.is-active {
-    font-weight: 600;
-    text-decoration: underline;
-  }
+
   .folder-node__children {
     margin-left: 0;
   }
+
+  /* simple slide animation for children */
+  .folder-slide-enter-active,
+  .folder-slide-leave-active { transition: opacity .12s ease; }
+  .folder-slide-enter-from,
+  .folder-slide-leave-to { opacity: 0; }
 
   /* header helpers */
   .medialibrary__folders-nav {
@@ -988,7 +1012,7 @@
     gap: 8px;
     margin-top: 8px;
   }
-  .breadcrumbs a { text-decoration: none; }
+  .breadcrumbs a { text-decoration: none; color: inherit; }
   .breadcrumbs .sep { margin: 0 6px; color: #999; }
   .breadcrumbs .is-active { font-weight: 600; }
   .ml-2 { margin-left: 8px; }
@@ -997,9 +1021,7 @@
 
 <style lang="scss">
   .medialibrary__filter-item {
-    .vselect {
-      min-width: 200px;
-    }
+    .vselect { min-width: 200px; }
   }
   .medialibrary__filter-item.checkbox {
     margin-top: 8px;
@@ -1007,16 +1029,9 @@
   }
   .medialibrary__header {
     @include breakpoint(small-) {
-      .filter__inner {
-        flex-direction: column;
-      }
-      .filter__search {
-        padding-top: 10px;
-        display: flex;
-      }
-      .filter__search input {
-        flex-grow: 1;
-      }
+      .filter__inner { flex-direction: column; }
+      .filter__search { padding-top: 10px; display: flex; }
+      .filter__search input { flex-grow: 1; }
     }
   }
 </style>
