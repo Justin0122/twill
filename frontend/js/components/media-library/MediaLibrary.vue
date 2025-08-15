@@ -306,43 +306,6 @@
       }
     },
     methods: {
-      onDeleteFolder(payload) {
-        const confirmed = window.confirm(
-          this.$trans(
-            'media-library.delete-folder-confirm',
-            'Delete this folder? All unused media inside (and its subfolders) will be deleted. This cannot be undone.'
-          )
-        )
-        if (!confirmed) return
-
-        api.deleteFolder(
-          this.endpoint,
-          payload.id,
-          (resp) => {
-            // If we deleted the current folder, bounce back to root
-            if (this.currentFolderId === payload.id) {
-              this.currentFolderId = null
-              this.currentFolderPath = []
-              this.saveLastFolder()
-            }
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.folder-deleted', 'Folder deleted'),
-              variant: 'success'
-            })
-            // refresh UI
-            this.page = 1
-            this.clearMediaItems()
-            this.reloadGrid()
-            this.loadFolderTree()
-          },
-          (error) => {
-            const msg =
-              error?.data?.message ||
-              this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: msg, variant: 'error' })
-          }
-        )
-      },
       onSelectFolder(payload) {
         this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
@@ -823,6 +786,44 @@
           }
         )
       },
+      onDeleteFolder(payload) {
+        const confirmed = window.confirm(
+          this.$trans(
+            'media-library.delete-folder-confirm',
+            'Delete this folder? All unused media inside (and its subfolders) will be deleted. This cannot be undone.'
+          )
+        )
+        if (!confirmed) return
+
+        api.deleteFolder(
+          this.endpoint,
+          payload.id,
+          (resp) => {
+            // If we deleted the current folder, bounce back to root
+            if (this.currentFolderId === payload.id) {
+              this.currentFolderId = null
+              this.currentFolderPath = []
+              this.saveLastFolder()
+            }
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.folder-deleted', 'Folder deleted'),
+              variant: 'success'
+            })
+            // refresh UI
+            this.page = 1
+            this.clearMediaItems()
+            this.reloadGrid()
+            this.loadFolderTree()
+          },
+          (error) => {
+            const msg =
+              error?.data?.message ||
+              this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
+            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: msg, variant: 'error' })
+          }
+        )
+      },
+
       onSelectFolder(payload) {
         // payload: { id: number|null, path: string[] }
         this.currentFolderId = payload.id ?? null
