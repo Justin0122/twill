@@ -249,31 +249,34 @@
       }
     },
     template: `
-    <div class="folder-node">
-      <div class="folder-node__row" :style="{ paddingLeft: (level * 24) + 'px' }">
-        <button class="folder-node__toggle" v-if="node.children && node.children.length"
-                @click="open = !open" :aria-expanded="open.toString()">
-          <span v-if="open">▾</span><span v-else>▸</span>
-        </button>
-        <button class="folder-node__name"
-                :class="{ 'is-active': isActiveHere() || (level===0 && activePath.length===0) }"
-                @click="selectSelf">
-          <span v-if="level===0">All</span>
-          <span v-else>{{ node.name }}</span>
-        </button>
-        <button class="folder-node__create" title="New subfolder" @click="createHere">＋</button>
+      <div class="folder-node">
+        <div
+          class="folder-node__row"
+          :style="{ marginLeft: level > 1 ? (level * 1) + 'rem' : '0' }"
+        >
+          <button class="folder-node__toggle" v-if="node.children && node.children.length"
+                  @click="open = !open" :aria-expanded="open.toString()">
+            <span v-if="open">▾</span><span v-else>▸</span>
+          </button>
+          <button class="folder-node__name"
+                  :class="{ 'is-active': isActiveHere() || (level===0 && activePath.length===0) }"
+                  @click="selectSelf">
+            <span v-if="level===0">All</span>
+            <span v-else>{{ node.name }}</span>
+          </button>
+          <button class="folder-node__create" title="New subfolder" @click="createHere">＋</button>
+        </div>
+        <div v-show="open" class="folder-node__children">
+          <folder-node v-for="child in node.children"
+                       :key="child.name"
+                       :node="child"
+                       :level="level+1"
+                       :active-path="activePath"
+                       @select="$emit('select', $event)"
+                       @create="$emit('create', $event)" />
+        </div>
       </div>
-      <div v-show="open" class="folder-node__children">
-        <folder-node v-for="child in node.children"
-                     :key="child.name"
-                     :node="child"
-                     :level="level+1"
-                     :active-path="activePath"
-                     @select="$emit('select', $event)"
-                     @create="$emit('create', $event)"/>
-      </div>
-    </div>
-  `
+    `
   }
 
   export default {
