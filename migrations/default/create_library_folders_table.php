@@ -11,10 +11,11 @@ return new class extends Migration {
             $table->id();
             $table->enum('library', ['file', 'media']);
             $table->string('name', 255);
-            $table->string('path', 1024)->unique();
+            $table->string('path', 1024);
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->timestamps();
             $table->index(['library', 'parent_id']);
+            $table->unique(['path'], 'library_folders_path_unique', 191);
         });
     }
 
