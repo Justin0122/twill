@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     public function up(): void
@@ -15,7 +16,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->timestamps();
             $table->index(['library', 'parent_id']);
-            $table->unique(['path'], 'library_folders_path_unique', 191);
         });
     }
 
