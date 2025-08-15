@@ -18,7 +18,8 @@ class Media extends Model
         'caption',
         'width',
         'height',
-        'path'
+        'path',
+        'folder_id',
     ];
 
     public function __construct(array $attributes = [])
