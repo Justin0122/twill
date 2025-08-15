@@ -135,8 +135,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $requestFilters['unused'] = $this->request->get('unused');
         }
 
-        // Not required for folder because we apply it via TableFilters(),
-        // but safe to keep requestFilters minimal to let core logic work as-is.
+        if ($this->request->has('folder')) {
+            $requestFilters['folder'] = $this->request->get('folder');
+        }
+
         return $requestFilters ?? [];
     }
 
