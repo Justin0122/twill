@@ -9,7 +9,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('library_folders', function (Blueprint $table) {
-            $table->unique(['library', 'path']);
+            $table->unique(['library', 'parent_id', 'name'], 'lf_library_parent_name_unique');
         });
 
         Schema::table('twill_medias', function (Blueprint $table) {
@@ -22,6 +22,13 @@ return new class extends Migration {
             $table->foreign('folder_id')->references('id')->on('library_folders')->nullOnDelete();
         });
 
+        try {
+            DB::statement('CREATE INDEX lf_path_prefix_index ON library_folders (path(191))');
+        } catch (\Throwable $e) {
+
+        }
+
+        // Backfill folder_id from legacy folder_path
         DB::transaction(function () {
             $medias = DB::table('twill_medias')
                 ->select('id', 'folder_path')
@@ -61,18 +68,23 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('twill_medias', function (Blueprint $table) {
-            $table->dropForeign(['folder_id']);
-            $table->dropColumn('folder_id');
-        });
+        try {
+            DB::statement('DROP INDEX lf_path_prefix_index ON library_folders');
+        } catch (\Throwable $e) {
+        }
 
         Schema::table('twill_files', function (Blueprint $table) {
             $table->dropForeign(['folder_id']);
             $table->dropColumn('folder_id');
         });
 
+        Schema::table('twill_medias', function (Blueprint $table) {
+            $table->dropForeign(['folder_id']);
+            $table->dropColumn('folder_id');
+        });
+
         Schema::table('library_folders', function (Blueprint $table) {
-            $table->dropUnique(['library', 'path']);
+            $table->dropUnique('lf_library_parent_name_unique');
         });
     }
 };
