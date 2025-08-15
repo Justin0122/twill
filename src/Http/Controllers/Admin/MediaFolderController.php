@@ -110,6 +110,109 @@ class MediaFolderController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function destroy(Request $request, LibraryFolder $folder)
+    {
+        // Only media library folders
+        abort_unless($folder->library === 'media', 404);
+
+        // Do not allow deleting the virtual root
+        if ($folder->parent_id === null) {
+            return response()->json(['message' => 'Root folder cannot be deleted.'], 422);
+        }
+
+        // Collect this folder + its descendants
+        $ids = collect([$folder->id])
+            ->merge(
+                LibraryFolder::where('library', 'media')
+                    ->where('path', 'like', $folder->path . '/%')
+                    ->pluck('id')
+            )
+            ->unique()
+            ->values();
+
+        // All media (directly) in these folders
+        $mediaIds = DB::table('twill_medias')
+            ->whereIn('folder_id', $ids)
+            ->pluck('id');
+
+        // Short-circuit if no media at all
+        if ($mediaIds->isEmpty()) {
+            LibraryFolder::whereIn('id', $ids)->delete();
+
+            return response()->json([
+                'ok' => true,
+                'deleted' => ['media' => 0, 'folders' => $ids->count()],
+            ]);
+        }
+
+        // Any usages?
+        $usages = DB::table('twill_mediables')
+            ->whereIn('media_id', $mediaIds)
+            ->select('media_id', 'mediable_type', 'mediable_id', 'role')
+            ->orderBy('media_id')
+            ->get();
+
+        $usedCount = $usages->count();
+
+        if ($usedCount > 0) {
+            // Map media id -> filename for a nicer report
+            $mediaMeta = DB::table('twill_medias')
+                ->whereIn('id', $mediaIds)
+                ->pluck('filename', 'id');
+
+            // Build a detailed usage report and try to resolve a human title
+            $usedReport = $usages->groupBy('media_id')->map(function ($rows, $mediaId) use ($mediaMeta) {
+                $places = $rows->map(function ($row) {
+                    $title = null;
+                    try {
+                        if (class_exists($row->mediable_type)) {
+                            $model = $row->mediable_type::find($row->mediable_id);
+                            if ($model) {
+                                // best-effort title
+                                $title = $model->title ?? $model->name ?? (method_exists($model, '__toString') ? (string) $model : null);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore resolution errors
+                    }
+
+                    return [
+                        'type'  => $row->mediable_type,
+                        'id'    => $row->mediable_id,
+                        'role'  => $row->role,
+                        'title' => $title,
+                    ];
+                })->values();
+
+                return [
+                    'media_id' => (int) $mediaId,
+                    'filename' => (string) ($mediaMeta[$mediaId] ?? ''),
+                    'places'   => $places,
+                ];
+            })->values();
+
+            return response()->json([
+                'message' => "This folder (or its subfolders) contains {$usedCount} used media. Remove usages first.",
+                'used'    => $usedReport,
+            ], 422);
+        }
+
+        // No usages: delete all (unused) media in these folders (soft-delete ok)
+        Media::whereIn('id', $mediaIds)->get()->each->delete();
+
+        // Finally delete subfolders + the folder itself
+        LibraryFolder::whereIn('id', $ids)->delete();
+
+        return response()->json([
+            'ok' => true,
+            'deleted' => [
+                'media'   => $mediaIds->count(),
+                'folders' => $ids->count(),
+            ],
+        ]);
+    }
+
+
     private function buildTreeFromRows($rows): array
     {
         // Index by id

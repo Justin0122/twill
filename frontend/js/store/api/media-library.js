@@ -103,6 +103,11 @@ export default {
       .catch(err => onError && onError(err.response || err))
   },
 
+  deleteFolder(endpoint, id, callback, errorCallback) {
+  //   bulk delete unused media items in the folder. If there are used media items, the folder will not be deleted.
+
+  },
+
   createFolder(endpoint, body, callback, errorCallback) {
     axios.post(`${endpoint}/folders`, body).then(
       function(resp) {
@@ -137,5 +142,21 @@ export default {
           errorCallback(resp)
       }
     )
-  }
+  },
+
+  deleteFolder(endpoint, id, callback, errorCallback) {
+    axios.delete(`${endpoint}/folders/${id}`, { headers: { Accept: 'application/json' } }).then(
+      function (resp) {
+        if (callback && typeof callback === 'function') callback(resp)
+      },
+      function (resp) {
+        const error = {
+          message: 'Media library delete folder error.',
+          value: resp
+        }
+        globalError(component, error)
+        if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+      }
+    )
+  },
 }
