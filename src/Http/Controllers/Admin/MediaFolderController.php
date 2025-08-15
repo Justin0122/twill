@@ -9,70 +9,130 @@ class MediaFolderController extends Controller
 {
     public function index(Request $request)
     {
-        $explicit = LibraryFolder::where('library', 'media')->pluck('path')->all();
-        $fromMedias = DB::table('twill_medias')
-            ->whereNotNull('folder_path')->where('folder_path', '!=', '')
-            ->distinct()->pluck('folder_path')->all();
+        // Build tree from library_folders (media)
+        $rows = LibraryFolder::where('library', 'media')
+            ->orderBy('path')
+            ->get(['id', 'name', 'path', 'parent_id']);
 
-        return response()->json(['tree' => $this->buildTree(array_unique(array_merge($explicit, $fromMedias)))]);
+        return response()->json(['tree' => $this->buildTreeFromRows($rows)]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|in:image,video,file,media', // you can narrow this to your types
+            'type'   => 'required|in:image,video,file,media',
             'parent' => 'nullable|string',
+            'name'   => 'required|string|max:255',
+        ]);
+
+        $parentPath = trim((string) ($data['parent'] ?? ''), '/');
+        $name       = trim($data['name'], '/');
+
+        $parent = $parentPath === ''
+            ? null
+            : LibraryFolder::where('library', 'media')->where('path', $parentPath)->first();
+
+        $path = trim(($parent->path ?? '') . '/' . $name, '/');
+
+        $folder = LibraryFolder::firstOrCreate(
+            ['library' => 'media', 'path' => $path],
+            [
+                'name'      => $name,
+                'parent_id' => $parent?->id,
+            ]
+        );
+
+        return response()->json(['ok' => true, 'folder' => $folder], 201);
+    }
+
+    // Rename folder
+    public function update(Request $request, LibraryFolder $folder)
+    {
+        abort_unless($folder->library === 'media', 404);
+
+        $data = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $parent = trim(($data['parent'] ?? ''), '/');
-        $name   = trim($data['name'], '/');
-        $path   = trim($parent . '/' . $name, '/');
+        $oldPath = $folder->path;
+        $newPath = trim(($folder->parent?->path ?? '') . '/' . $data['name'], '/');
 
-        LibraryFolder::firstOrCreate(['path' => $path], [
-            'library' => 'media',
-            'name' => $name,
-            'parent_id' => optional(LibraryFolder::where('path', $parent)->first())->id,
-        ]);
+        // Ensure uniqueness
+        if (LibraryFolder::where('library', 'media')->where('path', $newPath)->where('id', '!=', $folder->id)->exists()) {
+            return response()->json(['message' => 'A folder with that name already exists here.'], 422);
+        }
 
-        return response()->json(['ok' => true], 201);
+        DB::transaction(function () use ($folder, $data, $oldPath, $newPath) {
+            // 1) Update this folder
+            $folder->update(['name' => $data['name'], 'path' => $newPath]);
+
+            // 2) Cascade paths to descendants
+            $like = $oldPath === '' ? '%' : $oldPath . '/%';
+            $descendants = LibraryFolder::where('library', 'media')
+                ->where('path', 'like', $like)
+                ->get();
+
+            foreach ($descendants as $child) {
+                $child->update([
+                    'path' => preg_replace(
+                        '#^'.preg_quote($oldPath, '#').'#',
+                        $newPath,
+                        $child->path
+                    )
+                ]);
+            }
+        });
+
+        return response()->json(['ok' => true, 'folder' => $folder->fresh()]);
     }
 
+    // Move media to a folder by ID (or to root if null)
     public function move(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|string',
-            'target' => 'nullable|string',
-            'mediaIds' => 'required|array|min:1',
-            'mediaIds.*' => 'integer',
+            'type'      => 'required|string',
+            'targetId'  => 'nullable|integer',
+            'mediaIds'  => 'required|array|min:1',
+            'mediaIds.*'=> 'integer',
         ]);
 
-        $target = trim($data['target'] ?? '', '/');
+        $targetId = $data['targetId'] ?? null;
+        if ($targetId !== null) {
+            $exists = LibraryFolder::where('id', $targetId)->where('library', 'media')->exists();
+            if (!$exists) {
+                return response()->json(['message' => 'Target folder not found'], 422);
+            }
+        }
 
         DB::table('twill_medias')->whereIn('id', $data['mediaIds'])
-            ->update(['folder_path' => $target]);
+            ->update(['folder_id' => $targetId]); // null => root
 
         return response()->json(['ok' => true]);
     }
 
-    private function buildTree(array $paths): array
+    private function buildTreeFromRows($rows): array
     {
-        $root = ['name' => '', 'children' => []];
-        foreach ($paths as $p) {
-            $node = &$root;
-            foreach (array_filter(explode('/', $p), 'strlen') as $seg) {
-                $idx = null;
-                foreach ($node['children'] ?? [] as $k => $child) {
-                    if ($child['name'] === $seg) { $idx = $k; break; }
-                }
-                if ($idx === null) {
-                    $node['children'][] = ['name' => $seg, 'children' => []];
-                    $idx = array_key_last($node['children']);
-                }
-                $node = &$node['children'][$idx];
-            }
-            unset($node);
+        // Index by id
+        $nodes = [];
+        foreach ($rows as $r) {
+            $nodes[$r->id] = [
+                'id'       => $r->id,
+                'name'     => $r->name,
+                'path'     => $r->path,
+                'children' => [],
+            ];
         }
+
+        $root = ['id' => null, 'name' => '', 'path' => '', 'children' => []];
+
+        foreach ($rows as $r) {
+            if ($r->parent_id && isset($nodes[$r->parent_id])) {
+                $nodes[$r->parent_id]['children'][] = &$nodes[$r->id];
+            } else {
+                $root['children'][] = &$nodes[$r->id];
+            }
+        }
+
         return $root;
     }
 }

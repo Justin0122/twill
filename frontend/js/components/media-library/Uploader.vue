@@ -249,23 +249,16 @@
       },
 
       prepareUpload(id, name, additionalParams = {}) {
-        this.$emit('clear')
+        this.$emit('clear');
+        this.unique_folder_name = this.unique_folder_name || this.uploaderConfig.endpointRoot + qq.getUniqueId();
 
-        // each upload session will place uploaded files with original
-        // filenames in a single folder named using a uuid
-        this.unique_folder_name =
-          this.unique_folder_name ||
-          this.uploaderConfig.endpointRoot + qq.getUniqueId()
-
-        this._uploader.methods.setParams(
-          {
-            unique_folder_name: this.unique_folder_name,
-            media_to_replace_id: this.media_to_replace_id,
-            folder: this.folder || '',
-            ...additionalParams
-          },
-          id
-        )
+        this._uploader.methods.setParams({
+          unique_folder_name: this.unique_folder_name,
+          media_to_replace_id: this.media_to_replace_id,
+          folder: this.folder || '',
+          folder_id: this.folderId ?? null,
+          ...additionalParams
+        }, id);
 
         const media = {
           id: this._uploader.methods.getUuid(id),

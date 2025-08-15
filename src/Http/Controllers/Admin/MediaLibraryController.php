@@ -80,22 +80,12 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
                 }),
 
             BasicFilter::make()
-                ->queryString('folder')
-                ->apply(function (Builder $builder, ?string $value) {
-                    if ($value === null) {
-                        // no folder param => no extra filter
-                        return $builder;
+                ->queryString('folder_id')
+                ->apply(function (Builder $builder, $value) {
+                    if ($value === null || $value === '' || $value === 'null') {
+                        return $builder->whereNull('folder_id');
                     }
-                    $value = trim($value, '/');
-
-                    if ($value === '') {
-                        // root folder = empty string (or null)
-                        return $builder->where(function ($q) {
-                            $q->whereNull('folder_path')->orWhere('folder_path', '');
-                        });
-                    }
-
-                    return $builder->where('folder_path', $value);
+                    return $builder->where('folder_id', (int) $value);
                 }),
         ]);
     }
@@ -135,9 +125,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $requestFilters['unused'] = $this->request->get('unused');
         }
 
-        if ($this->request->has('folder')) {
-            $requestFilters['folder'] = $this->request->get('folder');
-        }
+        if ($this->request->has('folder_id')) $requestFilters['folder_id'] = $this->request->get('folder_id');
 
         return $requestFilters ?? [];
     }
@@ -182,41 +170,30 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
 
         $uploadedFile->storeAs($fileDirectory, $filename, $disk);
 
-        // normalize: '' for root, 'a/b' for nested
+        $folderId   = $request->input('folder_id');
         $folderPath = trim((string) $request->input('folder', ''), '/');
 
+        if ($folderId !== null && !LibraryFolder::whereKey($folderId)->exists()) {
+            $folderId = null;
+        }
+
         $fields = [
-            'uuid'        => $uuid,
-            'filename'    => $originalFilename,
-            'width'       => $w,
-            'height'      => $h,
+            'uuid'      => $uuid,
+            'filename'  => $originalFilename,
+            'width'     => $w,
+            'height'    => $h,
+            'folder_id' => $folderId,
             'folder_path' => $folderPath,
         ];
 
         if ($this->shouldReplaceMedia($id = $request->input('media_to_replace_id'))) {
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
-
-            // avoid mass-assignment restrictions during replace
-            $media->replace(Arr::except($fields, ['folder_path']));
-
-            // force-persist folder path
-            if ($request->has('folder')) {
-                $media->folder_path = $folderPath;
-                $media->save();
-            }
-
+            $media->replace($fields);
             return $media->fresh();
         }
 
-        // create first (bypass mass-assignment for folder_path), then force-set it
-        $media = $this->repository->create(Arr::except($fields, ['folder_path']));
-        if ($request->has('folder')) {
-            $media->folder_path = $folderPath;
-            $media->save();
-        }
-
-        return $media;
+        return $this->repository->create($fields);
     }
 
     /**
@@ -226,15 +203,17 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
      */
     public function storeReference($request)
     {
-        // ⭐ NEW: persist folder_path from request (root is '')
-        $folderPath = trim((string) $request->input('folder', ''), '/');
+        $folderId   = $request->input('folder_id'); // NEW
+        if ($folderId !== null && !LibraryFolder::whereKey($folderId)->exists()) {
+            $folderId = null;
+        }
 
         $fields = [
-            'uuid'        => $request->input('key') ?? $request->input('blob'),
-            'filename'    => $request->input('name'),
-            'width'       => $request->input('width'),
-            'height'      => $request->input('height'),
-            'folder_path' => $folderPath,
+            'uuid'      => $request->input('key') ?? $request->input('blob'),
+            'filename'  => $request->input('name'),
+            'width'     => $request->input('width'),
+            'height'    => $request->input('height'),
+            'folder_id' => $folderId,
         ];
 
         if ($this->shouldReplaceMedia($id = $request->input('media_to_replace_id'))) {

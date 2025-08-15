@@ -51,6 +51,47 @@ class FileFolderController extends Controller
         return response()->json(['ok' => true], 201);
     }
 
+    // Rename folder
+    public function update(Request $request, LibraryFolder $folder)
+    {
+        abort_unless($folder->library === 'file', 404);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $oldPath = $folder->path;
+        $newPath = trim(($folder->parent?->path ?? '') . '/' . $data['name'], '/');
+
+        // Ensure uniqueness
+        if (LibraryFolder::where('library', 'file')->where('path', $newPath)->where('id', '!=', $folder->id)->exists()) {
+            return response()->json(['message' => 'A folder with that name already exists here.'], 422);
+        }
+
+        DB::transaction(function () use ($folder, $data, $oldPath, $newPath) {
+            // 1) Update this folder
+            $folder->update(['name' => $data['name'], 'path' => $newPath]);
+
+            // 2) Cascade paths to descendants
+            $like = $oldPath === '' ? '%' : $oldPath . '/%';
+            $descendants = LibraryFolder::where('library', 'file')
+                ->where('path', 'like', $like)
+                ->get();
+
+            foreach ($descendants as $child) {
+                $child->update([
+                    'path' => preg_replace(
+                        '#^'.preg_quote($oldPath, '#').'#',
+                        $newPath,
+                        $child->path
+                    )
+                ]);
+            }
+        });
+
+        return response()->json(['ok' => true, 'folder' => $folder->fresh()]);
+    }
+
     public function move(Request $request)
     {
         $data = $request->validate([

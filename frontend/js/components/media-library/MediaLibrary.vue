@@ -168,8 +168,10 @@
                 v-if="folderTree"
                 :node="folderTree"
                 :active-path="currentFolderPath"
-                @select="selectFolderPath"
+                :active-id="currentFolderId"
+                @select="onSelectFolder"
                 @create="createFolderAtPath"
+                @rename="onRenameFolder"
               />
             </aside>
 
@@ -223,6 +225,7 @@
                 @clear="clearSelectedMedias"
                 :type="currentTypeObject"
                 :folder="currentFolderFullPath"
+                :folder-id="currentFolderId"
               />
               <div class="medialibrary__list-items">
                 <a17-itemlist
@@ -272,43 +275,33 @@
   const FolderNode = {
     name: 'folder-node',
     props: {
-      node: { type: Object, required: true }, // { name: '', children: [...] }
+      node: { type: Object, required: true }, // { id, name, path, children: [] }, root: { id:null, name:'', path:'' }
       level: { type: Number, default: 0 },
-      activePath: { type: Array, default: () => [] }
+      activePath: { type: Array, default: () => [] },
+      activeId:   { type: [Number, String, null], default: null }
     },
-    data() {
+    data () {
       return { open: false }
     },
     computed: {
-      // Is this node on the prefix of the active path? (i.e. ancestor of the selected folder)
-      isOnActivePath() {
+      isOnActivePath () {
         const here = this.pathHere()
         return here.every((seg, idx) => this.activePath[idx] === seg)
       },
-      // Should this node be forced open? (root or any ancestor of the active folder)
-      shouldBeOpen() {
-        return this.level === 0 || this.isOnActivePath
-      },
-      isActiveHere() {
-        // the node itself is the selected folder
-        const here = this.pathHere()
-        if (here.length !== this.activePath.length)
-          return this.level === 0 && this.activePath.length === 0
-        return here.every((seg, idx) => this.activePath[idx] === seg)
-      }
+      shouldBeOpen () { return this.level === 0 || this.isOnActivePath },
+      isActiveHere () { return this.node.id !== null && this.node.id === this.activeId }
     },
     watch: {
-      // Every time selection changes, make sure ancestors are open
-      activePath: {
-        handler() {
-          if (this.shouldBeOpen) this.open = true
-        },
-        deep: true,
-        immediate: true
-      }
+      activePath: { handler () { if (this.shouldBeOpen) this.open = true }, deep: true, immediate: true }
     },
     methods: {
-      pathHere() {
+      onSelectFolder (payload) {
+        this.currentFolderId   = payload.id ?? null
+        this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
+        this.saveLastFolder()
+        this.submitFilter()
+      },
+      pathHere () {
         const path = []
         let n = this
         while (n && n.node) {
@@ -318,46 +311,50 @@
         }
         return path
       },
-      selectSelf() {
-        this.$emit('select', this.pathHere())
+      selectSelf () {
+        this.$emit('select', { id: this.node.id ?? null, path: this.level === 0 ? [] : this.pathHere() })
       },
-      createHere() {
+      createHere () {
         this.$emit('create', this.pathHere())
       },
-      toggleOpen() {
-        // Don’t allow collapsing ancestors of the active folder (or root)
-        if (this.shouldBeOpen) {
-          this.open = true
-          return
-        }
+      renameHere () {
+        if (this.node.id != null) this.$emit('rename', { id: this.node.id, path: this.pathHere() })
+      },
+      toggleOpen () {
+        if (this.shouldBeOpen) { this.open = true; return }
         this.open = !this.open
       }
     },
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
-        <div class="folder-node__row"
-             :class="{ 'is-active': isActiveHere }"
-             :style="{ paddingLeft: (level * 14) + 'px' }">
+        <div class="folder-node__row" :class="{ 'is-active': isActiveHere }" :style="{ paddingLeft: (level * 14) + 'px' }">
           <button class="folder-node__toggle" v-if="node.children && node.children.length"
                   @click="toggleOpen" :aria-expanded="open.toString()">
             <span v-if="open">▾</span><span v-else>▸</span>
           </button>
-          <button class="folder-node__name"
-                  :class="{ 'is-active': isActiveHere }"
-                  @click="selectSelf">
+
+          <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
             <span v-if="level===0">All</span>
             <span v-else>{{ node.name }}</span>
           </button>
-          <button class="folder-node__create" title="New subfolder" @click="createHere">＋</button>
+
+          <div class="folder-node__actions" v-if="level>0">
+            <button class="folder-node__action" title="New subfolder" @click="createHere">＋</button>
+            <button class="folder-node__action" title="Rename folder" @click="renameHere">✎</button>
+          </div>
         </div>
+
         <div v-show="open" class="folder-node__children">
           <folder-node v-for="child in node.children"
-                       :key="child.name"
+                       :key="child.id || child.name"
                        :node="child"
                        :level="level+1"
                        :active-path="activePath"
+                       :active-id="activeId"
                        @select="$emit('select', $event)"
-                       @create="$emit('create', $event)" />
+                       @create="$emit('create', $event)"
+                       @rename="$emit('rename', $event)"
+          />
         </div>
       </div>
     `
@@ -516,20 +513,11 @@
       storageKey() {
         return `twill:ml:lastFolder:${this.endpoint}:${this.type}`
       },
-      saveLastFolder() {
-        const key = this.storageKey()
-        const value = this.currentFolderFullPath
+      saveLastFolder () {
         try {
-          window.localStorage.setItem(key, value)
-        } catch (e) {
-          document.cookie =
-            encodeURIComponent(key) +
-            '=' +
-            encodeURIComponent(value) +
-            '; max-age=' +
-            60 * 60 * 24 * 365 +
-            '; path=/'
-        }
+          localStorage.setItem(this.storageKey(), this.currentFolderFullPath)
+          localStorage.setItem(this.storageKey() + ':id', this.currentFolderId ?? '')
+        } catch (e) {/* fallback cookie like before */}
       },
       readCookie(name) {
         const cookies = document.cookie ? document.cookie.split('; ') : []
@@ -695,14 +683,13 @@
           )
         }
       },
-      getFormData(form) {
+      getFormData (form) {
         let data = FormDataAsObj(form)
         if (data) data.page = this.page
         else data = { page: this.page }
         data.type = this.type
-        if (Array.isArray(data.unused) && data.unused.length)
-          data.unused = data.unused[0]
-        data.folder = this.currentFolderFullPath || ''
+        if (Array.isArray(data.unused) && data.unused.length) data.unused = data.unused[0]
+        data.folder_id = this.currentFolderId ?? '' // '' or null => root
         return data
       },
       clearFilters() {
@@ -774,29 +761,56 @@
           }
         )
       },
-      moveSelectedToCurrentFolder() {
+      onSelectFolder (payload) {
+        // payload: { id: number|null, path: string[] }
+        this.currentFolderId   = payload.id ?? null
+        this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
+        this.saveLastFolder()  // persists "path"; you can optionally persist id too
+        this.submitFilter()
+      },
+
+      // Rename folder
+      onRenameFolder (payload) {
+        // payload: { id, path }
+        const currentName = payload.path.slice(-1)[0] || ''
+        const name = window.prompt(this.$trans('media-library.rename-folder', 'Rename folder'), currentName)
+        if (!name) return
+
+        api.renameFolder(
+          this.endpoint,
+          payload.id,
+          { type: this.type, name },
+          (resp) => {
+            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
+            if (this.currentFolderId === payload.id) {
+              const newPath = (resp.data.folder.path || '').split('/').filter(Boolean)
+              this.currentFolderPath = newPath
+            }
+            this.loadFolderTree()
+            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: this.$trans('media-library.renamed', 'Folder renamed'), variant: 'success' })
+          },
+          (error) => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: error.data?.message || 'Unable to rename folder', variant: 'error' })
+          }
+        )
+      },
+      moveSelectedToCurrentFolder () {
         if (!this.selectedMedias.length) return
         api.moveToFolder(
           this.endpoint,
           {
             type: this.type,
-            target: this.currentFolderFullPath,
+            targetId: this.currentFolderId,
             mediaIds: this.selectedMedias.map(m => m.id)
           },
           () => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.moved', 'Moved to folder'),
-              variant: 'success'
-            })
+            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: this.$trans('media-library.moved', 'Moved to folder'), variant: 'success' })
             this.page = 1
             this.clearMediaItems()
             this.reloadGrid()
           },
-          error => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error.data?.message || 'Unable to move items',
-              variant: 'error'
-            })
+          (error) => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: error.data?.message || 'Unable to move items', variant: 'error' })
           }
         )
       },
