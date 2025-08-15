@@ -373,6 +373,7 @@
                        @select="$emit('select', $event)"
                        @create="$emit('create', $event)"
                        @rename="$emit('rename', $event)"
+                       @delete="$emit('delete', $event)"
           />
         </div>
       </div>
@@ -444,7 +445,8 @@
         lastScrollTop: 0,
         gridLoaded: false,
         folderTree: null,
-        currentFolderPath: []
+        currentFolderPath: [],
+        currentFolderId: null,
       }
     },
     computed: {
