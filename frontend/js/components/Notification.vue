@@ -1,8 +1,21 @@
 <template>
   <transition name="move_down_notif">
-    <div v-if="show" :class="notifClasses" role="alert" aria-live="polite" aria-atomic="true">
+    <div
+      v-if="show"
+      :class="notifClasses"
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <div class="notif__inner">
-        <button v-if="!important" type="button" class="notif__close" data-dismiss="alert" aria-label="alertClose" @click.stop.prevent="closeNotif" >
+        <button
+          v-if="!important"
+          type="button"
+          class="notif__close"
+          data-dismiss="alert"
+          aria-label="alertClose"
+          @click.stop.prevent="closeNotif"
+        >
           <span v-svg symbol="close_modal"></span>
         </button>
         <span v-html="message"></span>
@@ -34,7 +47,7 @@
         default: true
       }
     },
-    data: function () {
+    data: function() {
       return {
         closed: false,
         timer: null,
@@ -42,23 +55,23 @@
       }
     },
     computed: {
-      message: function () {
+      message: function() {
         return this.$store.getters.notifByVariant(this.variant)
       },
-      variantClass: function () {
+      variantClass: function() {
         return `notif--${this.variant}`
       },
-      notifClasses: function () {
+      notifClasses: function() {
         return this.css && Array.isArray(this.css)
           ? [...this.css, this.variantClass]
           : ['notif', this.variantClass]
       },
-      show: function () {
+      show: function() {
         return !this.closed && !!this.message
       }
     },
     methods: {
-      closeNotif: function () {
+      closeNotif: function() {
         this.closed = true
         this.clearNotification()
 
@@ -67,10 +80,10 @@
           this.timer = null
         }
       },
-      clearNotification: function () {
+      clearNotification: function() {
         this.$store.commit(NOTIFICATION.CLEAR_NOTIF, this.variant)
       },
-      autoClose: function () {
+      autoClose: function() {
         if (this.timer === null) {
           this.timer = setTimeout(() => {
             this.closeNotif()
@@ -79,7 +92,7 @@
       }
     },
     watch: {
-      message: function () {
+      message: function() {
         if (this.message) {
           // if we have a message, let's show it
           this.closed = false

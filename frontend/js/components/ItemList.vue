@@ -2,51 +2,101 @@
   <div class="itemlist">
     <table class="itemlist__table">
       <tbody>
-        <tr class="itemlist__row" v-show="!item.isReplacement" v-for="(item, index) in itemsLoading" :key="item.id" >
-          <td class="itemlist__cell itemlist__cell--loading" :class="{ 'itemlist__cell--error' : item.error }" :colspan="columnsNumber">
-            <span class="itemlist__progress" v-if="!item.error" ><span class="itemlist__progressBar" :style="loadingProgress(index)"></span></span>
+        <tr
+          class="itemlist__row"
+          v-show="!item.isReplacement"
+          v-for="(item, index) in itemsLoading"
+          :key="item.id"
+        >
+          <td
+            class="itemlist__cell itemlist__cell--loading"
+            :class="{ 'itemlist__cell--error': item.error }"
+            :colspan="columnsNumber"
+          >
+            <span class="itemlist__progress" v-if="!item.error"
+              ><span
+                class="itemlist__progressBar"
+                :style="loadingProgress(index)"
+              ></span
+            ></span>
             <span class="itemlist__progressError" v-else>Upload Error</span>
           </td>
         </tr>
-        <tr class="itemlist__row"
-            v-for="(item, index) in allItems"
-            :key="`${item.endpointType}_${item.id}`"
-            :class="{
-              's--picked': isSelected(item, keysToCheck),
-              's--disabled': item.disabled || !!replacingMediaIds[item.id]
-            }"
-            @click.exact.prevent="toggleSelection(item)"
-            @click.shift.exact.prevent="shiftToggleSelection(item)">
+        <tr
+          class="itemlist__row"
+          v-for="(item, index) in allItems"
+          :key="`${item.endpointType}_${item.id}`"
+          :class="{
+            's--picked': isSelected(item, keysToCheck),
+            's--disabled': item.disabled || !!replacingMediaIds[item.id]
+          }"
+          @click.exact.prevent="toggleSelection(item)"
+          @click.shift.exact.prevent="shiftToggleSelection(item)"
+        >
           <template v-if="!item.isReplacement">
-            <td class="itemlist__cell itemlist__cell--btn" v-if="item.hasOwnProperty('id')">
-              <a17-checkbox name="item_list" :value="item.endpointType + '_' + item.id" :initialValue="checkedItems" theme="bold" :disabled="item.disabled" />
+            <td
+              class="itemlist__cell itemlist__cell--btn"
+              v-if="item.hasOwnProperty('id')"
+            >
+              <a17-checkbox
+                name="item_list"
+                :value="item.endpointType + '_' + item.id"
+                :initialValue="checkedItems"
+                theme="bold"
+                :disabled="item.disabled"
+              />
             </td>
-            <td :class="`itemlist__cell itemlist__cell--thumb ${item.endpointType === 'users' ? 'itemlist__cell--thumb-rounded' : ''}`" v-if="item.hasOwnProperty('thumbnail')">
+            <td
+              :class="
+                `itemlist__cell itemlist__cell--thumb ${
+                  item.endpointType === 'users'
+                    ? 'itemlist__cell--thumb-rounded'
+                    : ''
+                }`
+              "
+              v-if="item.hasOwnProperty('thumbnail')"
+            >
               <template v-if="item.endpointType === 'users'">
-                <a17-avatar
-                  :name="item.name"
-                  :thumbnail="item.thumbnail"
-                />
+                <a17-avatar :name="item.name" :thumbnail="item.thumbnail" />
               </template>
               <template v-else>
                 <img :src="item.thumbnail" />
               </template>
             </td>
-            <td class="itemlist__cell itemlist__cell--name" v-if="item.hasOwnProperty('name')">
-              <div v-if="item.hasOwnProperty('renderHtml')" v-html="item.name"></div>
+            <td
+              class="itemlist__cell itemlist__cell--name"
+              v-if="item.hasOwnProperty('name')"
+            >
+              <div
+                v-if="item.hasOwnProperty('renderHtml')"
+                v-html="item.name"
+              ></div>
               <div v-else>{{ item.name }}</div>
             </td>
-            <td class="itemlist__cell"
-                v-for="(extraColumn, index) in extraColumns"
-                :key="index"
-                :class="rowClass(extraColumn)">
-              <template v-if="extraColumn === 'size'">{{ item[extraColumn] | uppercase}}</template>
+            <td
+              class="itemlist__cell"
+              v-for="(extraColumn, index) in extraColumns"
+              :key="index"
+              :class="rowClass(extraColumn)"
+            >
+              <template v-if="extraColumn === 'size'">{{
+                item[extraColumn] | uppercase
+              }}</template>
               <template v-else>{{ item[extraColumn] }}</template>
             </td>
           </template>
           <template v-else-if="item.isReplacement">
-            <td class="itemlist__cell itemlist__cell--loading" :class="{ 'itemlist__cell--error' : item.error }" :colspan="columnsNumber">
-              <span class="itemlist__progress" v-if="!item.error" ><span class="itemlist__progressBar" :style="loadingProgress(index, 'allItems')"></span></span>
+            <td
+              class="itemlist__cell itemlist__cell--loading"
+              :class="{ 'itemlist__cell--error': item.error }"
+              :colspan="columnsNumber"
+            >
+              <span class="itemlist__progress" v-if="!item.error"
+                ><span
+                  class="itemlist__progressBar"
+                  :style="loadingProgress(index, 'allItems')"
+                ></span
+              ></span>
               <span class="itemlist__progressError" v-else>Upload Error</span>
             </td>
           </template>
@@ -75,17 +125,19 @@
     mixins: [mediaItemsMixin],
     filters: a17VueFilters,
     computed: {
-      allItems: function () {
-        return this.items.map((item) => {
+      allItems: function() {
+        return this.items.map(item => {
           if (!this.replacingMediaIds[item.id]) return item
           else {
-            const loadingItem = this.itemsLoading.find(loadingItem => loadingItem.replacementId === item.id)
+            const loadingItem = this.itemsLoading.find(
+              loadingItem => loadingItem.replacementId === item.id
+            )
             if (loadingItem) return loadingItem
             return item
           }
         })
       },
-      columnsNumber: function () {
+      columnsNumber: function() {
         if (!this.items.length) return 0
 
         let numb = this.extraColumns.length
@@ -98,24 +150,37 @@
 
         return numb
       },
-      extraColumns: function () {
+      extraColumns: function() {
         if (!this.items.length) return []
 
         const firstItem = this.items[0]
 
-        return Object.keys(firstItem).filter(key => { // exclude columns here
-          return ![
-            'id', 'name', 'thumbnail', 'src', 'original', 'edit',
-            'crop', 'deleteUrl', 'updateUrl', 'updateBulkUrl',
-            'deleteBulkUrl', 'endpointType', 'filesizeInMb'
-          ].includes(key) && typeof firstItem[key] === 'string' // only strings
+        return Object.keys(firstItem).filter(key => {
+          // exclude columns here
+          return (
+            ![
+              'id',
+              'name',
+              'thumbnail',
+              'src',
+              'original',
+              'edit',
+              'crop',
+              'deleteUrl',
+              'updateUrl',
+              'updateBulkUrl',
+              'deleteBulkUrl',
+              'endpointType',
+              'filesizeInMb'
+            ].includes(key) && typeof firstItem[key] === 'string'
+          ) // only strings
         })
       },
-      checkedItems: function () {
+      checkedItems: function() {
         const checkItemsIds = []
 
         if (this.selectedItems.length) {
-          this.selectedItems.forEach(function (item) {
+          this.selectedItems.forEach(function(item) {
             checkItemsIds.push(item.endpointType + '_' + item.id)
           })
         }
@@ -124,16 +189,16 @@
       }
     },
     methods: {
-      rowClass: function (item) {
+      rowClass: function(item) {
         return 'itemlist__cell--' + item
       },
-      loadingProgress: function (index, itemsKey) {
+      loadingProgress: function(index, itemsKey) {
         const items = itemsKey ? this[itemsKey] : this.itemsLoading
         return {
           width: items[index].progress ? items[index].progress + '%' : '0%'
         }
       },
-      getFirstLetter (item) {
+      getFirstLetter(item) {
         return item.name.charAt(0)
       }
     }
@@ -141,10 +206,9 @@
 </script>
 
 <style lang="scss" scoped>
-
   .itemlist {
     padding: 10px;
-    overflow:hidden;
+    overflow: hidden;
   }
 
   .itemlist__table {
@@ -156,9 +220,10 @@
   }
 
   .itemlist__table {
-    th, td {
-      border-top:1px solid $color__border--light;
-      border-bottom:1px solid $color__border--light;
+    th,
+    td {
+      border-top: 1px solid $color__border--light;
+      border-bottom: 1px solid $color__border--light;
       vertical-align: top;
       white-space: nowrap;
       overflow: hidden;
@@ -166,20 +231,20 @@
     }
 
     td:first-child {
-      border-left:1px solid $color__border--light;
+      border-left: 1px solid $color__border--light;
     }
 
     td:last-child {
-      border-right:1px solid $color__border--light;
+      border-right: 1px solid $color__border--light;
     }
   }
 
   .itemlist__row {
     overflow: hidden;
-    background:white;
-    position:relative;
+    background: white;
+    position: relative;
 
-    cursor:pointer;
+    cursor: pointer;
 
     &:hover {
       background-color: $color__f--bg;
@@ -197,18 +262,18 @@
   }
 
   .itemlist__cell {
-    padding:20px 10px;
+    padding: 20px 10px;
     white-space: nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    vertical-align:middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
 
     &:first-child {
-      padding-left:20px;
+      padding-left: 20px;
     }
 
     &:last-child {
-      padding-left:20px;
+      padding-left: 20px;
     }
   }
 
@@ -232,7 +297,7 @@
   }
 
   .itemlist__cell--btn {
-    width:1px;
+    width: 1px;
     // width:15px + 20px + 10px;
   }
 
@@ -249,9 +314,9 @@
     width: 50px;
 
     img {
-      display:block;
-      width:50px;
-      height:auto;
+      display: block;
+      width: 50px;
+      height: auto;
       background: $color__border--light;
     }
   }
@@ -266,13 +331,13 @@
   }
 
   .itemlist__cell--error {
-    height:auto;
+    height: auto;
   }
 
   .itemlist__progress {
     height: 4px;
     width: 15%;
-    min-width:120px;
+    min-width: 120px;
     background: $color__border--focus;
     border-radius: 2px;
     position: relative;
@@ -280,15 +345,15 @@
 
   .itemlist__progressBar {
     position: absolute;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
     width: 100%;
     border-radius: 2px;
-    height:4px;
+    height: 4px;
     background: $color__action;
   }
 
   .itemlist__progressError {
-    color:$color__error;
+    color: $color__error;
   }
 </style>

@@ -51,7 +51,7 @@ import { locales } from '@/utils/locale'
 const isProd = process.env.NODE_ENV === 'production'
 
 const A17Config = {
-  install (Vue, opts) {
+  install(Vue, opts) {
     // Globals components
     Vue.component('a17-button', a17Button)
     Vue.component('a17-infotip', a17Infotip)
@@ -91,7 +91,7 @@ const A17Config = {
     // Globale Vue mixin : Use global mixins sparsely and carefully!
     Vue.mixin({
       methods: {
-        openFreeMediaLibrary: function () {
+        openFreeMediaLibrary: function() {
           this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_CONNECTOR, null) // reset connector
           this.$store.commit(MEDIA_LIBRARY.RESET_MEDIA_TYPE) // reset to first available type
           this.$store.commit(MEDIA_LIBRARY.UPDATE_REPLACE_INDEX, -1) // we are not replacing an image here
@@ -101,7 +101,8 @@ const A17Config = {
           this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_HEIGHT_MIN, 0) // set height min to 0
           this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_MODE, false) // set the strict to false (you can change the active type)
 
-          if (this.$root.$refs.mediaLibrary) this.$root.$refs.mediaLibrary.open()
+          if (this.$root.$refs.mediaLibrary)
+            this.$root.$refs.mediaLibrary.open()
         }
       }
     })
@@ -111,17 +112,24 @@ const A17Config = {
     Vue.config.devtools = !isProd
     Vue.prototype.$http = axios
 
-    window.$trans = Vue.prototype.$trans = function (key, defaultValue) {
-      return get(window[process.env.VUE_APP_NAME].twillLocalization.lang, key, defaultValue)
+    window.$trans = Vue.prototype.$trans = function(key, defaultValue) {
+      return get(
+        window[process.env.VUE_APP_NAME].twillLocalization.lang,
+        key,
+        defaultValue
+      )
     }
 
     axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
 
-    axios.interceptors.response.use((response) => response, (error) => {
-      globalError('CONTENT', error)
+    axios.interceptors.response.use(
+      response => response,
+      error => {
+        globalError('CONTENT', error)
 
-      return Promise.reject(error)
-    })
+        return Promise.reject(error)
+      }
+    )
 
     // Plugins
     Vue.use(VueTimeago, {

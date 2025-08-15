@@ -22,22 +22,23 @@
       }
     },
     computed: {
-      uniqId: function () {
+      uniqId: function() {
         return this.name + '-' + this.randKey
       }
     },
-    data: function () {
+    data: function() {
       return {
         value: this.initialValue
       }
     },
     watch: {
-      initialValue: function () {
+      initialValue: function() {
         this.value = this.initialValue
       }
     },
     methods: {
-      updateFromStore: function (newValue) { // called from the formStore mixin
+      updateFromStore: function(newValue) {
+        // called from the formStore mixin
         if (typeof newValue === 'undefined') newValue = ''
 
         if (this.value !== newValue) {

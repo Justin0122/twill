@@ -11,7 +11,7 @@ import merge from 'lodash/merge'
 import Alpine from 'alpinejs'
 import mask from '@alpinejs/mask'
 
-const A17Init = function () {
+const A17Init = function() {
   navToggle()
   showEnvLine()
   logoutButton()
@@ -42,11 +42,13 @@ window[process.env.VUE_APP_NAME].vheader = new Vue({ el: '#headerUser' })
 /* eslint no-unused-vars: "off" */
 window[process.env.VUE_APP_NAME].vsearch = search
 /* eslint-disable no-console */
-console.log('\x1b[32m', `Made with ${process.env.VUE_APP_NAME} - v${window[process.env.VUE_APP_NAME].version}`)
-
-merge(
-  window[process.env.VUE_APP_NAME].STORE,
-  window.STORE
+console.log(
+  '\x1b[32m',
+  `Made with ${process.env.VUE_APP_NAME} - v${
+    window[process.env.VUE_APP_NAME].version
+  }`
 )
+
+merge(window[process.env.VUE_APP_NAME].STORE, window.STORE)
 
 export default A17Init

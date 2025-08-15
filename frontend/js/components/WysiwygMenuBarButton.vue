@@ -1,21 +1,24 @@
 <template>
-  <button :class="{ 'is-active': isActive, 'wysiwyg__menubar-button': icon || iconUrl }"
-          :disabled="disabled"
-          type="button"
-          :title="label"
-          @click="handleClick">
+  <button
+    :class="{
+      'is-active': isActive,
+      'wysiwyg__menubar-button': icon || iconUrl
+    }"
+    :disabled="disabled"
+    type="button"
+    :title="label"
+    @click="handleClick"
+  >
     <template v-if="iconUrl">
-      <img class="icon--custom" :src="iconUrl" :alt="label"/>
+      <img class="icon--custom" :src="iconUrl" :alt="label" />
     </template>
     <template v-else-if="icon">
-    <span class="icon"
-          :class="`icon--wysiwyg_${icon}`"
-          aria-hidden="true">
-    <svg>
-      <title>{{ label ?? icon }}</title>
-      <use :xlink:href="`#icon--wysiwyg_${icon}`"></use>
-    </svg>
-    </span>
+      <span class="icon" :class="`icon--wysiwyg_${icon}`" aria-hidden="true">
+        <svg>
+          <title>{{ label ?? icon }}</title>
+          <use :xlink:href="`#icon--wysiwyg_${icon}`"></use>
+        </svg>
+      </span>
     </template>
     <template v-else>
       {{ label }}
@@ -37,7 +40,7 @@
       },
       label: {
         type: String,
-        required: false,
+        required: false
       },
       isActive: {
         type: Boolean,
@@ -49,7 +52,7 @@
       }
     },
     methods: {
-      handleClick () {
+      handleClick() {
         this.$emit('btn:click')
       }
     }

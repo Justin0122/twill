@@ -1,22 +1,42 @@
 <template>
   <div class="mediagrid">
-    <div class="mediagrid__item" v-show="!item.isReplacement" v-for="(item, index) in itemsLoading" :key="'mediaLoading_' + item.id">
+    <div
+      class="mediagrid__item"
+      v-show="!item.isReplacement"
+      v-for="(item, index) in itemsLoading"
+      :key="'mediaLoading_' + item.id"
+    >
       <span class="mediagrid__button s--loading">
-        <span class="mediagrid__progress" v-if="!item.error"><span class="mediagrid__progressBar" :style="loadingProgress(index)"></span></span>
+        <span class="mediagrid__progress" v-if="!item.error"
+          ><span
+            class="mediagrid__progressBar"
+            :style="loadingProgress(index)"
+          ></span
+        ></span>
         <span class="mediagrid__progressError" v-else>Upload Error</span>
       </span>
     </div>
-    <div class="mediagrid__item" :class="{'s--hasFilename': showFileName}" v-for="item in items" :key="item.id">
-      <span class="mediagrid__button" :class="{
+    <div
+      class="mediagrid__item"
+      :class="{ 's--hasFilename': showFileName }"
+      v-for="item in items"
+      :key="item.id"
+    >
+      <span
+        class="mediagrid__button"
+        :class="{
           's--picked': isSelected(item),
           's--used': isUsed(item) || !!replacingMediaIds[item.id],
           's--disabled': item.disabled
         }"
         @click.exact="toggleSelection(item)"
-        @click.shift.exact="shiftToggleSelection(item)">
-          <img :src="item.thumbnail" class="mediagrid__img" />
-        </span>
-        <p v-if="showFileName" :title="item.name" class="mediagrid__name">{{ item.name }}</p>
+        @click.shift.exact="shiftToggleSelection(item)"
+      >
+        <img :src="item.thumbnail" class="mediagrid__img" />
+      </span>
+      <p v-if="showFileName" :title="item.name" class="mediagrid__name">
+        {{ item.name }}
+      </p>
     </div>
   </div>
 </template>
@@ -35,9 +55,11 @@
       })
     },
     methods: {
-      loadingProgress: function (index) {
+      loadingProgress: function(index) {
         return {
-          width: this.itemsLoading[index].progress ? this.itemsLoading[index].progress + '%' : '0%'
+          width: this.itemsLoading[index].progress
+            ? this.itemsLoading[index].progress + '%'
+            : '0%'
         }
       }
     }
@@ -51,17 +73,17 @@
     display: block;
     width: 100%;
     height: 100%;
-    font-size:0;
+    font-size: 0;
     line-height: 1em;
   }
 
   .mediagrid__item {
-    position:relative;
-    display:inline-block;
+    position: relative;
+    display: inline-block;
     width: 16.66666665%;
     padding-bottom: 16.66666665%;
     overflow: hidden;
-    background:white;
+    background: white;
 
     @media (max-width: 300px) {
       width: 100%;
@@ -164,12 +186,11 @@
         padding-bottom: calc((100% / 10) + #{$height_text});
       }
     }
-
   }
 
   .mediagrid__button {
     position: absolute;
-    cursor:pointer;
+    cursor: pointer;
 
     display: flex;
     justify-content: center; /* align horizontal */
@@ -186,39 +207,39 @@
     bottom: 10px;
 
     .s--hasFilename & {
-      bottom: calc(10px + #{$height_text})
+      bottom: calc(10px + #{$height_text});
     }
 
     &:before {
-      content: "";
+      content: '';
       position: absolute;
-      display:block;
+      display: block;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      border:1px solid rgba(0,0,0,0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     &.s--picked {
       &:after {
-        content: "";
+        content: '';
         position: absolute;
-        display:block;
+        display: block;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        border:4px solid $color__link;
+        border: 4px solid $color__link;
         z-index: 1;
       }
     }
 
     &.s--used {
       &:before {
-        content: "";
+        content: '';
         position: absolute;
-        display:block;
+        display: block;
         top: 0;
         left: 0;
         right: 0;
@@ -251,15 +272,15 @@
   }
 
   .s--loading {
-    background:$color__f--bg;
-    cursor:default;
+    background: $color__f--bg;
+    cursor: default;
   }
 
   .mediagrid__img {
-    display:block;
-    max-width:100%;
-    height:auto;
-    max-height:100%;
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
   }
 
   .mediagrid__progress {
@@ -272,15 +293,15 @@
 
   .mediagrid__progressBar {
     position: absolute;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
     width: 100%;
     border-radius: 2px;
-    height:4px;
+    height: 4px;
     background: $color__action;
   }
 
   .mediagrid__progressError {
-    color:$color__error;
+    color: $color__error;
   }
 </style>

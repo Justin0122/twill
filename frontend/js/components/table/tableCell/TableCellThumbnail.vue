@@ -1,17 +1,16 @@
 <template>
   <div :class="getThumbClasses">
     <a
-        :href="!row.hasOwnProperty('deleted') ? editUrl : false"
-        @click="!row.hasOwnProperty('deleted') ? preventEditInPlace($event) : null"
+      :href="!row.hasOwnProperty('deleted') ? editUrl : false"
+      @click="
+        !row.hasOwnProperty('deleted') ? preventEditInPlace($event) : null
+      "
     >
       <template v-if="col.variation === 'rounded'">
-        <a17-avatar
-            :name="rowTitle"
-            :thumbnail="row[colName]"
-        />
+        <a17-avatar :name="rowTitle" :thumbnail="row[colName]" />
       </template>
       <template v-else>
-        <img :src="row[colName]"/>
+        <img :src="row[colName]" />
       </template>
     </a>
   </div>
@@ -31,7 +30,7 @@
       rowTitle() {
         return this.row.name ?? this.row.title.replace(/<[^>]*>?/gm, '') ?? ''
       },
-      getThumbClasses () {
+      getThumbClasses() {
         return [
           'tablecell__thumb',
           this.col.variation ? `tablecell__thumb--${this.col.variation}` : ''
@@ -42,11 +41,11 @@
 </script>
 
 <style lang="scss" scoped>
-
   .tablecell--thumb {
     width: 1px;
 
-    @include breakpoint(xsmall) { // no thumbnail on smaller screens
+    @include breakpoint(xsmall) {
+      // no thumbnail on smaller screens
       padding-left: 0;
       padding-right: 0;
     }
@@ -57,7 +56,8 @@
     display: block;
     background: $color__border--light;
 
-    @include breakpoint(xsmall) { // no thumbnail on smaller screens
+    @include breakpoint(xsmall) {
+      // no thumbnail on smaller screens
       display: none;
     }
 

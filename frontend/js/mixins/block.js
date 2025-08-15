@@ -9,22 +9,22 @@ export default {
       default: false
     }
   },
-  data: function () {
+  data: function() {
     return {
       opened: this.isOpen
     }
   },
   methods: {
-    open: function () {
+    open: function() {
       this.opened = true
     },
-    fieldName: function (id) {
+    fieldName: function(id) {
       return this.name + '[' + id + ']' // output : nameOfBlock[UniqID][name]
     },
-    repeaterName: function (id) {
+    repeaterName: function(id) {
       return this.name.replace('[', '-').replace(']', '') + '|' + id // nameOfBlock-UniqID|name
     },
-    nestedEditorName: function (id) {
+    nestedEditorName: function(id) {
       return this.name.replace('[', '-').replace(']', '') + '|' + id // nameOfBlock-UniqID|name
     }
   }

@@ -1,6 +1,9 @@
 import { mapState } from 'vuex'
 
-import { TableCellPrefix, TableCellSpecificColumns } from '@/components/table/tableCell'
+import {
+  TableCellPrefix,
+  TableCellSpecificColumns
+} from '@/components/table/tableCell'
 import ACTIONS from '@/store/actions'
 import { DATATABLE, FORM, LANGUAGE, MODALEDITION } from '@/store/mutations'
 import NOTIFICATION from '@/store/mutations/notification'
@@ -13,25 +16,27 @@ export default {
     },
     row: {
       type: Object,
-      default: function () {
+      default: function() {
         return {}
       }
     },
     columns: {
       type: Array,
-      default: function () {
+      default: function() {
         return []
       }
     }
   },
   computed: {
-    editInModal: function () {
-      return this.row.hasOwnProperty('editInModal') ? this.row.editInModal : false
+    editInModal: function() {
+      return this.row.hasOwnProperty('editInModal')
+        ? this.row.editInModal
+        : false
     },
-    editUrl: function () {
+    editUrl: function() {
       return this.row.hasOwnProperty('edit') ? this.row.edit : '#'
     },
-    updateUrl: function () {
+    updateUrl: function() {
       return this.row.updateUrl ? this.row.updateUrl : '#'
     },
     ...mapState({
@@ -39,13 +44,13 @@ export default {
     })
   },
   methods: {
-    currentComponent (col) {
+    currentComponent(col) {
       if (typeof col === 'object') {
         return TableCellPrefix + (col.specificType ?? col.name.toLowerCase())
       }
-      return TableCellPrefix + col;
+      return TableCellPrefix + col
     },
-    currentComponentProps (col) {
+    currentComponentProps(col) {
       const props = {
         col: col || {},
         row: this.row,
@@ -61,7 +66,9 @@ export default {
           props.initialValue = this.bulkIds
           break
         case 'languages':
-          props.languages = this.row.hasOwnProperty('languages') ? this.row.languages : []
+          props.languages = this.row.hasOwnProperty('languages')
+            ? this.row.languages
+            : []
           props.editUrl = this.editUrl
           break
         case 'publish_start_date':
@@ -73,7 +80,7 @@ export default {
       }
       return props
     },
-    editInPlace: function (data) {
+    editInPlace: function(data) {
       if (data.lang) {
         const lang = data.lang
         this.$store.commit(LANGUAGE.UPDATE_LANG, lang.value)
@@ -84,33 +91,39 @@ export default {
         this.$store.commit(MODALEDITION.UPDATE_MODAL_ACTION, this.updateUrl)
         this.$store.commit(FORM.UPDATE_FORM_LOADING, true)
 
-        this.$store.dispatch(ACTIONS.REPLACE_FORM, endpoint).then(() => {
-          this.$nextTick(function () {
-            if (this.$root.$refs.editionModal) this.$root.$refs.editionModal.open()
-          })
-        }, (errorResponse) => {
-          this.$store.commit(NOTIFICATION.SET_NOTIF, {
-            message: 'Your content can not be edited, please retry',
-            variant: 'error'
-          })
-        })
+        this.$store.dispatch(ACTIONS.REPLACE_FORM, endpoint).then(
+          () => {
+            this.$nextTick(function() {
+              if (this.$root.$refs.editionModal)
+                this.$root.$refs.editionModal.open()
+            })
+          },
+          errorResponse => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: 'Your content can not be edited, please retry',
+              variant: 'error'
+            })
+          }
+        )
       }
     },
-    cellClasses: function (col, prefix) {
+    cellClasses: function(col, prefix) {
       return {
-        [prefix + '--icon']: col.name === 'featured' || col.name === 'published',
+        [prefix + '--icon']:
+          col.name === 'featured' || col.name === 'published',
         [prefix + '--bulk']: col.name === 'bulk',
         [prefix + '--thumb']: col.name === 'thumbnail',
         [prefix + '--draggable']: col.name === 'draggable',
         [prefix + '--languages']: col.name === 'languages',
         [prefix + '--nested']: col.name === 'nested',
-        [prefix + '--nested--parent']: col.name === 'nested' && this.nestedDepth === 0
+        [prefix + '--nested--parent']:
+          col.name === 'nested' && this.nestedDepth === 0
       }
     },
-    isSpecificColumn: function (col) {
+    isSpecificColumn: function(col) {
       return TableCellSpecificColumns.includes(col.specificType ?? col.name)
     },
-    tableCellUpdate: function (data) {
+    tableCellUpdate: function(data) {
       switch (data.col) {
         case 'published':
           this.togglePublish(data.row)
@@ -123,34 +136,36 @@ export default {
           break
       }
     },
-    toggleFeatured: function (row) {
+    toggleFeatured: function(row) {
       if (!row.hasOwnProperty('deleted')) {
         this.$store.dispatch(ACTIONS.TOGGLE_FEATURE, row)
       } else {
         this.$store.commit(NOTIFICATION.SET_NOTIF, {
-          message: 'You can’t feature/unfeature a deleted item, please restore it first.',
+          message:
+            'You can’t feature/unfeature a deleted item, please restore it first.',
           variant: 'error'
         })
       }
     },
-    toggleBulk: function (row) {
+    toggleBulk: function(row) {
       // We cant use the vmodel of the a17-checkbox directly because the checkboxes are in separated components (so the model is not shared)
       this.$store.commit(DATATABLE.UPDATE_DATATABLE_BULK, row.id)
     },
-    togglePublish: function (row) {
+    togglePublish: function(row) {
       if (!row.hasOwnProperty('deleted')) {
         this.$store.dispatch(ACTIONS.TOGGLE_PUBLISH, row)
       } else {
         this.$store.commit(NOTIFICATION.SET_NOTIF, {
-          message: 'You can’t publish/unpublish a deleted item, please restore it first.',
+          message:
+            'You can’t publish/unpublish a deleted item, please restore it first.',
           variant: 'error'
         })
       }
     },
-    restoreRow: function (row) {
+    restoreRow: function(row) {
       this.$store.dispatch(ACTIONS.RESTORE_ROW, row)
     },
-    destroyRow: function (row) {
+    destroyRow: function(row) {
       // open confirm dialog if any
       if (this.$root.$refs.warningDestroyRow) {
         this.$root.$refs.warningDestroyRow.open(() => {
@@ -160,7 +175,7 @@ export default {
         this.$store.dispatch(ACTIONS.DESTROY_ROW, row)
       }
     },
-    deleteRow: function (row) {
+    deleteRow: function(row) {
       // open confirm dialog if any
       if (this.$root.$refs.warningDeleteRow) {
         this.$root.$refs.warningDeleteRow.open(() => {
@@ -170,7 +185,7 @@ export default {
         this.$store.dispatch(ACTIONS.DELETE_ROW, row)
       }
     },
-    duplicateRow: function (row) {
+    duplicateRow: function(row) {
       this.$store.dispatch(ACTIONS.DUPLICATE_ROW, row)
     }
   }

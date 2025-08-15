@@ -1,5 +1,5 @@
 <script>
-// ExtendedVSelect.vue
+  // ExtendedVSelect.vue
   import 'vue-select/dist/vue-select.css'
 
   import vSelect from 'vue-select'
@@ -32,7 +32,7 @@
         default: false
       }
     },
-    data () {
+    data() {
       return {
         // Set mutableValue with current props value to prevent from first watch and onchange call
         mutableValue: this.value
@@ -44,10 +44,16 @@
        * text in the search input, & there's tags to delete
        * @return {this.value}
        */
-      maybeDeleteValue () {
-        if (!this.requiredValue && !this.$refs.search.value.length && this.mutableValue) {
+      maybeDeleteValue() {
+        if (
+          !this.requiredValue &&
+          !this.$refs.search.value.length &&
+          this.mutableValue
+        ) {
           // eslint-disable-next-line no-return-assign
-          return this.multiple ? this.mutableValue.pop() : this.mutableValue = null
+          return this.multiple
+            ? this.mutableValue.pop()
+            : (this.mutableValue = null)
         }
       },
       /**
@@ -56,9 +62,9 @@
        * @return {Boolean}        True when selected | False otherwise
        * https://github.com/sagalbot/vue-select/commit/8a601c0ac3311adb89bc6e31b8cf215b1343d93c
        */
-      isOptionSelected (option) {
+      isOptionSelected(option) {
         if (this.valueAsArray === undefined) {
-          return false;
+          return false
         }
         return this.valueAsArray.some(value => {
           if (typeof value === 'object') {
@@ -68,7 +74,7 @@
         })
       }
     },
-    mounted () {
+    mounted() {
       if (this.taggable) this.$emit('search', this.search, this.toggleLoading)
     }
   }

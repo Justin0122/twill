@@ -1,4 +1,4 @@
-import { mapGetters,mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 
 import ACTIONS from '@/store/actions'
 import { DATATABLE } from '@/store/mutations/index'
@@ -28,34 +28,32 @@ export default {
   },
   computed: {
     rows: {
-      get () {
+      get() {
         return this.$store.state.datatable.data
       },
-      set (value) {
-        const isChangingParents = (this.rows.length !== value.length)
+      set(value) {
+        const isChangingParents = this.rows.length !== value.length
         this.$store.commit(DATATABLE.UPDATE_DATATABLE_DATA, value)
         this.saveNewTree(isChangingParents)
       }
     },
-    isEmpty: function () {
+    isEmpty: function() {
       return this.rows.length <= 0
     },
-    isEmptyDatable: function () {
+    isEmptyDatable: function() {
       return { 'datatable__table--empty': this.isEmpty }
     },
     ...mapState({
       columns: state => state.datatable.columns
     }),
-    ...mapGetters([
-      'visibleColumns',
-      'hideableColumns',
-      'visibleColumnsNames'
-    ])
+    ...mapGetters(['visibleColumns', 'hideableColumns', 'visibleColumnsNames'])
   },
   methods: {
-    saveNewTree: function (isChangingParents) {
+    saveNewTree: function(isChangingParents) {
       const isNestedAction = isChangingParents ? true : this.nested
-      const action = isNestedAction ? ACTIONS.SET_DATATABLE_NESTED : ACTIONS.SET_DATATABLE
+      const action = isNestedAction
+        ? ACTIONS.SET_DATATABLE_NESTED
+        : ACTIONS.SET_DATATABLE
 
       const save = () => {
         this.$store.commit(DATATABLE.UPDATE_DATATABLE_TRACKER, 0)

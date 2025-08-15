@@ -45,5 +45,5 @@ export default {
   [TableCellPrefix + 'published']: TableCellPublished,
   [TableCellPrefix + 'nested']: TableCellNested,
   [TableCellPrefix + 'thumbnail']: TableCellThumbnail,
-  [TableCellPrefix + 'scheduled_status']: TableCellDates,
+  [TableCellPrefix + 'scheduled_status']: TableCellDates
 }

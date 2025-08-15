@@ -6,37 +6,40 @@ import { getURLWithoutQuery } from '@/utils/pushState.js'
 const component = 'BUCKETS'
 
 export default {
-
-  get: function (params, callback, errorCallback) {
-    axios.get(getURLWithoutQuery(), {
-      params
-    })
-      .then((resp) => {
+  get: function(params, callback, errorCallback) {
+    axios
+      .get(getURLWithoutQuery(), {
+        params
+      })
+      .then(resp => {
         if (callback && typeof callback === 'function') callback(resp.data)
       })
-      .catch((resp) => {
+      .catch(resp => {
         const error = {
           message: 'Get Buckets error',
           value: resp
         }
         globalError(component, error)
-        if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+        if (errorCallback && typeof errorCallback === 'function')
+          errorCallback(resp)
       })
   },
 
-  save (endpoint, params, callback, errorCallback) {
-    axios.post(endpoint, params)
-      .then((resp) => {
+  save(endpoint, params, callback, errorCallback) {
+    axios
+      .post(endpoint, params)
+      .then(resp => {
         if (callback && typeof callback === 'function') callback(resp)
       })
-      .catch((resp) => {
+      .catch(resp => {
         // error callback
         const error = {
           message: 'Buckets save error.',
           value: resp
         }
         globalError(component, error)
-        if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
+        if (errorCallback && typeof errorCallback === 'function')
+          errorCallback(resp)
       })
   }
 }

@@ -50,9 +50,8 @@
   }
 }
 
-
 // @mixin keyline-fill
-@mixin keyline-full($position:top, $color:$color__black) {
+@mixin keyline-full($position: top, $color: $color__black) {
   position: relative;
 
   &::before {

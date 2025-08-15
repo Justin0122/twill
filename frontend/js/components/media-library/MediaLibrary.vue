@@ -278,30 +278,40 @@
       node: { type: Object, required: true }, // { id, name, path, children: [] }, root: { id:null, name:'', path:'' }
       level: { type: Number, default: 0 },
       activePath: { type: Array, default: () => [] },
-      activeId:   { type: [Number, String, null], default: null }
+      activeId: { type: [Number, String, null], default: null }
     },
-    data () {
+    data() {
       return { open: false }
     },
     computed: {
-      isOnActivePath () {
+      isOnActivePath() {
         const here = this.pathHere()
         return here.every((seg, idx) => this.activePath[idx] === seg)
       },
-      shouldBeOpen () { return this.level === 0 || this.isOnActivePath },
-      isActiveHere () { return this.node.id !== null && this.node.id === this.activeId }
+      shouldBeOpen() {
+        return this.level === 0 || this.isOnActivePath
+      },
+      isActiveHere() {
+        return this.node.id !== null && this.node.id === this.activeId
+      }
     },
     watch: {
-      activePath: { handler () { if (this.shouldBeOpen) this.open = true }, deep: true, immediate: true }
+      activePath: {
+        handler() {
+          if (this.shouldBeOpen) this.open = true
+        },
+        deep: true,
+        immediate: true
+      }
     },
     methods: {
-      onSelectFolder (payload) {
-        this.currentFolderId   = payload.id ?? null
+      onSelectFolder(payload) {
+        this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
         this.saveLastFolder()
         this.submitFilter()
       },
-      pathHere () {
+      pathHere() {
         const path = []
         let n = this
         while (n && n.node) {
@@ -311,17 +321,24 @@
         }
         return path
       },
-      selectSelf () {
-        this.$emit('select', { id: this.node.id ?? null, path: this.level === 0 ? [] : this.pathHere() })
+      selectSelf() {
+        this.$emit('select', {
+          id: this.node.id ?? null,
+          path: this.level === 0 ? [] : this.pathHere()
+        })
       },
-      createHere () {
+      createHere() {
         this.$emit('create', this.pathHere())
       },
-      renameHere () {
-        if (this.node.id != null) this.$emit('rename', { id: this.node.id, path: this.pathHere() })
+      renameHere() {
+        if (this.node.id != null)
+          this.$emit('rename', { id: this.node.id, path: this.pathHere() })
       },
-      toggleOpen () {
-        if (this.shouldBeOpen) { this.open = true; return }
+      toggleOpen() {
+        if (this.shouldBeOpen) {
+          this.open = true
+          return
+        }
         this.open = !this.open
       }
     },
@@ -513,11 +530,16 @@
       storageKey() {
         return `twill:ml:lastFolder:${this.endpoint}:${this.type}`
       },
-      saveLastFolder () {
+      saveLastFolder() {
         try {
           localStorage.setItem(this.storageKey(), this.currentFolderFullPath)
-          localStorage.setItem(this.storageKey() + ':id', this.currentFolderId ?? '')
-        } catch (e) {/* fallback cookie like before */}
+          localStorage.setItem(
+            this.storageKey() + ':id',
+            this.currentFolderId ?? ''
+          )
+        } catch (e) {
+          /* fallback cookie like before */
+        }
       },
       readCookie(name) {
         const cookies = document.cookie ? document.cookie.split('; ') : []
@@ -683,12 +705,13 @@
           )
         }
       },
-      getFormData (form) {
+      getFormData(form) {
         let data = FormDataAsObj(form)
         if (data) data.page = this.page
         else data = { page: this.page }
         data.type = this.type
-        if (Array.isArray(data.unused) && data.unused.length) data.unused = data.unused[0]
+        if (Array.isArray(data.unused) && data.unused.length)
+          data.unused = data.unused[0]
         data.folder_id = this.currentFolderId ?? '' // '' or null => root
         return data
       },
@@ -761,40 +784,51 @@
           }
         )
       },
-      onSelectFolder (payload) {
+      onSelectFolder(payload) {
         // payload: { id: number|null, path: string[] }
-        this.currentFolderId   = payload.id ?? null
+        this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
-        this.saveLastFolder()  // persists "path"; you can optionally persist id too
+        this.saveLastFolder() // persists "path"; you can optionally persist id too
         this.submitFilter()
       },
 
       // Rename folder
-      onRenameFolder (payload) {
+      onRenameFolder(payload) {
         // payload: { id, path }
         const currentName = payload.path.slice(-1)[0] || ''
-        const name = window.prompt(this.$trans('media-library.rename-folder', 'Rename folder'), currentName)
+        const name = window.prompt(
+          this.$trans('media-library.rename-folder', 'Rename folder'),
+          currentName
+        )
         if (!name) return
 
         api.renameFolder(
           this.endpoint,
           payload.id,
           { type: this.type, name },
-          (resp) => {
+          resp => {
             // If we renamed the current folder, update breadcrumbs path only (id stays the same)
             if (this.currentFolderId === payload.id) {
-              const newPath = (resp.data.folder.path || '').split('/').filter(Boolean)
+              const newPath = (resp.data.folder.path || '')
+                .split('/')
+                .filter(Boolean)
               this.currentFolderPath = newPath
             }
             this.loadFolderTree()
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: this.$trans('media-library.renamed', 'Folder renamed'), variant: 'success' })
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.renamed', 'Folder renamed'),
+              variant: 'success'
+            })
           },
-          (error) => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: error.data?.message || 'Unable to rename folder', variant: 'error' })
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to rename folder',
+              variant: 'error'
+            })
           }
         )
       },
-      moveSelectedToCurrentFolder () {
+      moveSelectedToCurrentFolder() {
         if (!this.selectedMedias.length) return
         api.moveToFolder(
           this.endpoint,
@@ -804,13 +838,19 @@
             mediaIds: this.selectedMedias.map(m => m.id)
           },
           () => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: this.$trans('media-library.moved', 'Moved to folder'), variant: 'success' })
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.moved', 'Moved to folder'),
+              variant: 'success'
+            })
             this.page = 1
             this.clearMediaItems()
             this.reloadGrid()
           },
-          (error) => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: error.data?.message || 'Unable to move items', variant: 'error' })
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to move items',
+              variant: 'error'
+            })
           }
         )
       },

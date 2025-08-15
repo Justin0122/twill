@@ -2,11 +2,11 @@ export default {
   props: {
     col: {
       type: Object,
-      default: () => { }
+      default: () => {}
     },
     row: {
       type: Object,
-      default: () => { }
+      default: () => {}
     },
     editUrl: {
       type: String,
@@ -18,34 +18,34 @@ export default {
     }
   },
   computed: {
-    colName: function () {
+    colName: function() {
       return this.col.hasOwnProperty('name') ? this.col.name : ''
     }
   },
   methods: {
-    update: function () {
+    update: function() {
       this.$emit('update', { row: this.row, col: this.colName })
     },
-    preventEditInPlace: function (event) {
+    preventEditInPlace: function(event) {
       if (this.editInModal) {
         event.preventDefault()
       }
 
       this.editInPlace()
     },
-    editInPlace: function (event, lang) {
+    editInPlace: function(event, lang) {
       this.$emit('editInPlace', { event, lang })
     },
-    restoreRow: function () {
+    restoreRow: function() {
       this.$emit('restoreRow', this.row)
     },
-    destroyRow: function () {
+    destroyRow: function() {
       this.$emit('destroyRow', this.row)
     },
-    deleteRow: function () {
+    deleteRow: function() {
       this.$emit('deleteRow', this.row)
     },
-    duplicateRow: function () {
+    duplicateRow: function() {
       this.$emit('duplicateRow', this.row)
     }
   }

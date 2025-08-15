@@ -2,26 +2,60 @@
   <div class="cropper">
     <header class="cropper__header">
       <ul v-if="multiCrops" class="cropper__breakpoints">
-        <li v-for="(crop, key, index) in cropOptions" :key="key" :class="{ 's--active' : toggleBreakpoint === index }" @click="changeCrop(key, index)">{{ key | capitalize }}</li>
+        <li
+          v-for="(crop, key, index) in cropOptions"
+          :key="key"
+          :class="{ 's--active': toggleBreakpoint === index }"
+          @click="changeCrop(key, index)"
+        >
+          {{ key | capitalize }}
+        </li>
       </ul>
       <!-- Preset Ratios Section -->
       <ul class="cropper__presets">
-        <li v-for="preset in presetRatios" :key="preset.name" :class="{ 's--active': currentPreset && currentPreset.name === preset.name }" @click="selectPreset(preset)">
+        <li
+          v-for="preset in presetRatios"
+          :key="preset.name"
+          :class="{
+            's--active': currentPreset && currentPreset.name === preset.name
+          }"
+          @click="selectPreset(preset)"
+        >
           {{ preset.name }}
         </li>
-        <li v-if="currentPreset" class="cropper__clear" @click="clearPreset">Clear</li>
+        <li v-if="currentPreset" class="cropper__clear" @click="clearPreset">
+          Clear
+        </li>
       </ul>
     </header>
     <div class="cropper__content">
       <div class="cropper__wrapper" ref="cropWrapper">
-        <img class="cropper__img" ref="cropImage" :src="currentMedia.medium || currentMedia.original" :alt="currentMedia.name">
+        <img
+          class="cropper__img"
+          ref="cropImage"
+          :src="currentMedia.medium || currentMedia.original"
+          :alt="currentMedia.name"
+        />
       </div>
     </div>
     <footer class="cropper__footer">
       <ul v-if="ratiosByContext.length > 1" class="cropper__ratios">
-        <li class="f--small" v-for="ratio in ratiosByContext" @click="changeRatio(ratio)" :key="ratio.name" :class="{ 's--active' : currentRatioName === ratio.name }">{{ ratio.name | capitalize }}</li>
+        <li
+          class="f--small"
+          v-for="ratio in ratiosByContext"
+          @click="changeRatio(ratio)"
+          :key="ratio.name"
+          :class="{ 's--active': currentRatioName === ratio.name }"
+        >
+          {{ ratio.name | capitalize }}
+        </li>
       </ul>
-      <span class="cropper__values f--small hide--xsmall" :class="cropperWarning">{{ cropValues.original.width }} &times; {{ cropValues.original.height }}</span>
+      <span
+        class="cropper__values f--small hide--xsmall"
+        :class="cropperWarning"
+        >{{ cropValues.original.width }} &times;
+        {{ cropValues.original.height }}</span
+      >
       <slot></slot>
     </footer>
   </div>
@@ -50,7 +84,7 @@
       }
     },
     mixins: [cropperMixin],
-    data: function () {
+    data: function() {
       return {
         cropper: null,
         currentMedia: this.media,
@@ -70,41 +104,43 @@
           width: 0,
           height: 0
         },
-        currentRatioName: this.media.crops[Object.keys(this.media.crops)[0]].name,
+        currentRatioName: this.media.crops[Object.keys(this.media.crops)[0]]
+          .name,
         presetRatios: [
           { name: 'Square', ratio: 1 },
           { name: 'Thumbnail', ratio: 1.5 },
           { name: 'Wide', ratio: 2 },
           { name: '3/4', ratio: 0.75 },
-          { name: '4/3', ratio: 1.333 },
+          { name: '4/3', ratio: 1.333 }
         ],
         currentPreset: null
       }
     },
     watch: {
-      media: function (newMedia) {
+      media: function(newMedia) {
         this.currentMedia = newMedia
       }
     },
     computed: {
-      cropOptions: function () {
-        if (this.allCrops.hasOwnProperty(this.context)) return this.allCrops[this.context]
+      cropOptions: function() {
+        if (this.allCrops.hasOwnProperty(this.context))
+          return this.allCrops[this.context]
         return {}
       },
-      crop: function () {
+      crop: function() {
         return this.currentMedia.crops[this.currentCrop] || {}
       },
-      multiCrops: function () {
+      multiCrops: function() {
         return Object.keys(this.cropOptions).length > 1
       },
-      ratiosByContext: function () {
+      ratiosByContext: function() {
         const filtered = this.cropOptions[this.currentCrop]
         if (filtered) {
           return filtered
         }
         return []
       },
-      cropperOpts: function () {
+      cropperOpts: function() {
         return {
           ...this.defaultCropsOpts,
           cropmove: () => {
@@ -115,9 +151,11 @@
           }
         }
       },
-      cropperWarning: function () {
+      cropperWarning: function() {
         return {
-          cropper__warning: this.cropValues.original.width < this.minCropValues.width || this.cropValues.original.height < this.minCropValues.height
+          cropper__warning:
+            this.cropValues.original.width < this.minCropValues.width ||
+            this.cropValues.original.height < this.minCropValues.height
         }
       },
       ...mapState({
@@ -125,38 +163,48 @@
       })
     },
     filters: a17VueFilters,
-    mounted: function () {
+    mounted: function() {
       const opts = this.cropperOpts
       const imageBox = this.$refs.cropImage
       const imageWrapper = this.$refs.cropWrapper
       const img = new Image()
 
-      img.addEventListener('load', () => {
-        imageWrapper.style.maxWidth = imageWrapper.getBoundingClientRect().width + 'px'
-        imageWrapper.style.minHeight = imageWrapper.getBoundingClientRect().height + 'px'
+      img.addEventListener(
+        'load',
+        () => {
+          imageWrapper.style.maxWidth =
+            imageWrapper.getBoundingClientRect().width + 'px'
+          imageWrapper.style.minHeight =
+            imageWrapper.getBoundingClientRect().height + 'px'
 
-        this.cropper = new CropperJs(imageBox, opts)
-      }, {
-        once: true,
-        passive: true,
-        capture: true
-      })
+          this.cropper = new CropperJs(imageBox, opts)
+        },
+        {
+          once: true,
+          passive: true,
+          capture: true
+        }
+      )
 
       img.src = this.currentMedia.medium || this.currentMedia.original
 
       // init displayed crop values
-      imageBox.addEventListener('ready', () => {
-        this.cropValues.natural.width = img.naturalWidth
-        this.cropValues.natural.height = img.naturalHeight
-        this.updateCrop()
-      }, {
-        once: true,
-        passive: true,
-        capture: true
-      })
+      imageBox.addEventListener(
+        'ready',
+        () => {
+          this.cropValues.natural.width = img.naturalWidth
+          this.cropValues.natural.height = img.naturalHeight
+          this.updateCrop()
+        },
+        {
+          once: true,
+          passive: true,
+          capture: true
+        }
+      )
     },
     methods: {
-      initAspectRatio: function () {
+      initAspectRatio: function() {
         if (this.currentPreset) {
           this.minCropValues.width = 0
           this.minCropValues.height = 0
@@ -164,95 +212,104 @@
           return
         }
         const filtered = this.ratiosByContext
-        const filter = filtered.find((r) => r.name === this.currentRatioName)
+        const filter = filtered.find(r => r.name === this.currentRatioName)
 
         if (typeof filter !== 'undefined' && filter) {
-          this.minCropValues.width = filter.minValues ? filter.minValues.width : 0
-          this.minCropValues.height = filter.minValues ? filter.minValues.height : 0
+          this.minCropValues.width = filter.minValues
+            ? filter.minValues.width
+            : 0
+          this.minCropValues.height = filter.minValues
+            ? filter.minValues.height
+            : 0
           this.cropper.setAspectRatio(filter.ratio)
           return
         }
         this.cropper.setAspectRatio(NaN)
       },
-      changeCrop: function (cropName, index) {
+      changeCrop: function(cropName, index) {
         this.currentCrop = cropName
-        this.currentRatioName = this.crop.name || this.cropOptions[cropName][0].name
+        this.currentRatioName =
+          this.crop.name || this.cropOptions[cropName][0].name
         this.toggleBreakpoint = index
 
         this.updateCrop()
         this.sendCropperValues()
       },
-      changeRatio: function (ratioObj) {
+      changeRatio: function(ratioObj) {
         if (this.currentPreset) return // Ignore if preset is active
         this.currentRatioName = ratioObj.name
         this.updateCrop()
         this.sendCropperValues()
       },
-      selectPreset: function (preset) {
+      selectPreset: function(preset) {
         this.currentPreset = preset
         this.cropper.setAspectRatio(preset.ratio)
         this.sendCropperValues()
       },
-      clearPreset: function () {
+      clearPreset: function() {
         this.currentPreset = null
         this.updateCrop()
         this.sendCropperValues()
       },
-      updateCrop: function () {
+      updateCrop: function() {
         this.initAspectRatio()
         this.initCrop()
         this.updateCropperValues()
       },
-      updateCropperValues: function () {
+      updateCropperValues: function() {
         const data = this.cropper.getData(true)
         const originalCrop = this.toOriginalCrop(data)
         this.cropValues.original.width = originalCrop.width
         this.cropValues.original.height = originalCrop.height
       },
-      initCrop: function () {
-        let crop;
+      initCrop: function() {
+        let crop
         if (this.currentPreset) {
-          const natural = this.cropValues.natural;
-          let width = natural.width;
-          let height = Math.round(width / this.currentPreset.ratio);
+          const natural = this.cropValues.natural
+          let width = natural.width
+          let height = Math.round(width / this.currentPreset.ratio)
 
           if (height > natural.height) {
-            height = natural.height;
-            width = Math.round(height * this.currentPreset.ratio);
+            height = natural.height
+            width = Math.round(height * this.currentPreset.ratio)
           }
 
-          crop = { x: 0, y: 0, width, height };
-          this.cropper.setData(crop);
-          this.cropper.setAspectRatio(this.currentPreset.ratio);
+          crop = { x: 0, y: 0, width, height }
+          this.cropper.setData(crop)
+          this.cropper.setAspectRatio(this.currentPreset.ratio)
         } else {
-          crop = this.toNaturalCrop(this.crop);
-          this.cropper.setData(crop);
-          this.cropper.setData({ x: crop.x });
-          this.cropper.setData({ y: crop.y });
+          crop = this.toNaturalCrop(this.crop)
+          this.cropper.setData(crop)
+          this.cropper.setData({ x: crop.x })
+          this.cropper.setData({ y: crop.y })
         }
       },
-      test: function () {
+      test: function() {
         const crop = this.toNaturalCrop({ x: 0, y: 0, width: 380, height: 475 })
         this.cropper.setAspectRatio(0.8)
         this.cropper.setData(crop)
       },
-      sendCropperValues: function () {
+      sendCropperValues: function() {
         const data = {}
         data.values = {}
-        data.values[this.currentCrop] = this.toOriginalCrop(this.cropper.getData(true))
+        data.values[this.currentCrop] = this.toOriginalCrop(
+          this.cropper.getData(true)
+        )
         // If preset is active, use its name
-        data.values[this.currentCrop].name = this.currentPreset ? this.currentPreset.name : this.currentRatioName
+        data.values[this.currentCrop].name = this.currentPreset
+          ? this.currentPreset.name
+          : this.currentRatioName
 
         this.$emit('crop-end', data)
       },
-      toNaturalCrop: function (data) {
+      toNaturalCrop: function(data) {
         return cropConversion(data, this.cropValues.natural, this.currentMedia)
       },
-      toOriginalCrop: function (data) {
+      toOriginalCrop: function(data) {
         return cropConversion(data, this.currentMedia, this.cropValues.natural)
       }
     },
-    beforeDestroy: function () {
+    beforeDestroy: function() {
       this.cropper.destroy()
     }
   }
@@ -271,7 +328,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-grow:1;
+    flex-grow: 1;
     height: 430px;
     background-color: $color__light;
 
@@ -365,7 +422,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height:75px;
+      min-height: 75px;
     }
 
     .cropper__ratios {
@@ -402,7 +459,7 @@
         }
 
         &:disabled {
-          opacity: .5;
+          opacity: 0.5;
           pointer-events: none;
         }
 

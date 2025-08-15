@@ -116,9 +116,9 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
   store, // inject store to all children
   el: '#app',
   mixins: [formatPermalink, editorMixin, retrySubmitMixin],
-  data: function () {
+  data: function() {
     return {
-      unSubscribe: function () {
+      unSubscribe: function() {
         return null
       },
       isFormUpdated: false
@@ -130,13 +130,10 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
       editor: state => state.blocks.editor,
       isCustom: state => state.form.isCustom
     }),
-    ...mapGetters([
-      'getSaveType',
-      'isEnabledSubmitOption'
-    ])
+    ...mapGetters(['getSaveType', 'isEnabledSubmitOption'])
   },
   methods: {
-    submitForm: function () {
+    submitForm: function() {
       if (this.isSubmitPrevented) {
         this.shouldRetrySubmitWhenAllowed = true
         return
@@ -163,13 +160,15 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
         })
       }
     },
-    confirmExit: function (event) {
+    confirmExit: function(event) {
       if (!this.isFormUpdated || this.isCustom) {
         if (window.event !== undefined) window.event.cancelBubble = true
         else event.cancelBubble = true
-      } else { return 'message' }
+      } else {
+        return 'message'
+      }
     },
-    mutationsSubscribe: function () {
+    mutationsSubscribe: function() {
       // Subscribe to store mutation
       this.unSubscribe = this.$store.subscribe((mutation, state) => {
         if (FORM_MUTATIONS_TO_SUBSCRIBE.includes(mutation.type)) {
@@ -178,23 +177,37 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
         }
       })
     },
-    watchForFormUpdates (module, prop) {
-      const sortArrays = module === 'form' && (prop === 'fields' || prop === 'modalFields')
+    watchForFormUpdates(module, prop) {
+      const sortArrays =
+        module === 'form' && (prop === 'fields' || prop === 'modalFields')
       // Store the original form state, we will compare against this. It is important to sort it the same way as when
       // we are comparing so that order changes in the fields dont matter.
-      const originalForm = this.sortObjectArraysDeep(cloneDeep(this.$store.state[module][prop]), sortArrays)
-      this.$store.watch((state) => {
-        return state[module][prop]
-      }, (newForm) => {
-        const compareTo = this.sortObjectArraysDeep(cloneDeep(newForm), sortArrays)
-        this.isFormUpdated = !isEqual(originalForm, compareTo)
-        this.$store.commit(PUBLICATION.UPDATE_HAS_UNSAVED_CHANGES, this.isFormUpdated)
-      }, {
-        deep: true
-      })
+      const originalForm = this.sortObjectArraysDeep(
+        cloneDeep(this.$store.state[module][prop]),
+        sortArrays
+      )
+      this.$store.watch(
+        state => {
+          return state[module][prop]
+        },
+        newForm => {
+          const compareTo = this.sortObjectArraysDeep(
+            cloneDeep(newForm),
+            sortArrays
+          )
+          this.isFormUpdated = !isEqual(originalForm, compareTo)
+          this.$store.commit(
+            PUBLICATION.UPDATE_HAS_UNSAVED_CHANGES,
+            this.isFormUpdated
+          )
+        },
+        {
+          deep: true
+        }
+      )
     },
-    sortArrayByFirstKey (data) {
-      return sortBy(data, (o) => {
+    sortArrayByFirstKey(data) {
+      return sortBy(data, o => {
         if (typeof o === 'object') {
           const firstKey = Object.keys(o)[0]
           return o[firstKey]
@@ -202,7 +215,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
         return o
       })
     },
-    sortObjectArraysDeep (data, sortArrays = false) {
+    sortObjectArraysDeep(data, sortArrays = false) {
       if (Array.isArray(data) && sortArrays) {
         data = this.sortArrayByFirstKey(data)
       } else {
@@ -220,7 +233,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
       return data
     }
   },
-  mounted: function () {
+  mounted: function() {
     // Hook up the confirmation popup.
     window.onbeforeunload = this.confirmExit
 
@@ -234,10 +247,10 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
       this.watchForFormUpdates('repeaters', 'repeaters')
     })
   },
-  beforeDestroy: function () {
+  beforeDestroy: function() {
     this.unSubscribe()
   },
-  created: function () {
+  created: function() {
     openMediaLibrary()
   }
 })

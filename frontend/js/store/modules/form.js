@@ -7,10 +7,21 @@
 import cloneDeep from 'lodash/cloneDeep'
 
 import ACTIONS from '@/store/actions'
-import { getFormData, getFormFields, getModalFormFields } from '@/utils/getFormData.js'
+import {
+  getFormData,
+  getFormFields,
+  getModalFormFields
+} from '@/utils/getFormData.js'
 
 import api from '../api/form'
-import { ATTRIBUTES, FORM, LANGUAGE, NOTIFICATION, PUBLICATION, REVISION } from '../mutations'
+import {
+  ATTRIBUTES,
+  FORM,
+  LANGUAGE,
+  NOTIFICATION,
+  PUBLICATION,
+  REVISION
+} from '../mutations'
 
 const getFieldIndex = (stateKey, field) => {
   return stateKey.findIndex(f => f.name === field.name)
@@ -61,7 +72,8 @@ const state = {
    * Url to get only the preview of a block
    * @type {String}
    */
-  blockPreviewUrl: window[process.env.VUE_APP_NAME].STORE.form.blockPreviewUrl || '',
+  blockPreviewUrl:
+    window[process.env.VUE_APP_NAME].STORE.form.blockPreviewUrl || '',
   /**
    * Form errors after submitting
    * @type {Object}
@@ -76,7 +88,8 @@ const state = {
    * Force reload on successful submit
    * @type {Boolean}
    */
-  reloadOnSuccess: window[process.env.VUE_APP_NAME].STORE.form.reloadOnSuccess || false,
+  reloadOnSuccess:
+    window[process.env.VUE_APP_NAME].STORE.form.reloadOnSuccess || false,
   /**
    * Determines if the form should prevent submitting before an input value is pushed into the store
    * @type {Boolean}
@@ -86,48 +99,57 @@ const state = {
 
 // getters
 const getters = {
-  fieldsByName (state) {
-    return name => state.fields.filter(function (field) {
-      return field.name === name
-    })
+  fieldsByName(state) {
+    return name =>
+      state.fields.filter(function(field) {
+        return field.name === name
+      })
   },
-  fieldValueByName: (state, getters) => name => { // want to use getters
-    return getters.fieldsByName(name).length ? getters.fieldsByName(name)[0].value : ''
+  fieldValueByName: (state, getters) => name => {
+    // want to use getters
+    return getters.fieldsByName(name).length
+      ? getters.fieldsByName(name)[0].value
+      : ''
   },
-  modalFieldsByName (state) {
-    return name => state.modalFields.filter(function (field) {
-      return field.name === name
-    })
+  modalFieldsByName(state) {
+    return name =>
+      state.modalFields.filter(function(field) {
+        return field.name === name
+      })
   },
-  modalFieldValueByName: (state, getters) => name => { // want to use getters
-    return getters.modalFieldsByName(name).length ? getters.modalFieldsByName(name)[0].value : ''
+  modalFieldValueByName: (state, getters) => name => {
+    // want to use getters
+    return getters.modalFieldsByName(name).length
+      ? getters.modalFieldsByName(name)[0].value
+      : ''
   },
-  fieldsByBlockId: (state) => (id) => state.fields.filter((field) => field.name.startsWith(`blocks[${id}]`))
+  fieldsByBlockId: state => id =>
+    state.fields.filter(field => field.name.startsWith(`blocks[${id}]`))
 }
 
 const mutations = {
-  [FORM.UPDATE_FORM_PERMALINK] (state, newValue) {
+  [FORM.UPDATE_FORM_PERMALINK](state, newValue) {
     if (newValue && newValue !== '') {
       state.permalink = newValue
     }
   },
-  [FORM.PREVENT_SUBMIT] (state) {
+  [FORM.PREVENT_SUBMIT](state) {
     state.isSubmitPrevented = true
   },
-  [FORM.ALLOW_SUBMIT] (state) {
+  [FORM.ALLOW_SUBMIT](state) {
     state.isSubmitPrevented = false
   },
   // ----------- Form fields ----------- //
-  [FORM.EMPTY_FORM_FIELDS] (state, status) {
+  [FORM.EMPTY_FORM_FIELDS](state, status) {
     state.fields = []
   },
-  [FORM.ADD_FORM_FIELDS] (state, fields) {
+  [FORM.ADD_FORM_FIELDS](state, fields) {
     state.fields = [...state.fields, ...fields]
   },
-  [FORM.REPLACE_FORM_FIELDS] (state, fields) {
+  [FORM.REPLACE_FORM_FIELDS](state, fields) {
     state.fields = fields
   },
-  [FORM.UPDATE_FORM_FIELD] (state, field) {
+  [FORM.UPDATE_FORM_FIELD](state, field) {
     let fieldValue = field.locale ? {} : null
     const fieldIndex = getFieldIndex(state.fields, field)
     // Update existing form field
@@ -145,12 +167,12 @@ const mutations = {
       value: fieldValue
     })
   },
-  [FORM.REMOVE_FORM_FIELD] (state, fieldName) {
-    state.fields.forEach(function (field, index) {
+  [FORM.REMOVE_FORM_FIELD](state, fieldName) {
+    state.fields.forEach(function(field, index) {
       if (field.name === fieldName) state.fields.splice(index, 1)
     })
   },
-  [FORM.DUPLICATE_BLOCK_FORM_FIELDS] (state, { fields, oldId, newId }) {
+  [FORM.DUPLICATE_BLOCK_FORM_FIELDS](state, { fields, oldId, newId }) {
     const newFields = []
 
     fields.forEach(field => {
@@ -162,13 +184,13 @@ const mutations = {
     state.fields = [...state.fields, ...newFields]
   },
   // ----------- Modal fields ----------- //
-  [FORM.EMPTY_MODAL_FIELDS] (state, status) {
+  [FORM.EMPTY_MODAL_FIELDS](state, status) {
     state.modalFields = []
   },
-  [FORM.REPLACE_MODAL_FIELDS] (state, fields) {
+  [FORM.REPLACE_MODAL_FIELDS](state, fields) {
     state.modalFields = fields
   },
-  [FORM.UPDATE_MODAL_FIELD] (state, field) {
+  [FORM.UPDATE_MODAL_FIELD](state, field) {
     let fieldValue = field.locale ? {} : null
     const fieldIndex = getFieldIndex(state.modalFields, field)
 
@@ -187,31 +209,31 @@ const mutations = {
       value: fieldValue
     })
   },
-  [FORM.REMOVE_MODAL_FIELD] (state, fieldName) {
-    state.modalFields.forEach(function (field, index) {
+  [FORM.REMOVE_MODAL_FIELD](state, fieldName) {
+    state.modalFields.forEach(function(field, index) {
       if (field.name === fieldName) state.modalFields.splice(index, 1)
     })
   },
   // ----------- Form errors and Loading ----------- //
-  [FORM.UPDATE_FORM_LOADING] (state, loading) {
+  [FORM.UPDATE_FORM_LOADING](state, loading) {
     state.loading = loading || !state.loading
   },
-  [FORM.SET_FORM_ERRORS] (state, errors) {
+  [FORM.SET_FORM_ERRORS](state, errors) {
     state.errors = errors
   },
-  [FORM.CLEAR_FORM_ERRORS] (state) {
+  [FORM.CLEAR_FORM_ERRORS](state) {
     state.errors = []
   },
-  [FORM.UPDATE_FORM_SAVE_TYPE] (state, type) {
+  [FORM.UPDATE_FORM_SAVE_TYPE](state, type) {
     state.type = type
   }
 }
 
 const actions = {
-  [ACTIONS.HANDLE_ERRORS] ({ commit, state, getters, rootState }, errors) {
+  [ACTIONS.HANDLE_ERRORS]({ commit, state, getters, rootState }, errors) {
     const repeaters = rootState.repeaters.repeaters
     // Translate the errors to their respective fields.
-    Object.keys(errors).forEach((errorKey) => {
+    Object.keys(errors).forEach(errorKey => {
       const splitted = errorKey.split('.')
 
       if (splitted.length >= 4) {
@@ -230,36 +252,46 @@ const actions = {
 
     commit(FORM.SET_FORM_ERRORS, errors)
   },
-  [ACTIONS.REPLACE_FORM] ({ commit, state, getters, rootState, dispatch }, endpoint) {
+  [ACTIONS.REPLACE_FORM](
+    { commit, state, getters, rootState, dispatch },
+    endpoint
+  ) {
     return new Promise((resolve, reject) => {
       commit(FORM.CLEAR_FORM_ERRORS)
       commit(NOTIFICATION.CLEAR_NOTIF, 'error')
 
-      api.get(endpoint, function (successResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
+      api.get(
+        endpoint,
+        function(successResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
 
-        const data = successResponse.data
+          const data = successResponse.data
 
-        if (data.hasOwnProperty('languages')) {
-          commit(LANGUAGE.REPLACE_LANGUAGES, data.languages)
-          delete data.languages
+          if (data.hasOwnProperty('languages')) {
+            commit(LANGUAGE.REPLACE_LANGUAGES, data.languages)
+            delete data.languages
+          }
+
+          if (data.hasOwnProperty('revisions')) {
+            commit(REVISION.UPDATE_REV_ALL, data.revisions)
+            delete data.revisions
+          }
+
+          commit(FORM.REPLACE_FORM_FIELDS, data.fields)
+          resolve()
+        },
+        function(errorResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
+          dispatch(ACTIONS.HANDLE_ERRORS, errorResponse.response.data)
+          reject(errorResponse)
         }
-
-        if (data.hasOwnProperty('revisions')) {
-          commit(REVISION.UPDATE_REV_ALL, data.revisions)
-          delete data.revisions
-        }
-
-        commit(FORM.REPLACE_FORM_FIELDS, data.fields)
-        resolve()
-      }, function (errorResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
-        dispatch(ACTIONS.HANDLE_ERRORS, errorResponse.response.data)
-        reject(errorResponse)
-      })
+      )
     })
   },
-  [ACTIONS.UPDATE_FORM_IN_LISTING] ({ commit, state, getters, rootState }, options) {
+  [ACTIONS.UPDATE_FORM_IN_LISTING](
+    { commit, state, getters, rootState },
+    options
+  ) {
     return new Promise((resolve, reject) => {
       commit(FORM.CLEAR_FORM_ERRORS)
       commit(NOTIFICATION.CLEAR_NOTIF, 'error')
@@ -268,24 +300,42 @@ const actions = {
         languages: rootState.language.all
       })
 
-      api[options.method](options.endpoint, data, function (successResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
+      api[options.method](
+        options.endpoint,
+        data,
+        function(successResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
 
-        if (successResponse.data.hasOwnProperty('redirect') && options.redirect) {
-          window.location.replace(successResponse.data.redirect)
+          if (
+            successResponse.data.hasOwnProperty('redirect') &&
+            options.redirect
+          ) {
+            window.location.replace(successResponse.data.redirect)
+          }
+
+          commit(NOTIFICATION.SET_NOTIF, {
+            message: successResponse.data.message,
+            variant: successResponse.data.variant
+          })
+          resolve()
+        },
+        function(errorResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
+          commit(FORM.SET_FORM_ERRORS, errorResponse.response.data)
+          commit(NOTIFICATION.SET_NOTIF, {
+            message:
+              'Your submission could not be validated, please fix and retry',
+            variant: 'error'
+          })
+          reject(errorResponse)
         }
-
-        commit(NOTIFICATION.SET_NOTIF, { message: successResponse.data.message, variant: successResponse.data.variant })
-        resolve()
-      }, function (errorResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
-        commit(FORM.SET_FORM_ERRORS, errorResponse.response.data)
-        commit(NOTIFICATION.SET_NOTIF, { message: 'Your submission could not be validated, please fix and retry', variant: 'error' })
-        reject(errorResponse)
-      })
+      )
     })
   },
-  [ACTIONS.CREATE_FORM_IN_MODAL] ({ commit, state, getters, rootState }, options) {
+  [ACTIONS.CREATE_FORM_IN_MODAL](
+    { commit, state, getters, rootState },
+    options
+  ) {
     return new Promise((resolve, reject) => {
       commit(FORM.CLEAR_FORM_ERRORS)
       commit(NOTIFICATION.CLEAR_NOTIF, 'error')
@@ -295,26 +345,38 @@ const actions = {
         languages: rootState.language.all
       })
 
-      api[options.method](options.endpoint, data, function (successResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
+      api[options.method](
+        options.endpoint,
+        data,
+        function(successResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
 
-        // SuccessResponse much the newly created attributes as json
-        commit(ATTRIBUTES.UPDATE_OPTIONS, {
-          name: options.name,
-          options: successResponse.data
-        })
+          // SuccessResponse much the newly created attributes as json
+          commit(ATTRIBUTES.UPDATE_OPTIONS, {
+            name: options.name,
+            options: successResponse.data
+          })
 
-        // commit(NOTIFICATION.SET_NOTIF, { message: successResponse.data.message, variant: successResponse.data.variant })
-        resolve()
-      }, function (errorResponse) {
-        commit(FORM.UPDATE_FORM_LOADING, false)
-        commit(FORM.SET_FORM_ERRORS, errorResponse.response.data)
-        commit(NOTIFICATION.SET_NOTIF, { message: 'Your submission could not be validated, please fix and retry', variant: 'error' })
-        reject(errorResponse)
-      })
+          // commit(NOTIFICATION.SET_NOTIF, { message: successResponse.data.message, variant: successResponse.data.variant })
+          resolve()
+        },
+        function(errorResponse) {
+          commit(FORM.UPDATE_FORM_LOADING, false)
+          commit(FORM.SET_FORM_ERRORS, errorResponse.response.data)
+          commit(NOTIFICATION.SET_NOTIF, {
+            message:
+              'Your submission could not be validated, please fix and retry',
+            variant: 'error'
+          })
+          reject(errorResponse)
+        }
+      )
     })
   },
-  [ACTIONS.SAVE_FORM] ({ commit, state, getters, rootState, dispatch }, saveType) {
+  [ACTIONS.SAVE_FORM](
+    { commit, state, getters, rootState, dispatch },
+    saveType
+  ) {
     commit(FORM.CLEAR_FORM_ERRORS)
     commit(NOTIFICATION.CLEAR_NOTIF, 'error')
 
@@ -330,36 +392,55 @@ const actions = {
 
     const method = rootState.publication.createWithoutModal ? 'post' : 'put'
 
-    api[method](state.saveUrl, data, function (successResponse) {
-      commit(FORM.UPDATE_FORM_LOADING, false)
+    api[method](
+      state.saveUrl,
+      data,
+      function(successResponse) {
+        commit(FORM.UPDATE_FORM_LOADING, false)
 
-      if (successResponse.data.hasOwnProperty('redirect')) {
-        window.location.replace(successResponse.data.redirect)
-      }
+        if (successResponse.data.hasOwnProperty('redirect')) {
+          window.location.replace(successResponse.data.redirect)
+        }
 
-      if (state.reloadOnSuccess) {
-        window.location.reload()
-      }
+        if (state.reloadOnSuccess) {
+          window.location.reload()
+        }
 
-      commit(NOTIFICATION.SET_NOTIF, { message: successResponse.data.message, variant: successResponse.data.variant })
-      commit(PUBLICATION.UPDATE_PUBLISH_SUBMIT)
-      if (successResponse.data.hasOwnProperty('revisions')) {
-        commit(REVISION.UPDATE_REV_ALL, successResponse.data.revisions)
-      }
-    }, function (errorResponse) {
-      commit(FORM.UPDATE_FORM_LOADING, false)
+        commit(NOTIFICATION.SET_NOTIF, {
+          message: successResponse.data.message,
+          variant: successResponse.data.variant
+        })
+        commit(PUBLICATION.UPDATE_PUBLISH_SUBMIT)
+        if (successResponse.data.hasOwnProperty('revisions')) {
+          commit(REVISION.UPDATE_REV_ALL, successResponse.data.revisions)
+        }
+      },
+      function(errorResponse) {
+        commit(FORM.UPDATE_FORM_LOADING, false)
 
-      if (errorResponse.response.data.hasOwnProperty('exception')) {
-        commit(NOTIFICATION.SET_NOTIF, { message: 'Your submission could not be processed.', variant: 'error' })
-      } else {
-        dispatch(ACTIONS.HANDLE_ERRORS, errorResponse.response.data)
-        commit(NOTIFICATION.SET_NOTIF, { message: 'Your submission could not be validated, please fix and retry', variant: 'error' })
+        if (errorResponse.response.data.hasOwnProperty('exception')) {
+          commit(NOTIFICATION.SET_NOTIF, {
+            message: 'Your submission could not be processed.',
+            variant: 'error'
+          })
+        } else {
+          dispatch(ACTIONS.HANDLE_ERRORS, errorResponse.response.data)
+          commit(NOTIFICATION.SET_NOTIF, {
+            message:
+              'Your submission could not be validated, please fix and retry',
+            variant: 'error'
+          })
+        }
       }
-    })
+    )
   },
-  async [ACTIONS.DUPLICATE_BLOCK] ({ commit, getters }, { block, id }) {
+  async [ACTIONS.DUPLICATE_BLOCK]({ commit, getters }, { block, id }) {
     const fields = getters.fieldsByBlockId(block.id)
-    commit(FORM.DUPLICATE_BLOCK_FORM_FIELDS, { fields, oldId: block.id, newId: id })
+    commit(FORM.DUPLICATE_BLOCK_FORM_FIELDS, {
+      fields,
+      oldId: block.id,
+      newId: id
+    })
   }
 }
 

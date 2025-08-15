@@ -5,32 +5,33 @@ export default {
       default: 0
     }
   },
-  data: function () {
+  data: function() {
     return {
       value: this.initialValue,
       counter: 0
     }
   },
   computed: {
-    hasMaxlength: function () {
+    hasMaxlength: function() {
       return this.maxlength > 0
     },
-    displayedMaxlength: function () {
+    displayedMaxlength: function() {
       if (this.hasMaxlength) return this.maxlength
       else return false
     },
-    limitClasses: function () {
+    limitClasses: function() {
       return {
-        'input__limit--red': this.counter < (this.maxlength * 0.1)
+        'input__limit--red': this.counter < this.maxlength * 0.1
       }
     }
   },
   methods: {
-    onClickLocale: function () {
+    onClickLocale: function() {
       this.$emit('localize', this.locale)
     },
-    updateCounter: function (newValue) {
-      if (this.maxlength > 0) this.counter = this.maxlength - newValue.toString().length
+    updateCounter: function(newValue) {
+      if (this.maxlength > 0)
+        this.counter = this.maxlength - newValue.toString().length
     }
   }
 }

@@ -5,18 +5,18 @@ export default {
       default: false
     }
   },
-  data: function () {
+  data: function() {
     return {
       visible: this.open
     }
   },
   computed: {
-    visibilityClasses: function () {
+    visibilityClasses: function() {
       return { 's--open': this.visible }
     }
   },
   methods: {
-    onClickVisibility: function () {
+    onClickVisibility: function() {
       this.visible = !this.visible
 
       this.$emit('toggleVisibility', this.visible)

@@ -13,7 +13,7 @@ export default {
     }
   },
   computed: {
-    bucketClasses: function () {
+    bucketClasses: function() {
       return {
         selected: this.type !== 'bucket' && this.inBuckets,
         single: this.singleBucket
@@ -21,22 +21,25 @@ export default {
     }
   },
   methods: {
-    addToBucket: function (bucketId = this.bucket) {
+    addToBucket: function(bucketId = this.bucket) {
       this.$emit('add-to-bucket', this.item, bucketId)
     },
-    inBucketById: function (id) {
+    inBucketById: function(id) {
       const index = this.buckets.findIndex(b => b.id === id)
 
       if (index === -1) return
 
-      const find = this.buckets[index].children.find((c) => {
-        return c.id === this.item.id && c.content_type.value === this.item.content_type.value
+      const find = this.buckets[index].children.find(c => {
+        return (
+          c.id === this.item.id &&
+          c.content_type.value === this.item.content_type.value
+        )
       })
 
       return !!find
     },
-    restrictedBySource: function (id) {
-      const bucket = this.buckets.find((b) => b.id === id)
+    restrictedBySource: function(id) {
+      const bucket = this.buckets.find(b => b.id === id)
       if (!bucket) return false
 
       // In this case all sources are accepted by the bucket
@@ -44,7 +47,10 @@ export default {
       if (bucket.acceptedSources.length === 0) return true
 
       const currentSource = this.item.content_type.value
-      return bucket.acceptedSources.findIndex((source) => source === currentSource) !== -1
+      return (
+        bucket.acceptedSources.findIndex(source => source === currentSource) !==
+        -1
+      )
     }
   }
 }

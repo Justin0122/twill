@@ -45,16 +45,16 @@ export default {
       default: -1
     }
   },
-  data () {
+  data() {
     return {
       currentElDepth: undefined
     }
   },
   computed: {
-    updateTracker () {
+    updateTracker() {
       return this.$store.state.datatable.updateTracker
     },
-    draggableGetComponentData: function () {
+    draggableGetComponentData: function() {
       return {
         props: {
           depth: this.depth

@@ -35,7 +35,7 @@ export default {
     }
   },
   computed: {
-    defaultCropsOpts: function () {
+    defaultCropsOpts: function() {
       return {
         aspectRatio: this.initAspectRatio,
         viewMode: this.viewMode,

@@ -1,6 +1,9 @@
 <template>
   <tr class="browserItem">
-    <td v-if="draggable && max > 1" class="browserItem__cell browserItem__cell--drag">
+    <td
+      v-if="draggable && max > 1"
+      class="browserItem__cell browserItem__cell--drag"
+    >
       <div :class="dragClasses"></div>
     </td>
     <td :class="thumbnailClasses" v-if="hasThumbnail">
@@ -11,21 +14,34 @@
         />
       </template>
       <template v-else>
-        <a href="#" target="_blank"><img :src="currentItem.thumbnail" /></a>
+        <a href="#" target="_blank"><img :src="currentItem.thumbnail"/></a>
       </template>
     </td>
     <td class="browserItem__cell browserItem__cell--name">
       <a :href="currentItem.edit" target="_blank">
-        <span class="f--link-underlined--o" v-if="currentItem.hasOwnProperty('renderHtml')" v-html="currentItem.name"></span>
+        <span
+          class="f--link-underlined--o"
+          v-if="currentItem.hasOwnProperty('renderHtml')"
+          v-html="currentItem.name"
+        ></span>
         <span class="f--link-underlined--o" v-else>{{ currentItem.name }}</span>
       </a>
-      <input type="hidden" :name="name" :value="currentItem.id"/>
+      <input type="hidden" :name="name" :value="currentItem.id" />
     </td>
-    <td class="browserItem__cell browserItem__cell--type" v-if="currentItem.hasOwnProperty('endpointType') && showType">
+    <td
+      class="browserItem__cell browserItem__cell--type"
+      v-if="currentItem.hasOwnProperty('endpointType') && showType"
+    >
       <span>{{ currentItem.endpointType }}</span>
     </td>
     <td class="browserItem__cell browserItem__cell--icon" v-if="deletable">
-      <a17-button class="bucket__action" v-if="!disabled" icon="close" @click="deleteItem()"><span v-svg symbol="close_icon"></span></a17-button>
+      <a17-button
+        class="bucket__action"
+        v-if="!disabled"
+        icon="close"
+        @click="deleteItem()"
+        ><span v-svg symbol="close_icon"></span
+      ></a17-button>
     </td>
   </tr>
 </template>
@@ -44,7 +60,7 @@
       },
       item: {
         type: Object,
-        default: function () {
+        default: function() {
           return {}
         }
       },
@@ -61,43 +77,46 @@
         default: false
       }
     },
-    data: function () {
+    data: function() {
       return {
         handle: '.item__handle' // Drag handle override
       }
     },
     computed: {
-      hasThumbnail: function () {
+      hasThumbnail: function() {
         return Boolean(this.currentItem.hasOwnProperty('thumbnail'))
       },
-      hasLargeThumbnail: function () {
+      hasLargeThumbnail: function() {
         return this.hasThumbnail && !this.isUser
       },
-      isUser: function () {
+      isUser: function() {
         return Boolean(this.currentItem.endpointType === 'users')
       },
-      dragClasses: function () {
+      dragClasses: function() {
         return [
           'drag__handle--drag',
           !this.hasLargeThumbnail ? 'drag__handle--drag-small' : ''
         ]
       },
-      thumbnailClasses: function () {
+      thumbnailClasses: function() {
         return [
           'browserItem__cell',
           'browserItem__cell--thumb',
           this.isUser ? 'browserItem__cell--thumb-avatar' : ''
         ]
       },
-      currentItem: function () {
+      currentItem: function() {
         return this.item
       },
-      deletable: function () {
-        return !this.currentItem.hasOwnProperty('deletable') || this.currentItem.deletable === true
+      deletable: function() {
+        return (
+          !this.currentItem.hasOwnProperty('deletable') ||
+          this.currentItem.deletable === true
+        )
       }
     },
     methods: {
-      deleteItem: function () {
+      deleteItem: function() {
         this.$emit('delete')
       }
     }
@@ -105,9 +124,8 @@
 </script>
 
 <style lang="scss" scoped>
-
   .browserItem {
-    width:100%;
+    width: 100%;
     border-bottom: 1px solid $color__border--light;
 
     &:hover {
@@ -128,7 +146,7 @@
 
   .browserItem__cell--name {
     a {
-      color:$color__link;
+      color: $color__link;
       text-decoration: none;
     }
   }
@@ -136,17 +154,17 @@
   .browserItem__cell--thumb {
     padding-top: 16px;
     padding-bottom: 16px;
-    padding-left:15px;
-    width:50px;
+    padding-left: 15px;
+    width: 50px;
 
     a {
-      color:$color__link;
+      color: $color__link;
       text-decoration: none;
-      display:block;
+      display: block;
     }
 
     img {
-      display:block;
+      display: block;
       width: 50px;
       min-height: 50px;
       background: $color__border--light;
@@ -157,7 +175,7 @@
   .browserItem__cell--thumb-avatar {
     padding-top: 12px;
     padding-bottom: 12px;
-    width:36px;
+    width: 36px;
 
     img {
       width: 36px;
@@ -188,7 +206,7 @@
   }
 
   .browserItem__cell--drag {
-    padding:0;
+    padding: 0;
     width: 12px;
     min-width: 12px;
     background-color: $color__drag_bg;
@@ -205,7 +223,7 @@
   }
 
   .browserItem__cell--icon {
-    width:1px;
+    width: 1px;
 
     button {
       display: block;
@@ -216,8 +234,8 @@
     position: relative;
     width: 10px;
     height: 42px;
-    margin-left:auto;
-    margin-right:auto;
+    margin-left: auto;
+    margin-right: auto;
     transition: background 250ms ease;
     @include dragGrid($color__drag, $color__drag_bg);
   }

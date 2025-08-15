@@ -1,13 +1,14 @@
 <template>
   <div class="table__scroller" @scroll="updateScroll">
-    <table class="table" :class="{'table--sized' : columnsWidth.length }">
+    <table class="table" :class="{ 'table--sized': columnsWidth.length }">
       <colgroup v-if="columnsWidth.length">
-        <col v-for="(width, index) in columnsWidth"
-             :key="index"
-             :style="colWidths[index]" />
+        <col
+          v-for="(width, index) in columnsWidth"
+          :key="index"
+          :style="colWidths[index]"
+        />
       </colgroup>
-      <slot>
-      </slot>
+      <slot> </slot>
     </table>
   </div>
 </template>
@@ -22,23 +23,25 @@
       },
       columnsWidth: {
         type: Array,
-        default: function () { return [] }
+        default: function() {
+          return []
+        }
       }
     },
-    data: function () {
+    data: function() {
       return {
         currentScroll: this.xScroll
       }
     },
     computed: {
-      colWidths: function () {
-        return this.columnsWidth.map(function (width) {
+      colWidths: function() {
+        return this.columnsWidth.map(function(width) {
           return { width: width ? width + 'px' : '' }
         })
       }
     },
     watch: {
-      xScroll: function (value) {
+      xScroll: function(value) {
         if (this.currentScroll !== value) {
           this.currentScroll = value
           this.$el.scrollLeft = value // scroll the table horizontally
@@ -46,7 +49,7 @@
       }
     },
     methods: {
-      updateScroll: function () {
+      updateScroll: function() {
         const newValue = this.$el.scrollLeft
 
         if (this.currentScroll !== newValue) {
@@ -59,10 +62,9 @@
 </script>
 
 <style lang="scss" scoped>
-
   .table__scroller {
-    width:100%;
-    overflow:hidden;
+    width: 100%;
+    overflow: hidden;
     overflow-x: auto;
   }
 
@@ -82,6 +84,6 @@
   }
 
   .table__spacer {
-    width:50px;
+    width: 50px;
   }
 </style>

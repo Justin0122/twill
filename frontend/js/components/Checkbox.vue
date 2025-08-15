@@ -1,8 +1,18 @@
 <template>
   <span class="checkbox">
-    <input type="checkbox" :key="uniqId" class="checkbox__input" :class="checkboxClasses" :value="value" :name="name"
-           :id="uniqId" :disabled="disabled" v-model="checkedValue">
-    <label class="checkbox__label" :for="uniqId">{{ label }}
+    <input
+      type="checkbox"
+      :key="uniqId"
+      class="checkbox__input"
+      :class="checkboxClasses"
+      :value="value"
+      :name="name"
+      :id="uniqId"
+      :disabled="disabled"
+      v-model="checkedValue"
+    />
+    <label class="checkbox__label" :for="uniqId"
+      >{{ label }}
       <span class="checkbox__icon">
         <span v-svg symbol="check"></span>
       </span>
@@ -21,7 +31,7 @@
         default: ''
       },
       initialValue: {
-        default: function () {
+        default: function() {
           return []
         }
       },
@@ -43,19 +53,17 @@
       }
     },
     computed: {
-      uniqId: function (value) {
+      uniqId: function(value) {
         return this.name + '_' + this.value + '-' + this.randKey
       },
-      checkboxClasses: function () {
-        return [
-          this.theme ? `checkbox__input--${this.theme}` : ''
-        ]
+      checkboxClasses: function() {
+        return [this.theme ? `checkbox__input--${this.theme}` : '']
       },
       checkedValue: {
-        get: function () {
+        get: function() {
           return this.initialValue
         },
-        set: function (value) {
+        set: function(value) {
           this.$emit('change', value)
         }
       }
@@ -64,7 +72,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .checkbox {
     color: $color__text;
     min-width: 30px;
@@ -99,7 +106,7 @@
     width: 15px;
     height: 15px;
     border-radius: 2px;
-    transition: all .2s linear;
+    transition: all 0.2s linear;
   }
 
   .checkbox__label::before {
@@ -140,18 +147,18 @@
 
   /* disabled state */
   .checkbox__input:disabled + .checkbox__label {
-    opacity: .33;
+    opacity: 0.33;
     pointer-events: none;
   }
 
   .checkbox__input:checked:disabled + .checkbox__label {
-    opacity: .66;
+    opacity: 0.66;
     pointer-events: none;
   }
 
   /* Green variant */
   .checkbox__input--bold + .checkbox__label .checkbox__icon {
-    background-color: $color__publish
+    background-color: $color__publish;
   }
 
   /* Minus variant (for Bulk Edit) */

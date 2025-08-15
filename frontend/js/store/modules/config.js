@@ -1,5 +1,6 @@
 const state = {
-  publishDateDisplayFormat: window[process.env.VUE_APP_NAME].STORE.config.publishDateDisplayFormat
+  publishDateDisplayFormat:
+    window[process.env.VUE_APP_NAME].STORE.config.publishDateDisplayFormat
 }
 
 const getters = {}

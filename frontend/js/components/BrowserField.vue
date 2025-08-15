@@ -3,34 +3,47 @@
     <div class="browserField__trigger" v-if="buttonOnTop && remainingItems">
       <a17-button
         type="button"
-        :disabled="disabled || (connectedBrowserField && connectedBrowserFieldItems.length === 0)"
+        :disabled="
+          disabled ||
+            (connectedBrowserField && connectedBrowserFieldItems.length === 0)
+        "
         variant="ghost"
         @click="openBrowser"
       >
         {{ addLabel }}
       </a17-button>
-      <input type="hidden" :name="name" :value="itemsIds"/>
+      <input type="hidden" :name="name" :value="itemsIds" />
       <span class="browserField__note f--small"><slot></slot></span>
     </div>
     <table class="browserField__table" v-if="items.length">
       <draggable :tag="'tbody'" v-model="items" :disabled="disabled">
-        <a17-browseritem v-for="(item, index) in items" :key="item.endpointType + '_' + item.id" class="item__content"
-                         :name="`${name}_${item.id}`" :draggable="!disabled && draggable" :item="item" @delete="deleteItem(index)"
-                         :disabled="disabled"
-                         :max="max"
-                         :showType="endpoints.length > 0" />
+        <a17-browseritem
+          v-for="(item, index) in items"
+          :key="item.endpointType + '_' + item.id"
+          class="item__content"
+          :name="`${name}_${item.id}`"
+          :draggable="!disabled && draggable"
+          :item="item"
+          @delete="deleteItem(index)"
+          :disabled="disabled"
+          :max="max"
+          :showType="endpoints.length > 0"
+        />
       </draggable>
     </table>
     <div class="browserField__trigger" v-if="!buttonOnTop && remainingItems">
       <a17-button
         type="button"
-        :disabled="disabled || (connectedBrowserField && connectedBrowserFieldItems.length === 0)"
+        :disabled="
+          disabled ||
+            (connectedBrowserField && connectedBrowserFieldItems.length === 0)
+        "
         variant="ghost"
         @click="openBrowser"
       >
         {{ addLabel }}
       </a17-button>
-      <input type="hidden" :name="name" :value="itemsIds"/>
+      <input type="hidden" :name="name" :value="itemsIds" />
       <span class="browserField__note f--small"><slot></slot></span>
     </div>
   </div>
@@ -38,7 +51,7 @@
 
 <script>
   import draggable from 'vuedraggable'
-  import { mapGetters,mapState } from 'vuex'
+  import { mapGetters, mapState } from 'vuex'
 
   import draggableMixin from '@/mixins/draggable'
   import { BROWSER } from '@/store/mutations'
@@ -102,66 +115,66 @@
         defautl: null
       }
     },
-    data: function () {
+    data: function() {
       return {
         handle: '.item__handle' // Drag handle override
       }
     },
     computed: {
-      remainingItems: function () {
+      remainingItems: function() {
         return this.max - this.items.length
       },
-      addLabel: function () {
-        return this.$trans('fields.browser.add-label', 'Add') + ' ' + this.itemLabel
+      addLabel: function() {
+        return (
+          this.$trans('fields.browser.add-label', 'Add') + ' ' + this.itemLabel
+        )
       },
-      browserTitle: function () {
+      browserTitle: function() {
         return this.modalTitle !== '' ? this.modalTitle : this.addLabel
       },
       items: {
-        get () {
+        get() {
           if (this.selectedBrowser.hasOwnProperty(this.name)) {
             return this.selectedBrowser[this.name] || []
           } else {
             return []
           }
         },
-        set (value) {
+        set(value) {
           this.$store.commit(BROWSER.REORDER_ITEMS, {
             name: this.name,
             items: value
           })
         }
       },
-      itemsIds: function () {
+      itemsIds: function() {
         if (this.selectedItemsByIds[this.name]) {
           return this.selectedItemsByIds[this.name].join()
         } else {
           return ''
         }
       },
-      connectedBrowserFieldItems: function () {
+      connectedBrowserFieldItems: function() {
         return this.selectedBrowser[this.connectedBrowserField] || []
       },
       ...mapState({
         selectedBrowser: state => state.browser.selected
       }),
-      ...mapGetters([
-        'selectedItemsByIds'
-      ])
+      ...mapGetters(['selectedItemsByIds'])
     },
     methods: {
-      deleteAll: function () {
+      deleteAll: function() {
         this.$store.commit(BROWSER.DESTROY_ITEMS, {
           name: this.name
         })
       },
-      deleteItem: function (index) {
+      deleteItem: function(index) {
         this.$store.commit(BROWSER.DESTROY_ITEM, {
           name: this.name,
           index
         })
       },
-      openBrowser: function () {
+      openBrowser: function() {
         this.$store.commit(BROWSER.UPDATE_BROWSER_CONNECTOR, this.name)
         if (this.endpoints.length > 0) {
           this.$store.commit(BROWSER.UPDATE_BROWSER_ENDPOINTS, this.endpoints)
@@ -177,9 +190,13 @@
               append = '&'
             }
 
-            endpointURL = endpointURL + append + 'connectedBrowserIds= ' + encodeURIComponent(
-              JSON.stringify(this.connectedBrowserFieldItems.map(i => i.id))
-            )
+            endpointURL =
+              endpointURL +
+              append +
+              'connectedBrowserIds= ' +
+              encodeURIComponent(
+                JSON.stringify(this.connectedBrowserFieldItems.map(i => i.id))
+              )
           }
 
           this.$store.commit(BROWSER.UPDATE_BROWSER_ENDPOINT, {
@@ -197,12 +214,12 @@
           this.$root.$refs.browser.open(this.endpoints.length <= 0)
         }
       },
-      destroyValue: function () {
+      destroyValue: function() {
         this.deleteAll()
       }
     },
     watch: {
-      connectedBrowserFieldItems (items) {
+      connectedBrowserFieldItems(items) {
         if (this.connectedBrowserField && items.length === 0) {
           this.deleteAll()
         }
@@ -212,7 +229,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .browserField {
     // width: 100%;
     display: block;
@@ -228,7 +244,7 @@
     border-top: 1px solid $color__border--light;
 
     &:first-child {
-      border-top: 0 none
+      border-top: 0 none;
     }
   }
 

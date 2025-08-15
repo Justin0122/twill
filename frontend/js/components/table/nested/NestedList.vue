@@ -1,43 +1,58 @@
 <template>
-  <draggable class="nested__dropArea"
-             :class="nestedDropAreaClasses"
-             v-model="rows"
-             v-bind="draggableOptions"
-             :tag="'ul'"
-             :component-data="draggableGetComponentData">
-    <li class="nested-datatable__item"
-        v-for="(row, index) in rows"
-        :class="haveChildren(row.children)"
-        :key="depth + '-' +  row.id">
-      <div class="nested-item-header"
-           @click="handleRowClick(row)"
-           :class="{ 'has-children': row.children && row.children.length }">
-        <button v-if="row.children && row.children.length"
-                class="collapse-indicator"
-                @click.stop="toggleCollapse(row)">
+  <draggable
+    class="nested__dropArea"
+    :class="nestedDropAreaClasses"
+    v-model="rows"
+    v-bind="draggableOptions"
+    :tag="'ul'"
+    :component-data="draggableGetComponentData"
+  >
+    <li
+      class="nested-datatable__item"
+      v-for="(row, index) in rows"
+      :class="haveChildren(row.children)"
+      :key="depth + '-' + row.id"
+    >
+      <div
+        class="nested-item-header"
+        @click="handleRowClick(row)"
+        :class="{ 'has-children': row.children && row.children.length }"
+      >
+        <button
+          v-if="row.children && row.children.length"
+          class="collapse-indicator"
+          @click.stop="toggleCollapse(row)"
+        >
           {{ isCollapsed(row) ? '+' : '-' }}
         </button>
-        <a17-nested-item :index="index"
-                         :row="row"
-                         :columns="columns"
-                         @click.stop />
+        <a17-nested-item
+          :index="index"
+          :row="row"
+          :columns="columns"
+          @click.stop
+        />
       </div>
-      <a17-nested-list v-if="row.children && depth < maxDepth && !isCollapsed(row)"
-                       :maxDepth="maxDepth"
-                       :depth="depth + 1"
-                       :parentId="row.id"
-                       :items="row.children"
-                       :nested="true"
-                       :draggable="true" />
+      <a17-nested-list
+        v-if="row.children && depth < maxDepth && !isCollapsed(row)"
+        :maxDepth="maxDepth"
+        :depth="depth + 1"
+        :parentId="row.id"
+        :items="row.children"
+        :nested="true"
+        :draggable="true"
+      />
     </li>
   </draggable>
 </template>
 
-
 <script>
   import draggable from 'vuedraggable'
 
-  import { DatatableMixin, DraggableMixin, NestedDraggableMixin } from '@/mixins/index'
+  import {
+    DatatableMixin,
+    DraggableMixin,
+    NestedDraggableMixin
+  } from '@/mixins/index'
   import { DATATABLE } from '@/store/mutations'
 
   import NestedItem from './NestedItem'
@@ -74,7 +89,9 @@
       rows: {
         get() {
           // return this.items
-          return this.parentId > -1 ? this.items : this.$store.state.datatable.data
+          return this.parentId > -1
+            ? this.items
+            : this.$store.state.datatable.data
         },
         set(value) {
           const data = {
@@ -82,7 +99,7 @@
             val: value
           }
 
-          const isChangingParents = (this.rows.length !== data.val.length)
+          const isChangingParents = this.rows.length !== data.val.length
 
           if (this.parentId > -1) {
             this.$store.commit(DATATABLE.UPDATE_DATATABLE_NESTED, data)
@@ -95,7 +112,12 @@
       nestedDropAreaClasses: function() {
         return [
           this.rows.length === 0 ? 'nested__dropArea--empty' : '',
-          this.depth ? `nested__dropArea--depth nested__dropArea--depth${Math.min(10, this.depth)}` : ''
+          this.depth
+            ? `nested__dropArea--depth nested__dropArea--depth${Math.min(
+              10,
+              this.depth
+            )}`
+            : ''
         ]
       },
       draggableOptions: function() {
@@ -111,7 +133,8 @@
     methods: {
       haveChildren(children) {
         return {
-          'nested-datatable__item--empty': (children || []).length === 0 && this.depth < this.maxDepth
+          'nested-datatable__item--empty':
+            (children || []).length === 0 && this.depth < this.maxDepth
         }
       },
       toggleCollapse(row) {
@@ -130,9 +153,8 @@
 </script>
 
 <style lang="scss" scoped>
-
   .nested-datatable__item {
-    border: 1px solid #F2F2F2;
+    border: 1px solid #f2f2f2;
     // padding:10px 0 0 10px;
     margin-top: -1px;
 
@@ -186,8 +208,8 @@
       content: '';
       display: block;
       height: 6px;
-      border-left: 1px solid #D9D9D9;
-      border-bottom: 1px solid #D9D9D9;
+      border-left: 1px solid #d9d9d9;
+      border-bottom: 1px solid #d9d9d9;
       position: absolute;
       top: calc(50% - 3px);
       left: 20px;
@@ -214,7 +236,6 @@
       }
     }
   }
-
 </style>
 
 <style lang="scss">

@@ -4,13 +4,25 @@
       <slot></slot>
 
       <ul class="box__filter">
-        <li v-for="(navItem, index) in navFilters" :key="index"><a href="#" :class="{ 's--on' : navActive === index }" @click.prevent="filterStatus(index, navItem.slug)">{{ navItem.name }}</a></li>
+        <li v-for="(navItem, index) in navFilters" :key="index">
+          <a
+            href="#"
+            :class="{ 's--on': navActive === index }"
+            @click.prevent="filterStatus(index, navItem.slug)"
+            >{{ navItem.name }}</a
+          >
+        </li>
       </ul>
     </header>
     <div class="box__body">
       <table class="activityFeed__table" v-if="rows.data.length > 0">
         <template v-for="(row, index) in rows.data">
-          <a17-activity-row :row="row" :index="index" :columns="columns" :key="row.id"></a17-activity-row>
+          <a17-activity-row
+            :row="row"
+            :index="index"
+            :columns="columns"
+            :key="row.id"
+          ></a17-activity-row>
         </template>
       </table>
       <template v-else>
@@ -18,7 +30,13 @@
           <h4>{{ emptyMessage }}</h4>
         </div>
       </template>
-      <a17-paginate :max="rows.last_page" :value="rows.current_page" :offset="20" :availableOffsets="[20]" @changePage="getData"/>
+      <a17-paginate
+        :max="rows.last_page"
+        :value="rows.current_page"
+        :offset="20"
+        :availableOffsets="[20]"
+        @changePage="getData"
+      />
     </div>
   </div>
 </template>
@@ -28,7 +46,7 @@
 
   import A17ActivityRow from '@/components/dashboard/activityRow.vue'
   import { DATATABLE } from '@/store/mutations'
-  import A17Paginate from "@/components/table/Paginate.vue";
+  import A17Paginate from '@/components/table/Paginate.vue'
 
   export default {
     name: 'A17ActivityFeed',
@@ -42,10 +60,10 @@
       },
       emptyMessage: {
         type: String,
-        default: 'You don\'t have any activity yet.'
+        default: "You don't have any activity yet."
       }
     },
-    data: function () {
+    data: function() {
       return {
         navFilters: [
           {
@@ -62,10 +80,10 @@
     },
     computed: {
       rows: {
-        get () {
+        get() {
           return this.$store.state.datatable.data
         },
-        set (value) {
+        set(value) {
           this.$store.commit(DATATABLE.UPDATE_DATATABLE_DATA, value)
         }
       },
@@ -77,16 +95,29 @@
     },
     methods: {
       getData(pageNumber) {
-        this.$http.get(this.ajaxBaseUrl + '?' + this.navFilters[this.navActive].slug + '=' + pageNumber).then(({data}) => {
-          this.rows = data;
-        })
+        this.$http
+          .get(
+            this.ajaxBaseUrl +
+              '?' +
+              this.navFilters[this.navActive].slug +
+              '=' +
+              pageNumber
+          )
+          .then(({ data }) => {
+            this.rows = data
+          })
       },
-      filterStatus: function (index, slug) {
+      filterStatus: function(index, slug) {
         if (this.navActive === index) return
 
         this.navActive = index
         if (window[process.env.VUE_APP_NAME].STORE.datatable) {
-          if (window[process.env.VUE_APP_NAME].STORE.datatable.hasOwnProperty(slug)) this.rows = window[process.env.VUE_APP_NAME].STORE.datatable[slug]
+          if (
+            window[process.env.VUE_APP_NAME].STORE.datatable.hasOwnProperty(
+              slug
+            )
+          )
+            this.rows = window[process.env.VUE_APP_NAME].STORE.datatable[slug]
         }
       }
     }
@@ -94,7 +125,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .activityFeed {
   }
 

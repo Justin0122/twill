@@ -37,7 +37,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
     'a17-fieldset': a17Fieldset,
     'a17-browser': a17Browser
   },
-  created: function () {
+  created: function() {
     openMediaLibrary()
   }
 })

@@ -1,7 +1,7 @@
 import forEachNodelist from '../utils/forEachNodelist.js'
 // Show / Hide the menu on mobile devices
 
-const navToggle = function () {
+const navToggle = function() {
   let isAnimating = false
   let isActive = false
   let lastScrollPos = 0
@@ -14,7 +14,7 @@ const navToggle = function () {
 
   const klass = 's--nav'
 
-  function _triggerOpenNav () {
+  function _triggerOpenNav() {
     if (isAnimating) return false
     if (isActive) return false
 
@@ -33,7 +33,7 @@ const navToggle = function () {
     isAnimating = false
   }
 
-  function _triggerCloseNav () {
+  function _triggerCloseNav() {
     if (isAnimating) return false
     if (!isActive) return false
 
@@ -53,14 +53,14 @@ const navToggle = function () {
     isAnimating = false
   }
 
-  function _escNav (e) {
+  function _escNav(e) {
     if (e.keyCode === 27 && isActive) _triggerCloseNav() /* esc key */
   }
 
   // Toggle Click button
   if (bts.length) {
-    forEachNodelist(bts, function (bt) {
-      bt.addEventListener('click', function (e) {
+    forEachNodelist(bts, function(bt) {
+      bt.addEventListener('click', function(e) {
         if (!isActive) _triggerOpenNav()
         else _triggerCloseNav()
 
@@ -71,8 +71,8 @@ const navToggle = function () {
 
   // close the navigation
   if (btsClose.length) {
-    forEachNodelist(btsClose, function (bt) {
-      bt.addEventListener('click', function (e) {
+    forEachNodelist(btsClose, function(bt) {
+      bt.addEventListener('click', function(e) {
         if (isActive) _triggerCloseNav()
         bt.blur()
       })

@@ -1,21 +1,25 @@
 <template>
   <div class="editorIframe">
-    <div class="editorIframe__empty"
-         v-if="preview === ''">
+    <div class="editorIframe__empty" v-if="preview === ''">
       {{ title }}
     </div>
     <template v-else>
-      <iframe v-if="sandbox"
-              ref="frame"
-              :srcdoc="preview"
-              :sandbox="sandboxOptions"
-              scrolling="no"
-              @load="loadedPreview">
+      <iframe
+        v-if="sandbox"
+        ref="frame"
+        :srcdoc="preview"
+        :sandbox="sandboxOptions"
+        scrolling="no"
+        @load="loadedPreview"
+      >
       </iframe>
-      <iframe v-else ref="frame"
-              :srcdoc="preview"
-              scrolling="no"
-              @load="loadedPreview">
+      <iframe
+        v-else
+        ref="frame"
+        :srcdoc="preview"
+        scrolling="no"
+        @load="loadedPreview"
+      >
       </iframe>
     </template>
   </div>
@@ -29,34 +33,34 @@
     props: {
       block: {
         type: Object,
-        default: function () {
+        default: function() {
           return {}
         }
       }
     },
     computed: {
-      preview () {
+      preview() {
         return this.previewsById(this.block.id) || ''
       },
-      title () {
+      title() {
         return this.block.title || ''
       },
-      sandboxOptions () {
-        return typeof this.sandbox === 'boolean' ? 'allow-same-origin allow-top-navigation allow-scripts' : this.sandbox.join(' ')
+      sandboxOptions() {
+        return typeof this.sandbox === 'boolean'
+          ? 'allow-same-origin allow-top-navigation allow-scripts'
+          : this.sandbox.join(' ')
       },
-      ...mapGetters([
-        'previewsById'
-      ])
+      ...mapGetters(['previewsById'])
     },
     inject: ['sandbox'],
     methods: {
-      loadedPreview () {
+      loadedPreview() {
         if (this.$refs.frame && this.$refs.frame.srcdoc) {
           this.$emit('loaded', this.$refs.frame)
           this.resize()
         }
       },
-      resize () {
+      resize() {
         if (!this.$refs.frame) return
         const frameBody = this.$refs.frame.contentWindow.document.body
 
@@ -67,24 +71,26 @@
         const bodyStyle = window.getComputedStyle(frameBody)
         const bodyMarginTop = bodyStyle.getPropertyValue('margin-top')
         const bodyMarginBottom = bodyStyle.getPropertyValue('margin-bottom')
-        const frameHeight = frameBody.scrollHeight + parseInt(bodyMarginTop) + parseInt(bodyMarginBottom)
+        const frameHeight =
+          frameBody.scrollHeight +
+          parseInt(bodyMarginTop) +
+          parseInt(bodyMarginBottom)
 
         window.requestAnimationFrame(() => {
           this.$refs.frame.height = frameHeight + 'px'
         })
       }
     },
-    mounted () {
+    mounted() {
       window.addEventListener('resize', this.resize)
     },
-    beforeDestroy () {
+    beforeDestroy() {
       window.removeEventListener('resize', this.resize)
     }
   }
 </script>
 
 <style lang="scss" scoped>
-
   .editorIframe {
     cursor: pointer;
     overflow-y: hidden;

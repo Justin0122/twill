@@ -1,38 +1,46 @@
 <template>
-  <a17-locale v-if="languages.length > 1 && fieldType === 'text'"
-              :type="wysiwyg ? 'a17-wysiwyg' : 'a17-textfield'"
-              :initialValues="initialValues"
-              :attributes="attributes"
-              @change="saveMetadata">
+  <a17-locale
+    v-if="languages.length > 1 && fieldType === 'text'"
+    :type="wysiwyg ? 'a17-wysiwyg' : 'a17-textfield'"
+    :initialValues="initialValues"
+    :attributes="attributes"
+    @change="saveMetadata"
+  >
   </a17-locale>
   <div v-else-if="fieldType === 'text' && wysiwyg">
-    <a17-wysiwyg :options="wysiwygOptions"
-               :label="label"
-               :name="fieldName"
-               :type="fieldType"
-               :initialValue="initialValue"
-               in-store="value"
-               :maxlength="maxlength"
-               @change="saveMetadata"
+    <a17-wysiwyg
+      :options="wysiwygOptions"
+      :label="label"
+      :name="fieldName"
+      :type="fieldType"
+      :initialValue="initialValue"
+      in-store="value"
+      :maxlength="maxlength"
+      @change="saveMetadata"
     ></a17-wysiwyg>
     <p class="f--note f--small" v-html="placeholder" />
   </div>
-  <a17-textfield v-else-if="fieldType === 'text'"
-                 :label="label"
-                 :name="fieldName"
-                 type="text"
-                 :placeholder="placeholder"
-                 :initialValue="initialValue"
-                 in-store="value"
-                 :maxlength="maxlength"
-                 @change="saveMetadata">
+  <a17-textfield
+    v-else-if="fieldType === 'text'"
+    :label="label"
+    :name="fieldName"
+    type="text"
+    :placeholder="placeholder"
+    :initialValue="initialValue"
+    in-store="value"
+    :maxlength="maxlength"
+    @change="saveMetadata"
+  >
   </a17-textfield>
   <div class="mediaMetadata__checkbox" v-else-if="fieldType === 'checkbox'">
-    <a17-checkbox :label="label" :name="fieldName"
-                  :initialValue="initialValue"
-                  :value="1"
-                  @change="saveMetadata"
-                  inStore="value" />
+    <a17-checkbox
+      :label="label"
+      :name="fieldName"
+      :initialValue="initialValue"
+      :value="1"
+      @change="saveMetadata"
+      inStore="value"
+    />
   </div>
 </template>
 
@@ -67,7 +75,7 @@
       wysiwygOptions: {
         type: Object,
         required: false,
-        default: function () {
+        default: function() {
           return {}
         }
       },
@@ -81,34 +89,34 @@
         default: 0
       }
     },
-    data: function () {
+    data: function() {
       return {
         initialValues: {},
         initialValue: ''
       }
     },
     computed: {
-      fieldName: function () {
+      fieldName: function() {
         return `${this.name}[${this.id}]`
       },
-      fieldType: function () {
+      fieldType: function() {
         return this.type ? this.type : 'text'
       },
-      defaultMetadatas: function () {
+      defaultMetadatas: function() {
         if (this.media.hasOwnProperty('metadatas')) {
           return this.media.metadatas.default[this.id] || false
         } else {
           return false
         }
       },
-      customMetadatas: function () {
+      customMetadatas: function() {
         if (this.media.hasOwnProperty('metadatas')) {
           return this.media.metadatas.custom[this.id] || false
         } else {
           return false
         }
       },
-      attributes: function () {
+      attributes: function() {
         return {
           label: this.label,
           name: this.fieldName,
@@ -119,10 +127,12 @@
           maxlength: this.maxlength
         }
       },
-      placeholder: function () {
+      placeholder: function() {
         if (this.defaultMetadatas) {
           if (typeof this.defaultMetadatas === 'object') {
-            return this.defaultMetadatas.hasOwnProperty(this.currentLocale) ? this.defaultMetadatas[this.currentLocale] : ''
+            return this.defaultMetadatas.hasOwnProperty(this.currentLocale)
+              ? this.defaultMetadatas[this.currentLocale]
+              : ''
           } else {
             return this.defaultMetadatas !== null ? this.defaultMetadatas : ''
           }
@@ -136,7 +146,7 @@
       })
     },
     methods: {
-      saveMetadata: function (newDatas) {
+      saveMetadata: function(newDatas) {
         if (!newDatas.locale) {
           const value = newDatas
           newDatas = {
@@ -148,18 +158,22 @@
         this.$emit('change', newDatas)
       }
     },
-    mounted: function () {
+    mounted: function() {
       const initialValues = {}
       let initialValue = ''
       let index = 0
 
-      this.languages.forEach((lang) => {
+      this.languages.forEach(lang => {
         const langVal = lang.value
 
         if (this.customMetadatas) {
           if (this.customMetadatas[langVal]) {
             initialValues[langVal] = this.customMetadatas[langVal]
-          } else if ((this.customMetadatas === true || typeof this.customMetadatas === 'string') && index === 0) {
+          } else if (
+            (this.customMetadatas === true ||
+              typeof this.customMetadatas === 'string') &&
+            index === 0
+          ) {
             initialValues[langVal] = this.customMetadatas
             initialValue = this.customMetadatas
           } else {

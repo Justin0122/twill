@@ -5,7 +5,8 @@ module.exports = {
   },
   extends: ['plugin:vue/essential', '@vue/standard', 'prettier'],
   rules: {
-    'no-unmodified-loop-condition': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
+    'no-unmodified-loop-condition':
+      process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-unused-vars': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-unreachable': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     // indent

@@ -12,18 +12,22 @@ export default {
     },
     options: {
       type: Array,
-      default: function () { return [] }
+      default: function() {
+        return []
+      }
     }
   },
   computed: {
-    fullOptions: function () {
+    fullOptions: function() {
       const moreOptions = this.optionsByName(this.name)
       const currentOptions = this.options
 
       // Make sure there is no duplicates in the options
       if (Array.isArray(moreOptions)) {
-        moreOptions.forEach(function (option) {
-          const currentOptionIndex = currentOptions.findIndex(currentOption => currentOption.value === option.value)
+        moreOptions.forEach(function(option) {
+          const currentOptionIndex = currentOptions.findIndex(
+            currentOption => currentOption.value === option.value
+          )
           if (currentOptionIndex === -1) {
             currentOptions.push(option)
           }
@@ -34,8 +38,6 @@ export default {
       if (moreOptions.length) return currentOptions
       else return this.options
     },
-    ...mapGetters([
-      'optionsByName'
-    ])
+    ...mapGetters(['optionsByName'])
   }
 }

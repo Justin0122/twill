@@ -43,7 +43,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
     'a17-stat-feed': A17StatFeed,
     'a17-feed': A17GenericFeed
   },
-  created: function () {
+  created: function() {
     openMediaLibrary()
   }
 })

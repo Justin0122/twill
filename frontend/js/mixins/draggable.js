@@ -9,7 +9,7 @@ export default {
       default: true
     }
   },
-  data: function () {
+  data: function() {
     return {
       animation: 150,
       handle: '.drag__handle',
@@ -20,7 +20,7 @@ export default {
     }
   },
   computed: {
-    dragOptions: function () {
+    dragOptions: function() {
       return {
         animation: this.animation,
         handle: this.handle,

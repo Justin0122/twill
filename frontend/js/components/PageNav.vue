@@ -1,13 +1,24 @@
 <template>
   <div class="pagenav" v-if="parents.length || hasUrl">
     <div class="pagenav__form" v-if="parents.length">
-      <a17-vselect name="parents_sources" :placeholder="placeholder" size="large" :searchable="true" :options="options" @change="gotoUrl"></a17-vselect>
+      <a17-vselect
+        name="parents_sources"
+        :placeholder="placeholder"
+        size="large"
+        :searchable="true"
+        :options="options"
+        @change="gotoUrl"
+      ></a17-vselect>
     </div>
     <nav class="pagenav__nav" v-if="hasUrl">
-      <a :href="previousUrl" class="pagenav__btn" v-if="previousUrl">← {{ previousLabel }}</a>
+      <a :href="previousUrl" class="pagenav__btn" v-if="previousUrl"
+        >← {{ previousLabel }}</a
+      >
       <span v-else class="pagenav__btn">← {{ previousLabel }}</span>
 
-      <a :href="nextUrl" class="pagenav__btn" v-if="nextUrl">{{ nextLabel }} →</a>
+      <a :href="nextUrl" class="pagenav__btn" v-if="nextUrl"
+        >{{ nextLabel }} →</a
+      >
       <span v-else class="pagenav__btn">{{ nextLabel }} →</span>
     </nav>
   </div>
@@ -42,15 +53,14 @@
         default: ''
       }
     },
-    data: function () {
-      return {
-      }
+    data: function() {
+      return {}
     },
     computed: {
-      hasUrl: function () {
+      hasUrl: function() {
         return this.previousUrl || this.nextUrl
       },
-      options: function () {
+      options: function() {
         return parentTreeToOptions(this.parents, '–')
       },
       ...mapState({
@@ -58,69 +68,66 @@
       })
     },
     methods: {
-      gotoUrl: function (newValue) {
+      gotoUrl: function(newValue) {
         if (newValue.edit) {
           window.location.href = newValue.edit
         }
       }
     },
-    beforeMount: function () {
-    }
+    beforeMount: function() {}
   }
 </script>
 
 <style lang="scss" scoped>
-
   .pagenav {
-    border-radius:2px;
-    border:1px solid $color__border;
-    background:$color__background;
-    margin-bottom:20px;
+    border-radius: 2px;
+    border: 1px solid $color__border;
+    background: $color__background;
+    margin-bottom: 20px;
   }
 
   .pagenav__form {
-    padding:0 20px 20px 20px;
+    padding: 0 20px 20px 20px;
     margin-top: -15px;
   }
 
   .pagenav__nav {
-    display:flex;
+    display: flex;
   }
 
   .pagenav__form + .pagenav__nav {
     .pagenav__btn {
-      border-top:1px solid $color__border--light;
+      border-top: 1px solid $color__border--light;
     }
   }
 
   .pagenav__btn {
-    border-right:1px solid $color__border--light;
-    padding:0 20px;
+    border-right: 1px solid $color__border--light;
+    padding: 0 20px;
     flex: 1 0 0px;
     overflow: hidden;
-    height:48px;
-    line-height:48px;
-    text-decoration:none;
-    color:$color__text--light;
-    opacity:0.5;
+    height: 48px;
+    line-height: 48px;
+    text-decoration: none;
+    color: $color__text--light;
+    opacity: 0.5;
 
     &:last-child {
-      border-right:0 none;
+      border-right: 0 none;
     }
   }
 
   a.pagenav__btn {
-    opacity:1;
+    opacity: 1;
 
     &:focus,
     &:hover {
-      color:$color__text;
-      background:$color__ultralight;
+      color: $color__text;
+      background: $color__ultralight;
     }
   }
 
   .pagenav__btn + .pagenav__btn {
-    text-align:right;
+    text-align: right;
   }
-
 </style>

@@ -18,18 +18,14 @@
       }
     },
     computed: {
-      barClasses: function () {
-        return [
-          'buttonbar',
-          this.variant ? `buttonbar--${this.variant}` : ''
-        ]
+      barClasses: function() {
+        return ['buttonbar', this.variant ? `buttonbar--${this.variant}` : '']
       }
     }
   }
 </script>
 
 <style lang="scss" scoped>
-
   $toolbar__height: 40px;
   $border__radius: 2px;
 
@@ -104,7 +100,6 @@
 </style>
 
 <style lang="scss">
-
   $toolbar__height: 40px;
   $border__radius: 2px;
 

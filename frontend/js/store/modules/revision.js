@@ -13,14 +13,14 @@ const state = {
 }
 
 // getters
-const getters = { }
+const getters = {}
 
 const mutations = {
-  [REVISION.LOADING_REV] (state) {
+  [REVISION.LOADING_REV](state) {
     state.loading = true
   },
-  [REVISION.UPDATE_REV] (state, newValue) {
-    function isMatchingRev (revision) {
+  [REVISION.UPDATE_REV](state, newValue) {
+    function isMatchingRev(revision) {
       return revision.id === newValue
     }
 
@@ -29,21 +29,21 @@ const mutations = {
     if (index !== -1) state.active = state.all[index]
     else state.active = {}
   },
-  [REVISION.UPDATE_REV_CONTENT] (state, fullHTML) {
+  [REVISION.UPDATE_REV_CONTENT](state, fullHTML) {
     state.loading = false
     state.activeContent = fullHTML
   },
-  [REVISION.UPDATE_REV_CURRENT_CONTENT] (state, fullHTML) {
+  [REVISION.UPDATE_REV_CURRENT_CONTENT](state, fullHTML) {
     state.loading = false
     state.currentContent = fullHTML
   },
-  [REVISION.UPDATE_REV_ALL] (state, revisions) {
+  [REVISION.UPDATE_REV_ALL](state, revisions) {
     state.all = revisions
   }
 }
 
 const actions = {
-  [ACTIONS.GET_CURRENT] ({ commit, rootState }) {
+  [ACTIONS.GET_CURRENT]({ commit, rootState }) {
     return new Promise((resolve, reject) => {
       commit(REVISION.LOADING_REV)
 
@@ -66,7 +66,7 @@ const actions = {
       )
     })
   },
-  [ACTIONS.GET_REVISION] ({ commit, state, rootState }) {
+  [ACTIONS.GET_REVISION]({ commit, state, rootState }) {
     return new Promise((resolve, reject) => {
       commit(REVISION.LOADING_REV)
 

@@ -11,7 +11,7 @@ export default {
     })
   },
   methods: {
-    formatPermalink: function (newValue) {
+    formatPermalink: function(newValue) {
       const permalinkRef = this.$refs.permalink
 
       if (!permalinkRef) return
@@ -28,7 +28,9 @@ export default {
         const slug = this.$options.filters.slugify(text)
 
         const field = {
-          name: permalinkRef.attributes ? permalinkRef.attributes.name : permalinkRef.name,
+          name: permalinkRef.attributes
+            ? permalinkRef.attributes.name
+            : permalinkRef.name,
           value: slug
         }
 

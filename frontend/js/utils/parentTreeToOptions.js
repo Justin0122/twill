@@ -1,12 +1,12 @@
-export default function (parents, spacer) {
+export default function(parents, spacer) {
   const options = []
 
-  function setSpacing (level) {
+  function setSpacing(level) {
     return Array(level + 1).join(spacer) + ' '
   }
 
-  function getOptionsFromArray (parents, level) {
-    parents.forEach(function (parent) {
+  function getOptionsFromArray(parents, level) {
+    parents.forEach(function(parent) {
       const option = {}
       option.value = parent.id
       if (parent.edit) option.edit = parent.edit

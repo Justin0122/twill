@@ -207,7 +207,6 @@
     overflow: hidden;
   }
 
-
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
 

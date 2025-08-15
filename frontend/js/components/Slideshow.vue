@@ -1,36 +1,59 @@
 <template>
   <div class="slideshow">
     <div class="slideshow__trigger" v-if="buttonOnTop && remainingSlides > 0">
-      <a17-button :disabled="disabled" type="button" variant="ghost" @click="openMediaLibrary(remainingSlides)">{{ addLabel }}</a17-button>
+      <a17-button
+        :disabled="disabled"
+        type="button"
+        variant="ghost"
+        @click="openMediaLibrary(remainingSlides)"
+        >{{ addLabel }}</a17-button
+      >
       <span class="slideshow__note f--small"><slot></slot></span>
     </div>
-    <draggable class="slideshow__content" v-model="slides" v-bind="dragOptions" v-if="slides.length">
-      <transition-group name="draggable_list" tag='div'>
-        <div class="slide" v-for="(slide, index) in slides" :key="`${slide.id}_${index}`">
-            <div class="slide__handle" v-if="!disabled">
-              <div class="slide__handle--drag"></div>
-            </div>
-            <a17-mediafield class="slide__content"
-                            :name="`${name}_${slide.id}`"
-                            :index="index"
-                            :mediaContext="name"
-                            :cropContext="cropContext"
-                            :activeCrop="activeCrop"
-                            :hover="hoverable"
-                            :isSlide="true"
-                            :withAddInfo="withAddInfo"
-                            :withCaption="withCaption"
-                            :withVideoUrl="withVideoUrl"
-                            :altTextMaxLength="altTextMaxLength"
-                            :captionMaxLength="captionMaxLength"
-                            :extraMetadatas="extraMetadatas"
-                            :disabled="disabled">
-            </a17-mediafield>
+    <draggable
+      class="slideshow__content"
+      v-model="slides"
+      v-bind="dragOptions"
+      v-if="slides.length"
+    >
+      <transition-group name="draggable_list" tag="div">
+        <div
+          class="slide"
+          v-for="(slide, index) in slides"
+          :key="`${slide.id}_${index}`"
+        >
+          <div class="slide__handle" v-if="!disabled">
+            <div class="slide__handle--drag"></div>
+          </div>
+          <a17-mediafield
+            class="slide__content"
+            :name="`${name}_${slide.id}`"
+            :index="index"
+            :mediaContext="name"
+            :cropContext="cropContext"
+            :activeCrop="activeCrop"
+            :hover="hoverable"
+            :isSlide="true"
+            :withAddInfo="withAddInfo"
+            :withCaption="withCaption"
+            :withVideoUrl="withVideoUrl"
+            :altTextMaxLength="altTextMaxLength"
+            :captionMaxLength="captionMaxLength"
+            :extraMetadatas="extraMetadatas"
+            :disabled="disabled"
+          >
+          </a17-mediafield>
         </div>
       </transition-group>
     </draggable>
     <div class="slideshow__trigger" v-if="!buttonOnTop && remainingSlides > 0">
-      <a17-button :disabled="disabled" type="button" variant="ghost" @click="openMediaLibrary(remainingSlides)">{{ addLabel }}</a17-button>
+      <a17-button
+        :disabled="disabled"
+        type="button"
+        variant="ghost"
+        @click="openMediaLibrary(remainingSlides)"
+        >{{ addLabel }}</a17-button
+      >
       <span class="slideshow__note f--small"><slot></slot></span>
     </div>
   </div>
@@ -77,29 +100,29 @@
         default: true
       }
     },
-    data: function () {
+    data: function() {
       return {
         handle: '.slide__handle', // Drag handle override
         hoverable: true
       }
     },
     computed: {
-      remainingSlides: function () {
+      remainingSlides: function() {
         return Math.max(0, this.max - this.slides.length)
       },
-      addLabel: function () {
+      addLabel: function() {
         const itemNames = this.itemLabel + 's'
         return 'Attach ' + itemNames
       },
       slides: {
-        get () {
+        get() {
           if (this.selectedMedias.hasOwnProperty(this.name)) {
             return this.selectedMedias[this.name] || []
           } else {
             return []
           }
         },
-        set (value) {
+        set(value) {
           this.$store.commit(MEDIA_LIBRARY.REORDER_MEDIAS, {
             name: this.name,
             medias: value
@@ -111,11 +134,11 @@
       })
     },
     methods: {
-      deleteSlideshow: function () {
+      deleteSlideshow: function() {
         // destroy all the medias of the slideshow
         this.$store.commit(MEDIA_LIBRARY.DESTROY_MEDIAS, this.name)
       },
-      destroyValue: function () {
+      destroyValue: function() {
         if (this.isSlide) return // for Slideshows : the medias are deleted when the slideshow component is destroyed (so no need to do it here)
         if (!this.isDestroyed) this.deleteMedia()
       }
@@ -124,23 +147,22 @@
 </script>
 
 <style lang="scss" scoped>
-
   .slideshow {
     display: block;
     border-radius: 2px;
     border: 1px solid $color__border;
-    background:$color__background;
+    background: $color__background;
   }
 
   .slideshow__trigger {
-    padding:10px;
+    padding: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
     border-top: 1px solid $color__border--light;
 
     &:first-child {
-      border-top:0 none;
+      border-top: 0 none;
     }
   }
 
@@ -149,7 +171,7 @@
     padding: 5px;
     flex: 1;
     justify-content: flex-end;
-    display:none;
+    display: none;
 
     @include breakpoint('small+') {
       display: flex;
@@ -183,7 +205,7 @@
     justify-content: center;
     align-items: center;
     width: 12px;
-    min-width:12px;
+    min-width: 12px;
     background-color: $color__drag_bg;
     transition: background 250ms ease;
 
@@ -206,7 +228,6 @@
 
   .slide__content {
     flex-grow: 1;
-    max-width:calc(100% - 12px);
+    max-width: calc(100% - 12px);
   }
-
 </style>

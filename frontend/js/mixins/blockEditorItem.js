@@ -14,22 +14,22 @@ export default {
     }
   },
   methods: {
-    selectBlock () {
+    selectBlock() {
       this.$emit('block:select')
     },
-    unselectBlock () {
+    unselectBlock() {
       this.$emit('block:unselect')
     },
-    deleteBlock () {
+    deleteBlock() {
       this.$emit('block:delete')
     },
-    moveBlock (index) {
+    moveBlock(index) {
       this.$emit('block:move', index)
     },
-    cloneBlock () {
+    cloneBlock() {
       this.$emit('block:clone')
     },
-    toggleBlockDropdown () {
+    toggleBlockDropdown() {
       if (this.blocksLength > 1 && this.$refs.blockDropdown) {
         this.$refs.blockDropdown.toggle()
       }

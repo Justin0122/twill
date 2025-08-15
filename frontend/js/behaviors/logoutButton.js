@@ -1,6 +1,6 @@
 // POST logout action
 
-const logoutButton = function () {
+const logoutButton = function() {
   const logoutForm = document.querySelector('[data-logout-form]')
 
   if (!logoutForm) return

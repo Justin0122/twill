@@ -3,7 +3,7 @@
 // Should output : '<span class="icon icon--${id}"><svg><title>id</title><use xlink:href="#icon--${id}"></use></svg></span>';
 // <svg class="icon icon--${id}"><title>id</title><use xlink:href="#icon--${id}"></use></svg> if node is already a svg
 
-export function addSvg (el, binding, vnode) {
+export function addSvg(el, binding, vnode) {
   const classNames = ['icon']
   const id = binding.expression || vnode.data.attrs.symbol
   let svg = el
@@ -17,7 +17,7 @@ export function addSvg (el, binding, vnode) {
 
   // add classes to wrapper
   classNames.push(`icon--${id}`)
-  classNames.forEach(function (className) {
+  classNames.forEach(function(className) {
     el.classList.add(className)
   })
 
@@ -35,18 +35,18 @@ export function addSvg (el, binding, vnode) {
   svg.appendChild(use)
 }
 
-export function removeSvg (el) {
+export function removeSvg(el) {
   const svg = el.querySelector('svg')
 
   // remove svg
   if (svg) svg.parentNode.removeChild(svg)
 
   // clean up classes
-  const classNames = el.className.split(' ').filter(function (c) {
+  const classNames = el.className.split(' ').filter(function(c) {
     return c.indexOf('icon') === 0
   })
 
-  classNames.forEach(function (className) {
+  classNames.forEach(function(className) {
     el.classList.remove(className)
   })
 }

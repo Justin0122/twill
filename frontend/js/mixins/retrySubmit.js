@@ -1,7 +1,7 @@
 import { mapState } from 'vuex'
 
 export default {
-  data: function () {
+  data: function() {
     return {
       shouldRetrySubmitWhenAllowed: false
     }
@@ -12,7 +12,7 @@ export default {
     })
   },
   watch: {
-    isSubmitPrevented: function (isSubmitPrevented) {
+    isSubmitPrevented: function(isSubmitPrevented) {
       if (!isSubmitPrevented && this.shouldRetrySubmitWhenAllowed) {
         this.shouldRetrySubmitWhenAllowed = false
         this.retrySubmit()
@@ -20,7 +20,7 @@ export default {
     }
   },
   methods: {
-    retrySubmit: function () {
+    retrySubmit: function() {
       if (this.submitForm) {
         this.submitForm() // @see main-form.js
       } else if (this.submit) {

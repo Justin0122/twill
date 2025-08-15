@@ -6,7 +6,7 @@
       <div class="datatable__table">
         <a17-table>
           <thead>
-          <a17-tablehead :columns="visibleColumns" ref="thead"/>
+            <a17-tablehead :columns="visibleColumns" ref="thead" />
           </thead>
         </a17-table>
       </div>
@@ -25,7 +25,11 @@
 </template>
 
 <script>
-  import { DatatableMixin, DraggableMixin, NestedDraggableMixin } from '@/mixins/index'
+  import {
+    DatatableMixin,
+    DraggableMixin,
+    NestedDraggableMixin
+  } from '@/mixins/index'
   import { DATATABLE } from '@/store/mutations/index'
 
   import a17Table from './../Table.vue'
@@ -35,7 +39,7 @@
   export default {
     name: 'A17NestedDatatable',
     mixins: [DatatableMixin, DraggableMixin, NestedDraggableMixin],
-    data: function () {
+    data: function() {
       return {
         items: this.$store.state.datatable.data
       }
@@ -45,12 +49,12 @@
       'a17-tablehead': a17Tablehead,
       'a17-nested-list': NestedList
     },
-    beforeMount: function () {
-      function findBulkColumn (column) {
+    beforeMount: function() {
+      function findBulkColumn(column) {
         return column.name === 'bulk'
       }
 
-      function findDraggableColumn (column) {
+      function findDraggableColumn(column) {
         return column.name === 'draggable'
       }
 
@@ -89,7 +93,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .nested-datatable__table {
     position: relative;
     width: 100%;

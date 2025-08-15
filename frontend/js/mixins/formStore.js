@@ -1,5 +1,5 @@
 import isEqual from 'lodash/isEqual'
-import { mapGetters,mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 
 import { FORM } from '@/store/mutations'
 
@@ -23,14 +23,11 @@ export default {
     }
   },
   computed: {
-    storedValue: function () {
+    storedValue: function() {
       if (this.inModal) return this.modalFieldValueByName(this.getFieldName())
       else return this.fieldValueByName(this.getFieldName())
     },
-    ...mapGetters([
-      'fieldValueByName',
-      'modalFieldValueByName'
-    ]),
+    ...mapGetters(['fieldValueByName', 'modalFieldValueByName']),
     ...mapState({
       submitting: state => state.form.loading,
       fields: state => state.form.fields, // Fields in the form
@@ -38,24 +35,27 @@ export default {
     })
   },
   watch: {
-    storedValue: function (fieldInstore) {
+    storedValue: function(fieldInstore) {
       if (this.inStore === '') return
 
       const currentValue = this[this.inStore]
-      const newValue = (this.locale) ? fieldInstore[this.locale.value] : fieldInstore
+      const newValue = this.locale
+        ? fieldInstore[this.locale.value]
+        : fieldInstore
 
       // new value detected, let's update the UI (updateFromStore method need to be present into the component so the value is properly updated)
       if (!isEqual(currentValue, newValue)) {
-        if (typeof this.updateFromStore !== 'undefined') this.updateFromStore(newValue)
+        if (typeof this.updateFromStore !== 'undefined')
+          this.updateFromStore(newValue)
       }
     }
   },
   methods: {
-    getFieldName: function () {
+    getFieldName: function() {
       return this.fieldName !== '' ? this.fieldName : this.name
     },
     // Save the value into the store
-    saveIntoStore: function (value) {
+    saveIntoStore: function(value) {
       if (this.inStore === '') return
 
       let newValue = ''
@@ -73,21 +73,22 @@ export default {
       if (this.inModal) this.$store.commit(FORM.UPDATE_MODAL_FIELD, field)
       else this.$store.commit(FORM.UPDATE_FORM_FIELD, field)
     },
-    preventSubmit: function () {
+    preventSubmit: function() {
       this.$store.commit(FORM.PREVENT_SUBMIT)
     },
-    allowSubmit: function () {
+    allowSubmit: function() {
       this.$store.commit(FORM.ALLOW_SUBMIT)
     },
-    destroyValue: function () {
+    destroyValue: function() {
       if (this.inStore !== '') {
         // Delete form field from store because the field has been removed
-        if (this.inModal) this.$store.commit(FORM.REMOVE_MODAL_FIELD, this.getFieldName())
+        if (this.inModal)
+          this.$store.commit(FORM.REMOVE_MODAL_FIELD, this.getFieldName())
         else this.$store.commit(FORM.REMOVE_FORM_FIELD, this.getFieldName())
       }
     }
   },
-  beforeMount: function () {
+  beforeMount: function() {
     const fieldName = this.getFieldName()
 
     if (this.inStore === '') return
@@ -95,7 +96,7 @@ export default {
 
     const fields = this.inModal ? this.modalFields : this.fields
 
-    const fieldInStore = fields.filter(function (field) {
+    const fieldInStore = fields.filter(function(field) {
       return field.name === fieldName
     })
 

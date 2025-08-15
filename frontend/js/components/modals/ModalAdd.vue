@@ -1,5 +1,10 @@
 <template>
-  <a17-modal ref="modal" class="modal--form" :title="modalTitle" :forceClose="true">
+  <a17-modal
+    ref="modal"
+    class="modal--form"
+    :title="modalTitle"
+    :forceClose="true"
+  >
     <form :action="formCreate" @submit.prevent="submit">
       <slot></slot>
       <a17-modal-validation :is-disable="true"></a17-modal-validation>
@@ -10,7 +15,7 @@
 <script>
   import retrySubmitMixin from '@/mixins/retrySubmit'
   import ACTIONS from '@/store/actions'
-  import { FORM,NOTIFICATION } from '@/store/mutations'
+  import { FORM, NOTIFICATION } from '@/store/mutations'
 
   import a17ModalValidationButtons from './ModalValidationButtons.vue'
 
@@ -35,10 +40,10 @@
       'a17-modal-validation': a17ModalValidationButtons
     },
     methods: {
-      open: function () {
+      open: function() {
         if (this.$refs.modal) this.$refs.modal.open()
       },
-      submit: function () {
+      submit: function() {
         if (this.isSubmitPrevented) {
           this.shouldRetrySubmitWhenAllowed = true
           return
@@ -53,28 +58,34 @@
 
         const submitMode = document.activeElement.name
 
-        this.$nextTick(function () {
-          this.$store.dispatch(ACTIONS.CREATE_FORM_IN_MODAL, {
-            name: this.name,
-            endpoint: this.formCreate,
-            method: 'post'
-          }).then(() => {
-            if (self.$refs.modal) self.$refs.modal.close()
-
-            self.$nextTick(function () {
-              self.$store.commit(NOTIFICATION.SET_NOTIF, {
-                message: 'Your content has been added',
-                variant: 'success'
-              })
-
-              if (submitMode === 'create-another' && self.$refs.modal) self.$refs.modal.open()
+        this.$nextTick(function() {
+          this.$store
+            .dispatch(ACTIONS.CREATE_FORM_IN_MODAL, {
+              name: this.name,
+              endpoint: this.formCreate,
+              method: 'post'
             })
-          }, (errorResponse) => {
-            self.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: 'Your content can not be added, please retry',
-              variant: 'error'
-            })
-          })
+            .then(
+              () => {
+                if (self.$refs.modal) self.$refs.modal.close()
+
+                self.$nextTick(function() {
+                  self.$store.commit(NOTIFICATION.SET_NOTIF, {
+                    message: 'Your content has been added',
+                    variant: 'success'
+                  })
+
+                  if (submitMode === 'create-another' && self.$refs.modal)
+                    self.$refs.modal.open()
+                })
+              },
+              errorResponse => {
+                self.$store.commit(NOTIFICATION.SET_NOTIF, {
+                  message: 'Your content can not be added, please retry',
+                  variant: 'error'
+                })
+              }
+            )
         })
       }
     }

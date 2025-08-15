@@ -19,23 +19,20 @@
       }
     },
     computed: {
-      avatarClasses () {
-        return [
-          'avatar',
-          this.getBackgroundColor
-        ]
+      avatarClasses() {
+        return ['avatar', this.getBackgroundColor]
       },
-      getBackgroundColor () {
+      getBackgroundColor() {
         // Init colors.
         const colors = ['orange', 'blue', 'purple', 'red']
 
         // Calculate indexColor.
-        const indexColor = (this.name.length % colors.length)
+        const indexColor = this.name.length % colors.length
 
         // Return background class.
         return `avatar--background-${colors[indexColor]}`
       },
-      nameFirstLetter () {
+      nameFirstLetter() {
         return this.name.charAt(0)
       }
     }

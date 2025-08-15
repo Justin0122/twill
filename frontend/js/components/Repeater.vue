@@ -1,19 +1,28 @@
 <template>
   <div class="content">
     <draggable class="content__content" v-model="blocks" v-bind="dragOptions">
-      <transition-group name="draggable_list" tag='div'>
-        <div class="content__item" v-for="(block, index) in blocks" :key="block.id">
+      <transition-group name="draggable_list" tag="div">
+        <div
+          class="content__item"
+          v-for="(block, index) in blocks"
+          :key="block.id"
+        >
           <a17-blockeditor-item
-              ref="blockList"
-              :block="block"
-              :index="index"
-              :withHandle="reorder && draggable"
-              :withActions="displayActions"
-              :size="blockSize"
-              :opened="opened"
+            ref="blockList"
+            :block="block"
+            :index="index"
+            :withHandle="reorder && draggable"
+            :withActions="displayActions"
+            :size="blockSize"
+            :opened="opened"
           >
-            <a17-button slot="block-actions" variant="icon" data-action @click="duplicateBlock(index)"
-                        v-if="hasRemainingBlocks && allowCreate">
+            <a17-button
+              slot="block-actions"
+              variant="icon"
+              data-action
+              @click="duplicateBlock(index)"
+              v-if="hasRemainingBlocks && allowCreate"
+            >
               <span v-svg symbol="add"></span>
             </a17-button>
             <div slot="dropdown-action">
@@ -23,7 +32,11 @@
               <button v-else type="button" @click="expandAllBlocks()">
                 {{ $trans('fields.block-editor.expand-all', 'Expand all') }}
               </button>
-              <button type="button" @click="duplicateBlock(index)" v-if="hasRemainingBlocks">
+              <button
+                type="button"
+                @click="duplicateBlock(index)"
+                v-if="hasRemainingBlocks"
+              >
                 {{ $trans('fields.block-editor.clone-block', 'Clone block') }}
               </button>
               <button type="button" @click="deleteBlock(index)">
@@ -36,18 +49,18 @@
     </draggable>
     <div class="content__trigger">
       <a17-button
-          v-if="hasRemainingBlocks && blockType.trigger && allowCreate"
-          :class="triggerClass"
-          :variant="triggerVariant"
-          @click="addBlock()"
+        v-if="hasRemainingBlocks && blockType.trigger && allowCreate"
+        :class="triggerClass"
+        :variant="triggerVariant"
+        @click="addBlock()"
       >
         {{ blockType.trigger }}
       </a17-button>
       <a17-button
-          v-if="hasRemainingBlocks && browser"
-          :class="triggerClass"
-          :variant="triggerVariant"
-          @click="openBrowser()"
+        v-if="hasRemainingBlocks && browser"
+        :class="triggerClass"
+        :variant="triggerVariant"
+        @click="openBrowser()"
       >
         {{ blockType.selectTrigger }}
       </a17-button>
@@ -56,13 +69,13 @@
       </div>
     </div>
     <a17-standalone-browser
-        v-if="browserIsOpen"
-        :endpoint="browser"
-        :for-repeater="true"
-        @selected="addRepeatersFromSelection"
-        ref="localbrowser"
-        @close="browserIsOpen = false"
-        :max="max"
+      v-if="browserIsOpen"
+      :endpoint="browser"
+      :for-repeater="true"
+      @selected="addRepeatersFromSelection"
+      ref="localbrowser"
+      @close="browserIsOpen = false"
+      :max="max"
     />
   </div>
 </template>
@@ -72,10 +85,10 @@
   import { mapState } from 'vuex'
 
   import BlockEditorItem from '@/components/blocks/BlockEditorItem.vue'
-  import A17StandaloneBrowser from "@/components/StandaloneBrowser.vue"
+  import A17StandaloneBrowser from '@/components/StandaloneBrowser.vue'
   import draggableMixin from '@/mixins/draggable'
   import { FORM } from '@/store/mutations'
-  import ACTIONS from "@/store/actions";
+  import ACTIONS from '@/store/actions'
 
   export default {
     name: 'A17Repeater',
@@ -105,7 +118,7 @@
       },
       relation: {
         type: String,
-        required: false,
+        required: false
       },
       allowCreate: {
         type: Boolean,
@@ -123,9 +136,9 @@
       reorder: {
         type: Boolean,
         default: true
-      },
+      }
     },
-    data: function () {
+    data: function() {
       return {
         opened: true,
         browserIsOpen: false,
@@ -133,42 +146,44 @@
       }
     },
     computed: {
-      triggerVariant: function () {
+      triggerVariant: function() {
         if (this.buttonAsLink) {
           return 'aslink'
         }
         return this.inContentEditor ? 'outline' : 'action'
       },
-      triggerClass: function () {
+      triggerClass: function() {
         return this.inContentEditor ? 'content__button' : ''
       },
-      blockSize: function () {
+      blockSize: function() {
         return this.inContentEditor ? 'small' : ''
       },
-      inContentEditor: function () {
+      inContentEditor: function() {
         return typeof this.$parent.repeaterName !== 'undefined'
       },
-      hasRemainingBlocks: function () {
+      hasRemainingBlocks: function() {
         let max = null
         if (this.max && this.max > 0) {
           max = this.max
         } else if (this.blockType.hasOwnProperty('max')) {
           max = this.blockType.max
         }
-        return !max || (max > this.blocks.length)
+        return !max || max > this.blocks.length
       },
-      blockType: function () {
-        return this.availableBlocks[this.type] ? this.availableBlocks[this.type] : {}
+      blockType: function() {
+        return this.availableBlocks[this.type]
+          ? this.availableBlocks[this.type]
+          : {}
       },
       blocks: {
-        get () {
+        get() {
           if (this.savedBlocks.hasOwnProperty(this.name)) {
             return this.savedBlocks[this.name] || []
           } else {
             return []
           }
         },
-        set (value) {
+        set(value) {
           this.$store.commit(FORM.REORDER_FORM_BLOCKS, {
             type: this.type,
             name: this.name,
@@ -182,20 +197,25 @@
       })
     },
     methods: {
-      setOpened: function () {
-        const allClosed = this.$refs.blockList && this.$refs.blockList.every((block) => !block.visible)
+      setOpened: function() {
+        const allClosed =
+          this.$refs.blockList &&
+          this.$refs.blockList.every(block => !block.visible)
         if (allClosed) {
           this.opened = false
         }
       },
-      addBlock: function () {
-        this.$store.commit(FORM.ADD_FORM_BLOCK, { type: this.type, name: this.name })
+      addBlock: function() {
+        this.$store.commit(FORM.ADD_FORM_BLOCK, {
+          type: this.type,
+          name: this.name
+        })
 
         this.$nextTick(() => {
           this.checkExpandBlocks()
         })
       },
-      addRepeatersFromSelection (selected) {
+      addRepeatersFromSelection(selected) {
         this.$store.commit(FORM.ADD_REPEATER_FROM_SELECTION, {
           type: this.type,
           name: this.name,
@@ -203,7 +223,7 @@
           relation: this.relation
         })
       },
-      duplicateBlock: function (index) {
+      duplicateBlock: function(index) {
         this.$store.dispatch(ACTIONS.DUPLICATE_REPEATER, {
           editorName: this.name,
           index,
@@ -216,33 +236,35 @@
           this.checkExpandBlocks()
         })
       },
-      deleteBlock: function (index) {
+      deleteBlock: function(index) {
         this.$store.commit(FORM.DELETE_FORM_BLOCK, {
           type: this.type,
           name: this.name,
           index
         })
       },
-      collapseAllBlocks: function () {
+      collapseAllBlocks: function() {
         this.opened = false
       },
-      expandAllBlocks: function () {
+      expandAllBlocks: function() {
         this.opened = true
       },
-      checkExpandBlocks () {
-        if (this.$refs.blockList[this.$refs.blockList.length - 1] !== undefined) {
+      checkExpandBlocks() {
+        if (
+          this.$refs.blockList[this.$refs.blockList.length - 1] !== undefined
+        ) {
           this.$refs.blockList[this.$refs.blockList.length - 1].toggleExpand()
         }
       },
-      openBrowser: function () {
+      openBrowser: function() {
         this.browserIsOpen = true
       }
     },
-    mounted: function () {
+    mounted: function() {
       // if there are blocks, these should be all collapse by default
-      this.$nextTick(function () {
+      this.$nextTick(function() {
         if (this.$refs.blockList && this.blocks && this.blocks.length < 4) {
-          this.$refs.blockList.forEach((block) => block.toggleExpand())
+          this.$refs.blockList.forEach(block => block.toggleExpand())
         }
 
         this.setOpened()
@@ -252,7 +274,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .content {
     margin-top: 20px;
   }

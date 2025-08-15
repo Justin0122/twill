@@ -19,7 +19,7 @@ export default {
     ...mapState({
       itemsLoading: state => state.mediaLibrary.loading
     }),
-    replacingMediaIds: function () {
+    replacingMediaIds: function() {
       return this.itemsLoading.reduce((agg, curr) => {
         if (curr.isReplacement) {
           agg[curr.replacementId] = curr.id
@@ -29,16 +29,24 @@ export default {
     }
   },
   methods: {
-    isSelected: function (item, keys = ['id']) {
-      return Boolean(this.selectedItems.find(sItem => keys.every(key => sItem[key] === item[key])))
+    isSelected: function(item, keys = ['id']) {
+      return Boolean(
+        this.selectedItems.find(sItem =>
+          keys.every(key => sItem[key] === item[key])
+        )
+      )
     },
-    isUsed: function (item, keys = ['id']) {
-      return Boolean(this.usedItems.find(uItem => keys.every(key => uItem[key] === item[key])))
+    isUsed: function(item, keys = ['id']) {
+      return Boolean(
+        this.usedItems.find(uItem =>
+          keys.every(key => uItem[key] === item[key])
+        )
+      )
     },
-    toggleSelection: function (item) {
+    toggleSelection: function(item) {
       this.$emit('change', item)
     },
-    shiftToggleSelection: function (item) {
+    shiftToggleSelection: function(item) {
       this.$emit('shiftChange', item, true)
     }
   }

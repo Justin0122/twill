@@ -1,5 +1,10 @@
 <template>
-  <a17-table-cell-html v-if="col.hasOwnProperty('html')" v-bind="childProps" @update="update" @editInPlace="editInPlace"/>
+  <a17-table-cell-html
+    v-if="col.hasOwnProperty('html')"
+    v-bind="childProps"
+    @update="update"
+    @editInPlace="editInPlace"
+  />
   <span v-else>{{ row[colName] }}</span>
 </template>
 
@@ -12,7 +17,7 @@
     name: 'A17TableCellGeneric',
     mixins: [TableCellMixin],
     computed: {
-      childProps: function () {
+      childProps: function() {
         return this.$props
       }
     },
@@ -22,6 +27,4 @@
   }
 </script>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>

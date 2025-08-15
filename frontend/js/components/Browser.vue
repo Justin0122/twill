@@ -2,14 +2,15 @@
   <div class="browser">
     <div class="browser__frame">
       <div class="browser__header" ref="form">
-        <div class="browser__sources"
-             v-if="multiSources">
-          <a17-vselect class="browser__sources-select"
-                       name="sources"
-                       :selected="currentEndpoint"
-                       :options="endpoints"
-                       :required="true"
-                       @change="changeBrowserSource"/>
+        <div class="browser__sources" v-if="multiSources">
+          <a17-vselect
+            class="browser__sources-select"
+            name="sources"
+            :selected="currentEndpoint"
+            :options="endpoints"
+            :required="true"
+            @change="changeBrowserSource"
+          />
         </div>
         <div class="browser__search">
           <a17-filter @submit="submitFilter">
@@ -23,15 +24,21 @@
       </div>
       <div class="browser__inner">
         <div class="browser__list" ref="list">
-          <a17-itemlist :items="fullItems"
-                        :keysToCheck="['id', 'edit']"
-                        @change="updateSelectedItems"
-                        :selectedItems="selectedItems"/>
+          <a17-itemlist
+            :items="fullItems"
+            :keysToCheck="['id', 'edit']"
+            @change="updateSelectedItems"
+            :selectedItems="selectedItems"
+          />
         </div>
       </div>
       <div class="browser__footer">
-        <a17-button type="button" variant="action" @click="saveAndClose">{{ browserTitle }}</a17-button>
-        <span class="browser__size-infos">{{ selectedItems.length }} / {{ max }}</span>
+        <a17-button type="button" variant="action" @click="saveAndClose">{{
+          browserTitle
+        }}</a17-button>
+        <span class="browser__size-infos"
+          >{{ selectedItems.length }} / {{ max }}</span
+        >
       </div>
     </div>
   </div>
@@ -66,7 +73,7 @@
         default: 1
       }
     },
-    data () {
+    data() {
       return {
         maxPage: 20,
         fullItems: [],
@@ -75,17 +82,17 @@
       }
     },
     computed: {
-      currentEndpoint () {
+      currentEndpoint() {
         return this.endpoints.find(endpoint => endpoint.value === this.endpoint)
       },
-      multiSources () {
+      multiSources() {
         return this.endpoints.length > 0
       },
       selectedItems: {
-        get () {
+        get() {
           return this.selected[this.connector] || []
         },
-        set (items) {
+        set(items) {
           this.$store.commit(BROWSER.SAVE_ITEMS, items)
         }
       },
@@ -101,13 +108,17 @@
       })
     },
     methods: {
-      updateSelectedItems (item) {
+      updateSelectedItems(item) {
         const keysToTest = this.multiSources ? ['id', 'endpointType'] : ['id']
-        const availableItem = this.fullItems.some(sItem => keysToTest.every(key => sItem[key] === item[key]))
+        const availableItem = this.fullItems.some(sItem =>
+          keysToTest.every(key => sItem[key] === item[key])
+        )
 
         if (!availableItem) return
 
-        const alreadySelected = this.selectedItems.some(sItem => keysToTest.every(key => sItem[key] === item[key]))
+        const alreadySelected = this.selectedItems.some(sItem =>
+          keysToTest.every(key => sItem[key] === item[key])
+        )
 
         // not already selected
         if (!alreadySelected) {
@@ -119,14 +130,16 @@
           this.selectedItems = [...this.selectedItems, item]
         } else {
           // Remove one item from the selected item
-          const itemIndex = this.selectedItems.findIndex(sItem => keysToTest.every(key => sItem[key] === item[key]))
+          const itemIndex = this.selectedItems.findIndex(sItem =>
+            keysToTest.every(key => sItem[key] === item[key])
+          )
           if (itemIndex < 0) return
           const items = [...this.selectedItems]
           items.splice(itemIndex, 1)
           this.selectedItems = items
         }
       },
-      getFormData (form) {
+      getFormData(form) {
         let data = FormDataAsObj(form)
 
         if (data) {
@@ -137,13 +150,13 @@
 
         return data
       },
-      clearSelectedItems () {
+      clearSelectedItems() {
         this.selectedItems = []
       },
-      clearFullItems () {
+      clearFullItems() {
         this.fullItems.splice(0)
       },
-      reloadList (hardReload = false) {
+      reloadList(hardReload = false) {
         if (hardReload) {
           this.page = 1
         }
@@ -152,32 +165,35 @@
         const list = this.$refs.list
         const formdata = this.getFormData(form)
 
-        this.$http.get(this.endpoint, { params: formdata }).then((resp) => {
-          // add items here
-          if (hardReload) {
-            this.clearFullItems()
-          }
-
-          this.fullItems.push(...resp.data.data)
-
-          // re-listen for scroll position if height changed
-          this.$nextTick(() => {
-            if (this.listHeight !== list.scrollHeight) {
-              this.listHeight = list.scrollHeight
-              list.addEventListener('scroll', this.scrollToPaginate)
+        this.$http.get(this.endpoint, { params: formdata }).then(
+          resp => {
+            // add items here
+            if (hardReload) {
+              this.clearFullItems()
             }
-          })
-        }, function (resp) {
-        // error callback
-        })
+
+            this.fullItems.push(...resp.data.data)
+
+            // re-listen for scroll position if height changed
+            this.$nextTick(() => {
+              if (this.listHeight !== list.scrollHeight) {
+                this.listHeight = list.scrollHeight
+                list.addEventListener('scroll', this.scrollToPaginate)
+              }
+            })
+          },
+          function(resp) {
+            // error callback
+          }
+        )
       },
-      submitFilter () {
+      submitFilter() {
         // when changing filters, reset the page to 1
         this.page = 1
         this.clearFullItems()
         this.reloadList()
       },
-      scrollToPaginate () {
+      scrollToPaginate() {
         const list = this.$refs.list
 
         if (list.scrollTop + list.clientHeight > this.listHeight - 10) {
@@ -189,16 +205,16 @@
           }
         }
       },
-      saveAndClose () {
+      saveAndClose() {
         this.$store.commit(BROWSER.SAVE_ITEMS, this.selectedItems)
         this.$parent.close()
       },
-      changeBrowserSource (source) {
+      changeBrowserSource(source) {
         this.$store.commit(BROWSER.UPDATE_BROWSER_ENDPOINT, source)
         this.reloadList(true)
       }
     },
-    mounted () {
+    mounted() {
       // bind scroll on the feed
       this.reloadList()
     }
@@ -206,7 +222,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .browser {
     display: block;
     width: 100%;
@@ -290,7 +305,7 @@
   }
 
   .browser__note {
-    color:$color__text--light;
+    color: $color__text--light;
     padding-left: 20px;
   }
 </style>

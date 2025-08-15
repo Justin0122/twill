@@ -1,47 +1,64 @@
 <template>
   <div class="userInfo">
-
     <!-- Content -->
     <div class="userInfo__content">
       <div v-if="userInfo.registered_at" class="userInfo__item">
         <div class="userInfo__row">
           <span class="userInfo__row-cell">Registered at</span>
-          <span class="userInfo__row-cell userInfo__row-cell--value">{{ userInfo.registered_at }}</span>
+          <span class="userInfo__row-cell userInfo__row-cell--value">{{
+            userInfo.registered_at
+          }}</span>
         </div>
       </div>
       <div v-if="userInfo.last_login_at" class="userInfo__item">
         <div class="userInfo__row">
           <span class="userInfo__row-cell">Last login at</span>
-          <span class="userInfo__row-cell userInfo__row-cell--value">{{ userInfo.last_login_at }}</span>
+          <span class="userInfo__row-cell userInfo__row-cell--value">{{
+            userInfo.last_login_at
+          }}</span>
         </div>
       </div>
       <div v-if="userInfo.resend_registration_link" class="userInfo__item">
-        <a class="userInfo__link" :href="userInfo.resend_registration_link" type="submit">
+        <a
+          class="userInfo__link"
+          :href="userInfo.resend_registration_link"
+          type="submit"
+        >
           <span class="f--link-underlined--o">Resend registration email</span>
         </a>
       </div>
       <div class="userInfo__item">
         <button class="userInfo__link" @click="openPasswordModal" type="button">
-          <span
-            class="f--link-underlined--o">{{ userInfo.is_activated ? 'Reset password' : 'Register account now' }}</span>
+          <span class="f--link-underlined--o">{{
+            userInfo.is_activated ? 'Reset password' : 'Register account now'
+          }}</span>
         </button>
       </div>
     </div>
 
     <!-- Modal : Password -->
-    <a17-modal class="modal--form" ref="passwordModal"
-               @hide="hidePasswordModal"
-               :title="userInfo.is_activated ? `Reset password for ${userInfo.user_name}` : `Register account for ${userInfo.user_name}`">
+    <a17-modal
+      class="modal--form"
+      ref="passwordModal"
+      @hide="hidePasswordModal"
+      :title="
+        userInfo.is_activated
+          ? `Reset password for ${userInfo.user_name}`
+          : `Register account for ${userInfo.user_name}`
+      "
+    >
       <div class="userInfo__form-row">
-        <a17-textfield name="new_password"
-                       id="new_password"
-                       fieldName="new_password"
-                       inStore="value"
-                       label="New password"
-                       :maxlength="50"
-                       note="Must have at least 8 characters"
-                       required
-                       type="password"/>
+        <a17-textfield
+          name="new_password"
+          id="new_password"
+          fieldName="new_password"
+          inStore="value"
+          label="New password"
+          :maxlength="50"
+          note="Must have at least 8 characters"
+          required
+          type="password"
+        />
       </div>
       <div v-if="userInfo.is_activated" class="userInfo__form-row">
         <a17-singlecheckbox
@@ -50,13 +67,15 @@
           :initialValue="false"
           id="require_password_change"
           fieldName="require_password_change"
-          label="Require password change at next login"/>
+          label="Require password change at next login"
+        />
       </div>
       <div class="userInfo__form-row">
-        <a17-modal-validation :mode="userInfo.is_activated ? 'Update' : 'Create'"/>
+        <a17-modal-validation
+          :mode="userInfo.is_activated ? 'Update' : 'Create'"
+        />
       </div>
     </a17-modal>
-
   </div>
 </template>
 
@@ -77,13 +96,13 @@
         default: null
       }
     },
-    data () {
+    data() {
       return {
         isPasswordModalOpen: false
       }
     },
     methods: {
-      openPasswordModal () {
+      openPasswordModal() {
         this.isPasswordModalOpen = true
         this.$refs.passwordModal.open()
         this.$store.commit(FORM.UPDATE_FORM_FIELD, {
@@ -91,7 +110,7 @@
           value: true
         })
       },
-      hidePasswordModal () {
+      hidePasswordModal() {
         this.$store.commit(FORM.UPDATE_FORM_FIELD, {
           name: 'reset_password',
           value: false

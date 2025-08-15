@@ -8,21 +8,28 @@
             :editor-name="editorName"
             v-for="savedBlock in allSavedBlocks"
             :key="savedBlock.id"
-            v-slot="{ block, isActive, blockIndex, move, remove, unEdit }">
+            v-slot="{ block, isActive, blockIndex, move, remove, unEdit }"
+          >
             <div class="editorSidebar__edit-block">
-              <a17-sidebar-block-item :block="block"
-                                      v-show="isActive"
-                                      :blockIndex="blockIndex"
-                                      :blocksLength="allSavedBlocks.length"
-                                      @block:move="move"
-                                      @block:delete="deleteBlock(remove)"/>
+              <a17-sidebar-block-item
+                :block="block"
+                v-show="isActive"
+                :blockIndex="blockIndex"
+                :blocksLength="allSavedBlocks.length"
+                @block:move="move"
+                @block:delete="deleteBlock(remove)"
+              />
               <div class="editorSidebar__actions">
-                <a17-button variant="action"
-                            @click="saveBlock(unEdit, blockIndex)">
+                <a17-button
+                  variant="action"
+                  @click="saveBlock(unEdit, blockIndex)"
+                >
                   {{ $trans('editor.done') }}
                 </a17-button>
-                <a17-button variant="secondary"
-                            @click="cancelBlock(unEdit, blockIndex)">
+                <a17-button
+                  variant="secondary"
+                  @click="cancelBlock(unEdit, blockIndex)"
+                >
                   {{ $trans('editor.cancel') }}
                 </a17-button>
               </div>
@@ -34,12 +41,23 @@
 
     <template v-if="!hasBlockActive">
       <div class="editorSidebar__list">
-        <a17-sidebar-block-list :blocks="blocks"/>
+        <a17-sidebar-block-list :blocks="blocks" />
       </div>
 
       <div class="editorSidebar__actions">
-        <a17-button v-if="isSubmitDisabled(submitOptions[0])" variant="validate" :disabled="true">{{ submitOptions[0].text }}</a17-button>
-        <a17-button v-else @click="saveForm(submitOptions[0].name)" :name="submitOptions[0].name" variant="validate">{{ submitOptions[0].text }}</a17-button>
+        <a17-button
+          v-if="isSubmitDisabled(submitOptions[0])"
+          variant="validate"
+          :disabled="true"
+          >{{ submitOptions[0].text }}</a17-button
+        >
+        <a17-button
+          v-else
+          @click="saveForm(submitOptions[0].name)"
+          :name="submitOptions[0].name"
+          variant="validate"
+          >{{ submitOptions[0].text }}</a17-button
+        >
       </div>
     </template>
   </div>
@@ -81,19 +99,19 @@
     },
     mixins: [BlockEditorMixin],
     computed: {
-      submitOptions () {
+      submitOptions() {
         return this.$store.getters.getSubmitOptions
       }
     },
     methods: {
-      isSubmitDisabled: function (btn) {
+      isSubmitDisabled: function(btn) {
         if (btn.hasOwnProperty('disabled')) {
           return btn.disabled === true
         } else {
           return false
         }
       },
-      saveForm (buttonName) {
+      saveForm(buttonName) {
         this.$store.commit(PUBLICATION.UPDATE_SAVE_TYPE, buttonName)
         if (this.$root.submitForm) this.$root.submitForm()
       }
