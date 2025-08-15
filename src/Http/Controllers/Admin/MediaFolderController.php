@@ -116,11 +116,6 @@ class MediaFolderController extends Controller
         // Only media library folders
         abort_unless($folder->library === 'media', 404);
 
-        // Do not allow deleting the virtual root
-        if ($folder->parent_id === null) {
-            return response()->json(['message' => 'Root folder cannot be deleted.'], 422);
-        }
-
         // Collect this folder + its descendants
         $ids = collect([$folder->id])
             ->merge(
