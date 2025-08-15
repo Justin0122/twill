@@ -182,6 +182,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
 
         $uploadedFile->storeAs($fileDirectory, $filename, $disk);
 
+        // normalize: '' for root, 'a/b' for nested
         $folderPath = trim((string) $request->input('folder', ''), '/');
 
         $fields = [
@@ -195,11 +196,27 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         if ($this->shouldReplaceMedia($id = $request->input('media_to_replace_id'))) {
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
-            $media->replace($fields);
+
+            // avoid mass-assignment restrictions during replace
+            $media->replace(Arr::except($fields, ['folder_path']));
+
+            // force-persist folder path
+            if ($request->has('folder')) {
+                $media->folder_path = $folderPath;
+                $media->save();
+            }
+
             return $media->fresh();
         }
 
-        return $this->repository->create($fields);
+        // create first (bypass mass-assignment for folder_path), then force-set it
+        $media = $this->repository->create(Arr::except($fields, ['folder_path']));
+        if ($request->has('folder')) {
+            $media->folder_path = $folderPath;
+            $media->save();
+        }
+
+        return $media;
     }
 
     /**
