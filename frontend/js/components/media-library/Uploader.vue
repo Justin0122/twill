@@ -32,14 +32,18 @@
             <div slot="navigation" class="medialibrary__folders-nav">
               <nav class="breadcrumbs" aria-label="Folder path">
                 <a href="#" @click.prevent="goToRoot" :class="{ 'is-active': currentFolderPath.length === 0 }">All</a>
-                <template v-for="(seg, i) in currentFolderPath" :key="i">
+                <span
+                  v-for="(seg, i) in currentFolderPath"
+                  :key="currentFolderPath.slice(0, i + 1).join('/')"
+                >
                   <span class="sep">/</span>
                   <a
                     href="#"
                     @click.prevent="goToIndex(i)"
                     :class="{ 'is-active': i === currentFolderPath.length - 1 }"
                   >{{ seg }}</a>
-                </template>
+                </span>
+
               </nav>
               <a17-button size="small" variant="secondary" @click="promptNewFolder">New folder</a17-button>
             </div>
