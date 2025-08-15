@@ -97,15 +97,16 @@ export default {
     )
   },
 
-  renameFolder (endpoint, id, payload, onSuccess, onError) {
-    window.axios
-      .patch(`${endpoint}/folders/${id}`, payload)
-      .then(onSuccess)
-      .catch(err => onError(err.response || err))
+  renameFolder (endpoint, id, payload, callback, errorCallback) {
+    axios.post(`${endpoint}/folders/${id}`, { ...payload, _method: 'PATCH' }).then(
+      resp => { if (callback) callback(resp) },
+      resp => {
+        globalError(component, { message: 'Media library rename folder error.', value: resp })
+        if (errorCallback) errorCallback(resp)
+      }
+    )
   },
 
-  // Create a folder under a parent path
-  // POST {endpoint}/folders  body: { type, parent: 'tuwi/sub', name: 'newfolder' }
   createFolder(endpoint, body, callback, errorCallback) {
     axios.post(`${endpoint}/folders`, body).then(
       function(resp) {
