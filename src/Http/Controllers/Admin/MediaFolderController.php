@@ -204,7 +204,7 @@ class MediaFolderController extends Controller
             })->values();
 
             return response()->json([
-                'message' => "This folder (or its subfolders) contains {$usedCount} used media. Remove usages first.",
+                'message' => "This folder (or its subfolders) contains used media. Remove usages first.",
                 'used'    => $usedReport,
             ], 422);
         }
