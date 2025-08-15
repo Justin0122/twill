@@ -4,6 +4,7 @@ namespace A17\Twill\Http\Controllers\Admin;
 use A17\Twill\Models\LibraryFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use A17\Twill\Models\Media;
 
 class MediaFolderController extends Controller
 {
