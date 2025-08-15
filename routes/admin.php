@@ -28,7 +28,8 @@ if (config('twill.enabled.media-library')) {
         // Folders (by ID)
         Route::get('medias/folders',  [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'index']);
         Route::post('medias/folders', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'store']);
-        Route::put('medias/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'update']);
+        Route::patch('medias/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'update']);
+        Route::put('medias/folders/{folder}',   [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'update']);
         Route::post('medias/folders/move', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'move']);
     });
 }

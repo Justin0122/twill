@@ -97,14 +97,10 @@ export default {
     )
   },
 
-  renameFolder (endpoint, id, payload, callback, errorCallback) {
-    axios.post(`${endpoint}/folders/${id}`, { ...payload, _method: 'PATCH' }).then(
-      resp => { if (callback) callback(resp) },
-      resp => {
-        globalError(component, { message: 'Media library rename folder error.', value: resp })
-        if (errorCallback) errorCallback(resp)
-      }
-    )
+  renameFolder (endpoint, id, payload, onSuccess, onError) {
+    axios.patch(`${endpoint}/folders/${id}`, payload, { headers: { Accept: 'application/json' } })
+      .then(resp => onSuccess && onSuccess(resp))
+      .catch(err => onError && onError(err.response || err))
   },
 
   createFolder(endpoint, body, callback, errorCallback) {
