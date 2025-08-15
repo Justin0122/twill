@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\ResponseFactory;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use A17\Twill\Models\LibraryFolder;
 
 class MediaLibraryController extends ModuleController implements SignUploadListener
 {
