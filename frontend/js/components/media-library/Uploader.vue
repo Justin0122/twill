@@ -79,48 +79,55 @@
           },
           text: { fileInputTitle: 'Browse...' },
           messages: {
-            retryFailTooManyItemsError: 'Retry failed - you have reached your file limit.',
+            retryFailTooManyItemsError:
+              'Retry failed - you have reached your file limit.',
             sizeError: '{file} is too large, maximum file size is {sizeLimit}.',
-            tooManyItemsError: 'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
-            typeError: '{file} has an invalid extension. Valid extension(s): {extensions}.'
+            tooManyItemsError:
+              'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
+            typeError:
+              '{file} has an invalid extension. Valid extension(s): {extensions}.'
           }
         }
 
         this._uploader =
           this.uploaderConfig.endpointType === 's3'
             ? new FineUploaderS3({
-              options: {
-                ...sharedConfig,
-                validation: { ...this.uploaderValidation },
-                objectProperties: {
-                  key: id => {
-                    return (
-                      this.unique_folder_name +
-                      '/' +
-                      sanitizeFilename(this._uploader.methods.getName(id))
-                    )
+                options: {
+                  ...sharedConfig,
+                  validation: { ...this.uploaderValidation },
+                  objectProperties: {
+                    key: id => {
+                      return (
+                        this.unique_folder_name +
+                        '/' +
+                        sanitizeFilename(this._uploader.methods.getName(id))
+                      )
+                    },
+                    region: this.uploaderConfig.endpointRegion,
+                    bucket: this.uploaderConfig.endpointBucket,
+                    acl: this.uploaderConfig.acl
                   },
-                  region: this.uploaderConfig.endpointRegion,
-                  bucket: this.uploaderConfig.endpointBucket,
-                  acl: this.uploaderConfig.acl
-                },
-                request: {
-                  endpoint: this.uploaderConfig.endpoint,
-                  accessKey: this.uploaderConfig.accessKey
-                },
-                signature: {
-                  endpoint: this.uploaderConfig.signatureEndpoint,
-                  version: 4,
-                  customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
-                },
-                uploadSuccess: {
-                  endpoint: this.uploaderConfig.successEndpoint,
-                  customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
+                  request: {
+                    endpoint: this.uploaderConfig.endpoint,
+                    accessKey: this.uploaderConfig.accessKey
+                  },
+                  signature: {
+                    endpoint: this.uploaderConfig.signatureEndpoint,
+                    version: 4,
+                    customHeaders: {
+                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                    }
+                  },
+                  uploadSuccess: {
+                    endpoint: this.uploaderConfig.successEndpoint,
+                    customHeaders: {
+                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                    }
+                  }
                 }
-              }
-            })
+              })
             : this.uploaderConfig.endpointType === 'azure'
-              ? new FineUploaderAzure({
+            ? new FineUploaderAzure({
                 options: {
                   ...sharedConfig,
                   validation: { ...this.uploaderValidation },
@@ -130,8 +137,8 @@
                       return new Promise(resolve => {
                         resolve(
                           this.unique_folder_name +
-                          '/' +
-                          sanitizeFilename(this._uploader.methods.getName(id))
+                            '/' +
+                            sanitizeFilename(this._uploader.methods.getName(id))
                         )
                       })
                     }
@@ -140,15 +147,19 @@
                   signature: {
                     endpoint: this.uploaderConfig.signatureEndpoint,
                     version: 4,
-                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
+                    customHeaders: {
+                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                    }
                   },
                   uploadSuccess: {
                     endpoint: this.uploaderConfig.successEndpoint,
-                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
+                    customHeaders: {
+                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                    }
                   }
                 }
               })
-              : new FineUploaderTraditional({
+            : new FineUploaderTraditional({
                 options: {
                   ...sharedConfig,
                   validation: {
@@ -157,14 +168,18 @@
                   },
                   request: {
                     endpoint: this.uploaderConfig.endpoint,
-                    customHeaders: { 'X-CSRF-TOKEN': this.uploaderConfig.csrfToken }
+                    customHeaders: {
+                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                    }
                   }
                 }
               })
       },
       replaceMedia: function(id) {
         this.media_to_replace_id = id
-        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll('[name = "qqfile"]')
+        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll(
+          '[name = "qqfile"]'
+        )
         qqinputs[Array.from(qqinputs).length - 1].click()
       },
       loadingProgress: function(media) {
@@ -205,7 +220,10 @@
         return new Promise((resolve, reject) => {
           const img = new Image()
           img.onload = () => {
-            this.prepareUpload(id, name, { width: img.width, height: img.height })
+            this.prepareUpload(id, name, {
+              width: img.width,
+              height: img.height
+            })
             resolve(img)
           }
           img.onerror = err => {
@@ -221,7 +239,8 @@
 
         // one temp folder per upload session
         this.unique_folder_name =
-          this.unique_folder_name || this.uploaderConfig.endpointRoot + qq.getUniqueId()
+          this.unique_folder_name ||
+          this.uploaderConfig.endpointRoot + qq.getUniqueId()
 
         // Build params without leaking "undefined"/"null" strings
         const params = {
@@ -235,11 +254,18 @@
         }
 
         // only include if set (use string for safety in multipart)
-        if (this.folderId !== null && this.folderId !== '' && this.folderId !== undefined) {
+        if (
+          this.folderId !== null &&
+          this.folderId !== '' &&
+          this.folderId !== undefined
+        ) {
           params.folder_id = String(this.folderId)
         }
 
-        if (this.media_to_replace_id !== null && this.media_to_replace_id !== undefined) {
+        if (
+          this.media_to_replace_id !== null &&
+          this.media_to_replace_id !== undefined
+        ) {
           params.media_to_replace_id = String(this.media_to_replace_id)
         }
 
@@ -275,7 +301,9 @@
       },
       _onErrorCallback(id, name, errorReason) {
         const index = id
-          ? this.loadingMedias.findIndex(m => m.id === this._uploader.methods.getUuid(id))
+          ? this.loadingMedias.findIndex(
+              m => m.id === this._uploader.methods.getUuid(id)
+            )
           : -1
 
         if (index >= 0) {
@@ -283,7 +311,9 @@
           this.loadingError(this.loadingMedias[index])
         } else {
           const media = {
-            id: id ? this._uploader.methods.getUuid(id) : Math.floor(Math.random() * 1000),
+            id: id
+              ? this._uploader.methods.getUuid(id)
+              : Math.floor(Math.random() * 1000),
             name: sanitizeFilename(name),
             progress: 0,
             error: true,
@@ -309,7 +339,9 @@
         }
       },
       _onTotalProgressCallback(totalUploadedBytes, totalBytes) {
-        const uploadProgress = Math.floor((totalUploadedBytes / totalBytes) * 100)
+        const uploadProgress = Math.floor(
+          (totalUploadedBytes / totalBytes) * 100
+        )
         this.uploadProgress(uploadProgress)
       },
       _onDropError(errorCode, errorData) {
@@ -338,7 +370,9 @@
         allowMultipleItems: true,
         callbacks: {
           dropError: this._onDropError.bind(this),
-          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(this)
+          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(
+            this
+          )
         }
       })
     },
@@ -351,7 +385,9 @@
 <style lang="scss" scoped>
   $height_small_btn: 35px;
 
-  .uploader { margin: 10px; }
+  .uploader {
+    margin: 10px;
+  }
 
   .uploader__dropzone {
     border: 1px dashed $color__border--hover;
@@ -371,11 +407,23 @@
       color: $color__text--light;
       padding: 0 20px;
       text-align: center;
-      transition: color 0.2s linear, border-color 0.2s linear, background-color 0.2s linear;
+      transition: color 0.2s linear, border-color 0.2s linear,
+        background-color 0.2s linear;
 
-      &.qq-upload-button-hover, &:hover { border-color: $color__text; color: $color__text; }
-      &.qq-upload-button-focus, &:focus { border-color: $color__text; color: $color__text; }
-      &:disabled { opacity: 0.5; pointer-events: none; }
+      &.qq-upload-button-hover,
+      &:hover {
+        border-color: $color__text;
+        color: $color__text;
+      }
+      &.qq-upload-button-focus,
+      &:focus {
+        border-color: $color__text;
+        color: $color__text;
+      }
+      &:disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
     }
   }
 
@@ -383,6 +431,8 @@
     display: inline-block;
     vertical-align: top;
     margin-top: 8px;
-    @include breakpoint(small-) { display: none; }
+    @include breakpoint(small-) {
+      display: none;
+    }
   }
 </style>
