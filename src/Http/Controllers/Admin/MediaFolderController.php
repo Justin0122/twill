@@ -5,6 +5,7 @@ use A17\Twill\Models\LibraryFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use A17\Twill\Models\Media;
+use A17\Twill\Models\Block;
 
 class MediaFolderController extends Controller
 {
@@ -113,7 +114,6 @@ class MediaFolderController extends Controller
 
     public function destroy(Request $request, LibraryFolder $folder)
     {
-        // Only media library folders
         abort_unless($folder->library === 'media', 404);
 
         // Collect this folder + its descendants
@@ -156,29 +156,45 @@ class MediaFolderController extends Controller
                 ->whereIn('id', $mediaIds)
                 ->pluck('filename', 'id');
 
-            // Build a detailed usage report and try to resolve a human title
+            // Build a detailed usage report that resolves to the owning page/model
             $usedReport = $usages->groupBy('media_id')->map(function ($rows, $mediaId) use ($mediaMeta) {
+
                 $places = $rows->map(function ($row) {
+                    [$pageType, $pageId] = $this->resolveUsageToPage($row->mediable_type, (int)$row->mediable_id);
+
                     $title = null;
-                    try {
-                        if (class_exists($row->mediable_type)) {
-                            $model = $row->mediable_type::find($row->mediable_id);
+                    if ($pageType && class_exists($pageType)) {
+                        try {
+                            $model = $pageType::find($pageId);
                             if ($model) {
                                 // best-effort title
-                                $title = $model->title ?? $model->name ?? (method_exists($model, '__toString') ? (string) $model : null);
+                                $title = $model->title
+                                    ?? $model->name
+                                    ?? (method_exists($model, 'getTitle') ? $model->getTitle() : null)
+                                    ?? (method_exists($model, '__toString') ? (string) $model : null);
                             }
+                        } catch (\Throwable $e) {
+                            // ignore resolution errors
                         }
-                    } catch (\Throwable $e) {
-                        // ignore resolution errors
                     }
 
                     return [
-                        'type'  => $row->mediable_type,
-                        'id'    => $row->mediable_id,
+                        // what page it's used on:
+                        'type'  => $pageType ?: $row->mediable_type,
+                        'id'    => $pageId   ?: $row->mediable_id,
+                        // keep the role (image field name within that page/block)
                         'role'  => $row->role,
                         'title' => $title,
+                        // optional raw location for debugging:
+                        'via'   => [
+                            'mediable_type' => $row->mediable_type,
+                            'mediable_id'   => $row->mediable_id,
+                        ],
                     ];
-                })->values();
+                })
+                    // same page might appear multiple times (e.g. same media twice in same page)
+                    ->unique(fn($p) => ($p['type'] ?? '').'#'.($p['id'] ?? '').'|'.($p['role'] ?? ''))
+                    ->values();
 
                 return [
                     'media_id' => (int) $mediaId,
@@ -208,6 +224,58 @@ class MediaFolderController extends Controller
         ]);
     }
 
+    /**
+     * Resolve a mediable reference to the ultimate owning "page".
+     * - If it's a Block (or "blocks"), walk up the chain until we reach a non-Block blockable.
+     * - Otherwise, assume the mediable_type itself is the page model.
+     *
+     * @return array{0:?string,1:?int} [pageTypeFQCN, pageId]
+     */
+    private function resolveUsageToPage(?string $mediableType, int $mediableId): array
+    {
+        // normalized checks for Block
+        $isBlockType = function ($type) {
+            return in_array($type, ['blocks', Block::class, 'A17\\Twill\\Models\\Block'], true);
+        };
+
+        if ($isBlockType($mediableType)) {
+            // climb from block -> (maybe parent block) -> page
+            $visited = [];
+            $currentId = $mediableId;
+
+            while ($currentId && !in_array($currentId, $visited, true)) {
+                $visited[] = $currentId;
+                // use model if available to honor table names; fall back to DB if needed
+                $block = Block::query()->find($currentId);
+                if (!$block) {
+                    $block = DB::table('twill_blocks')->where('id', $currentId)->first();
+                    if (!$block) break;
+                    $blockableType = $block->blockable_type;
+                    $blockableId   = (int)$block->blockable_id;
+                    $parentId      = $block->parent_id ?? null;
+                } else {
+                    $blockableType = $block->blockable_type;
+                    $blockableId   = (int)$block->blockable_id;
+                    $parentId      = $block->parent_id;
+                }
+
+                // nested block? keep climbing
+                if ($isBlockType($blockableType)) {
+                    $currentId = $blockableId; // parent block id
+                    continue;
+                }
+
+                // reached a page-like model
+                return [$blockableType, $blockableId];
+            }
+
+            // fallback: could not resolve, return the original block ref
+            return [$mediableType, $mediableId];
+        }
+
+        // direct usage on a model (e.g., App\Models\Page)
+        return [$mediableType, $mediableId];
+    }
 
     private function buildTreeFromRows($rows): array
     {
