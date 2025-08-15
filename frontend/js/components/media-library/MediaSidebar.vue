@@ -450,7 +450,7 @@
               // eslint-disable-next-line eqeqeq
             })
             .every((val, i, arr) =>
-              Array.isArray(val) ? val[0] == arr[0] : val == arr[0]
+              Array.isArray(val) ? val[0] === arr[0] : val === arr[0]
             )
             ? this.firstMedia.metadatas.default[name]
             : type === 'object'
