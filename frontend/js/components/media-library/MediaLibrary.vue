@@ -189,6 +189,9 @@
                 :folder="currentFolderFullPath"
                 :translatableMetadatas="translatableMetadatas"
                 @triggerMediaReplace="replaceMedia"
+                :folder-error="folderDeleteError"
+                :folder-error-used="folderDeleteUsed"
+                @clearFolderError="() => { folderDeleteError = null; folderDeleteUsed = [] }"
               />
             </aside>
 
@@ -447,6 +450,8 @@
         folderTree: null,
         currentFolderPath: [],
         currentFolderId: null,
+        folderDeleteError: null,
+        folderDeleteUsed: [],
       }
     },
     computed: {
@@ -801,7 +806,10 @@
           this.endpoint,
           payload.id,
           (resp) => {
-            // If we deleted the current folder, bounce back to root
+            // clear any previous error
+            this.folderDeleteError = null
+            this.folderDeleteUsed = []
+
             if (this.currentFolderId === payload.id) {
               this.currentFolderId = null
               this.currentFolderPath = []
@@ -811,17 +819,26 @@
               message: this.$trans('media-library.folder-deleted', 'Folder deleted'),
               variant: 'success'
             })
-            // refresh UI
             this.page = 1
             this.clearMediaItems()
             this.reloadGrid()
             this.loadFolderTree()
           },
           (error) => {
-            const msg =
-              error?.data?.message ||
-              this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
-            this.$store.commit(NOTIFICATION.SET_NOTIF, { message: msg, variant: 'error' })
+            // Prefer the detailed 422 from your controller
+            if (error?.status === 422 && error?.data) {
+              this.folderDeleteError = error.data.message || this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
+              this.folderDeleteUsed  = Array.isArray(error.data.used) ? error.data.used : []
+            } else {
+              this.folderDeleteError = this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
+              this.folderDeleteUsed  = []
+            }
+
+            // Optional toast too:
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.folderDeleteError,
+              variant: 'error'
+            })
           }
         )
       },

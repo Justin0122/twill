@@ -1,7 +1,30 @@
 <template>
   <div class="mediasidebar">
     <a17-mediasidebar-upload v-if="mediasLoading.length" />
+
     <template v-else>
+      <!-- NEW: folder delete error / usage report -->
+      <div v-if="folderError" class="mediasidebar__foldererror">
+        <div class="mediasidebar__foldererror-head">
+          <strong>{{ folderError }}</strong>
+          <button class="foldererror__close" type="button" @click="$emit('clearFolderError')">×</button>
+        </div>
+
+        <ul class="foldererror__items">
+          <li v-for="item in folderErrorUsed" :key="item.media_id" class="foldererror__item">
+            <div class="foldererror__file">
+              <strong>{{ item.filename || ('Media #' + item.media_id) }}</strong>
+            </div>
+            <ul class="foldererror__places">
+              <li v-for="(p, i) in item.places" :key="item.media_id + '-' + i">
+                <code>{{ p.type }}</code> #{{ p.id }}
+                <span v-if="p.role"> • {{ p.role }}</span>
+                <span v-if="p.title"> — {{ p.title }}</span>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
       <div class="mediasidebar__inner" :class="containerClasses">
         <p v-if="!hasMedia" class="f--note">
           {{ $trans('media-library.sidebar.empty-text', 'No file selected') }}
@@ -375,6 +398,14 @@
           return []
         }
       },
+      folderError: {
+        type: [String, null],
+        default: null
+      },
+      folderErrorUsed: {
+        type: Array,
+        default: () => []
+      },
       authorized: {
         type: Boolean,
         default: false
@@ -401,7 +432,7 @@
         loading: false,
         focused: false,
         previousSavedData: {},
-        fieldsRemovedFromBulkEditing: []
+        fieldsRemovedFromBulkEditing: [],
       }
     },
     filters: a17VueFilters,
@@ -812,4 +843,22 @@
     margin-top: 32px;
     margin-bottom: 32px;
   }
+
+  .mediasidebar__foldererror {
+    margin: 12px 20px 0;
+    padding: 12px;
+    border: 1px solid #f3c2c2;
+    background: #fff6f6;
+    border-radius: 8px;
+    .mediasidebar__foldererror-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .foldererror__close {
+      background: transparent; border: 0; cursor: pointer; font-size: 18px; line-height: 1;
+    }
+    .foldererror__items { margin: 0; padding-left: 16px; }
+    .foldererror__file { margin-top: 6px; }
+    .foldererror__places { margin: 4px 0 0 16px; }
+  }
+
 </style>

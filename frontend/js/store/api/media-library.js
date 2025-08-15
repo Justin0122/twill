@@ -104,19 +104,10 @@ export default {
   },
 
   deleteFolder(endpoint, id, callback, errorCallback) {
-    axios.delete(`${endpoint}/folders/${id}`, { headers: { Accept: 'application/json' } }).then(
-      function (resp) {
-        if (callback && typeof callback === 'function') callback(resp)
-      },
-      function (resp) {
-        const error = {
-          message: 'Media library delete folder error.',
-          value: resp
-        }
-        globalError(component, error)
-        if (errorCallback && typeof errorCallback === 'function') errorCallback(resp)
-      }
-    )
+    axios
+      .delete(`${endpoint}/folders/${id}`, { headers: { Accept: 'application/json' } })
+      .then(resp => callback && callback(resp))
+      .catch(err => errorCallback && errorCallback(err.response || err))
   },
 
   createFolder(endpoint, body, callback, errorCallback) {
