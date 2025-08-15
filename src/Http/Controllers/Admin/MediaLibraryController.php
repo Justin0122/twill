@@ -20,46 +20,19 @@ use Illuminate\Support\Collection;
 
 class MediaLibraryController extends ModuleController implements SignUploadListener
 {
-    /**
-     * @var string
-     */
     protected $moduleName = 'medias';
-
-    /**
-     * @var string
-     */
     protected $namespace = 'A17\Twill';
 
-    /**
-     * @var array
-     */
-    protected $defaultOrders = [
-        'id' => 'desc',
-    ];
-
-    /**
-     * @var int
-     */
+    protected $defaultOrders = ['id' => 'desc'];
     protected $perPage = 40;
 
-    /**
-     * @var string
-     */
     protected $endpointType;
-
-    /**
-     * @var array
-     */
     protected $customFields = [];
 
-    /**
-     * @var Illuminate\Routing\ResponseFactory
-     */
+    /** @var \Illuminate\Routing\ResponseFactory */
     protected $responseFactory;
 
-    /**
-     * @var Illuminate\Config\Repository
-     */
+    /** @var \Illuminate\Config\Repository */
     protected $config;
 
     public function __construct(
@@ -73,10 +46,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         $this->config = $config;
 
         $this->middleware('can:access-media-library', ['only' => ['index']]);
-        $this->middleware(
-            'can:edit-media-library',
-            ['only' => ['signS3Upload', 'signAzureUpload', 'tags', 'store', 'singleUpdate', 'bulkUpdate']]
-        );
+        $this->middleware('can:edit-media-library', ['only' => [
+            'signS3Upload', 'signAzureUpload', 'tags', 'store', 'singleUpdate', 'bulkUpdate',
+        ]]);
+
         $this->endpointType = $this->config->get('twill.media_library.endpoint_type');
         $this->customFields = $this->config->get('twill.media_library.extra_metadatas_fields');
     }
@@ -89,22 +62,41 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
     public function filters(): TableFilters
     {
         return TableFilters::make([
-            BasicFilter::make()->queryString('tag')->apply(function (Builder $builder, ?int $value) {
-                if ($value) {
-                    $builder->whereHas('tags', function (Builder $builder) use ($value) {
-                        $builder->where('tag_id', $value);
-                    });
-                }
+            BasicFilter::make()
+                ->queryString('tag')
+                ->apply(function (Builder $builder, ?int $value) {
+                    if ($value) {
+                        $builder->whereHas('tags', function (Builder $builder) use ($value) {
+                            $builder->where('tag_id', $value);
+                        });
+                    }
+                    return $builder;
+                }),
 
-                return $builder;
-            }),
-            BasicFilter::make()->queryString('unused')->apply(function (Builder $builder, ?bool $value) {
-                if ($value) {
-                    return $builder->unused();
-                }
+            BasicFilter::make()
+                ->queryString('unused')
+                ->apply(function (Builder $builder, ?bool $value) {
+                    return $value ? $builder->unused() : $builder;
+                }),
 
-                return $builder;
-            }),
+            BasicFilter::make()
+                ->queryString('folder')
+                ->apply(function (Builder $builder, ?string $value) {
+                    if ($value === null) {
+                        // no folder param => no extra filter
+                        return $builder;
+                    }
+                    $value = trim($value, '/');
+
+                    if ($value === '') {
+                        // root folder = empty string (or null)
+                        return $builder->where(function ($q) {
+                            $q->whereNull('folder_path')->orWhere('folder_path', '');
+                        });
+                    }
+
+                    return $builder->where('folder_path', $value);
+                }),
         ]);
     }
 
@@ -122,18 +114,13 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         $items = $this->getIndexItems($prependScope);
 
         return [
-            'items' => $items->map(function ($item) {
-                return $item->toCmsArray();
-            })->toArray(),
+            'items'   => $items->map(fn ($item) => $item->toCmsArray())->toArray(),
             'maxPage' => $items->lastPage(),
-            'total' => $items->total(),
-            'tags' => $this->repository->getTagsList(),
+            'total'   => $items->total(),
+            'tags'    => $this->repository->getTagsList(),
         ];
     }
 
-    /**
-     * @return array
-     */
     protected function getRequestFilters(): array
     {
         if ($this->request->has('search')) {
@@ -148,33 +135,31 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $requestFilters['unused'] = $this->request->get('unused');
         }
 
+        // Not required for folder because we apply it via TableFilters(),
+        // but safe to keep requestFilters minimal to let core logic work as-is.
         return $requestFilters ?? [];
     }
 
-    /**
-     * @param int|null $parentModuleId
-     * @return
-     */
     public function store($parentModuleId = null)
     {
         $request = $this->app->make(MediaRequest::class);
-        $media = $this->endpointType === 'local' ? $this->storeFile($request) : $this->storeReference($request);
+        $media = $this->endpointType === 'local'
+            ? $this->storeFile($request)
+            : $this->storeReference($request);
 
         return $this->responseFactory->json(['media' => $media->toCmsArray(), 'success' => true], 200);
     }
 
     /**
-     * @param Request $request
+     * Local uploads
+     *
      * @return Media
      */
     public function storeFile($request)
     {
         $originalFilename = $request->input('qqfilename');
-
         $filename = sanitizeFilename($originalFilename);
-
         $fileDirectory = $request->input('unique_folder_name');
-
         $uuid = $request->input('unique_folder_name') . '/' . $filename;
 
         if ($this->config->get('twill.media_library.prefix_uuid_with_local_path', false)) {
@@ -184,7 +169,6 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         }
 
         $disk = $this->config->get('twill.media_library.disk');
-
         $uploadedFile = $request->file('qqfile');
 
         if ($request->input('width') && $request->input('height')) {
@@ -196,18 +180,20 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
 
         $uploadedFile->storeAs($fileDirectory, $filename, $disk);
 
+        $folderPath = trim((string) $request->input('folder', ''), '/');
+
         $fields = [
-            'uuid' => $uuid,
-            'filename' => $originalFilename,
-            'width' => $w,
-            'height' => $h,
+            'uuid'        => $uuid,
+            'filename'    => $originalFilename,
+            'width'       => $w,
+            'height'      => $h,
+            'folder_path' => $folderPath,
         ];
 
         if ($this->shouldReplaceMedia($id = $request->input('media_to_replace_id'))) {
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
             $media->replace($fields);
-
             return $media->fresh();
         }
 
@@ -215,33 +201,34 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
     }
 
     /**
-     * @param Request $request
+     * Remote (S3/Azure) references
+     *
      * @return Media
      */
     public function storeReference($request)
     {
+        // ⭐ NEW: persist folder_path from request (root is '')
+        $folderPath = trim((string) $request->input('folder', ''), '/');
+
         $fields = [
-            'uuid' => $request->input('key') ?? $request->input('blob'),
-            'filename' => $request->input('name'),
-            'width' => $request->input('width'),
-            'height' => $request->input('height'),
+            'uuid'        => $request->input('key') ?? $request->input('blob'),
+            'filename'    => $request->input('name'),
+            'width'       => $request->input('width'),
+            'height'      => $request->input('height'),
+            'folder_path' => $folderPath,
         ];
 
         if ($this->shouldReplaceMedia($id = $request->input('media_to_replace_id'))) {
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
             $media->update($fields);
-
             return $media->fresh();
         }
 
         return $this->repository->create($fields);
     }
 
-    /**
-     * @return JsonResponse
-     */
-    public function singleUpdate()
+    public function singleUpdate(): JsonResponse
     {
         $id = $this->request->input('id');
 
@@ -249,8 +236,8 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $id,
             array_merge([
                 'alt_text' => $this->request->get('alt_text', null),
-                'caption' => $this->request->get('caption', null),
-                'tags' => $this->request->get('tags', null),
+                'caption'  => $this->request->get('caption', null),
+                'tags'     => $this->request->get('tags', null),
             ], $this->getExtraMetadatas()->toArray())
         );
 
@@ -262,16 +249,11 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         ], 200);
     }
 
-    /**
-     * @return JsonResponse
-     */
-    public function bulkUpdate()
+    public function bulkUpdate(): JsonResponse
     {
         $ids = explode(',', $this->request->input('ids'));
 
-        $metadatasFromRequest = $this->getExtraMetadatas()->reject(function ($meta) {
-            return is_null($meta);
-        })->toArray();
+        $metadatasFromRequest = $this->getExtraMetadatas()->reject(fn ($meta) => is_null($meta))->toArray();
 
         $extraMetadatas = array_diff_key(
             $metadatasFromRequest,
@@ -289,7 +271,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $this->repository->update(
                 $id,
                 [
-                    'bulk_tags' => $newTags ?? [],
+                    'bulk_tags'            => $newTags ?? [],
                     'previous_common_tags' => $previousCommonTags ?? [],
                 ] + $extraMetadatas
             );
@@ -298,34 +280,21 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         $items = $this->getIndexItems(['id' => $ids]);
 
         return $this->responseFactory->json([
-            'items' => $items->map(function ($item) {
-                return $item->toCmsArray();
-            })->toArray(),
-            'tags' => $this->repository->getTagsList(),
+            'items' => $items->map(fn ($item) => $item->toCmsArray())->toArray(),
+            'tags'  => $this->repository->getTagsList(),
         ], 200);
     }
 
-    /**
-     * @return mixed
-     */
     public function signS3Upload(Request $request, SignS3Upload $signS3Upload)
     {
         return $signS3Upload->fromPolicy($request->getContent(), $this, $this->config->get('twill.media_library.disk'));
     }
 
-    /**
-     * @return mixed
-     */
     public function signAzureUpload(Request $request, SignAzureUpload $signAzureUpload)
     {
         return $signAzureUpload->getSasUrl($request, $this, $this->config->get('twill.media_library.disk'));
     }
 
-    /**
-     * @param $signature
-     * @param bool $isJsonResponse
-     * @return mixed
-     */
     public function uploadIsSigned($signature, $isJsonResponse = true)
     {
         return $isJsonResponse
@@ -333,18 +302,12 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             : $this->responseFactory->make($signature, 200, ['Content-Type' => 'text/plain']);
     }
 
-    /**
-     * @return JsonResponse
-     */
-    public function uploadIsNotValid()
+    public function uploadIsNotValid(): JsonResponse
     {
         return $this->responseFactory->json(['invalid' => true], 500);
     }
 
-    /**
-     * @return Collection
-     */
-    private function getExtraMetadatas()
+    private function getExtraMetadatas(): Collection
     {
         return Collection::make($this->customFields)->mapWithKeys(function ($field) {
             $fieldInRequest = $this->request->get($field['name']);
@@ -357,10 +320,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         });
     }
 
-    /**
-     * @return bool
-     */
-    private function shouldReplaceMedia($id)
+    private function shouldReplaceMedia($id): bool
     {
         return is_numeric($id) ? $this->repository->whereId($id)->exists() : false;
     }

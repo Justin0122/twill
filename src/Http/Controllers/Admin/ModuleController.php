@@ -2150,7 +2150,9 @@ abstract class ModuleController extends Controller
         if ($this->request->has('search')) {
             return ['search' => $this->request->get('search')];
         }
-
+        if ($this->request->has('folder')) {
+            $requestFilters['folder'] = $this->request->get('folder');
+        }
         $this->applyFiltersDefaultOptions();
 
         return json_decode($this->request->get('filter'), true) ?? [];

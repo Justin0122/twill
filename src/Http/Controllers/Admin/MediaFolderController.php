@@ -20,7 +20,7 @@ class MediaFolderController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|in:image,video,file,media',
+            'type' => 'required|in:image,video,file,media', // you can narrow this to your types
             'parent' => 'nullable|string',
             'name' => 'required|string|max:255',
         ]);
