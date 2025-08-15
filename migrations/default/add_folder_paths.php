@@ -8,10 +8,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('twill_files', function (Blueprint $table) {
-            $table->string('folder_path', 1024)->default('')->index();
+            $table->string('folder_path', 1024)->default('');
         });
         Schema::table('twill_medias', function (Blueprint $table) {
-            $table->string('folder_path', 1024)->default('')->index();
+            $table->string('folder_path', 1024)->default('');
         });
     }
 
