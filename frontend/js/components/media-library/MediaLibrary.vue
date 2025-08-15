@@ -3,60 +3,222 @@
     <div class="medialibrary">
       <div class="medialibrary__frame">
         <div class="medialibrary__header" ref="form">
-          <a17-filter @submit="submitFilter" :clearOption="true" @clear="clearFilters">
-            <ul class="secondarynav secondarynav--desktop" slot="navigation" v-if="types.length">
-              <li class="secondarynav__item" v-for="navType in types" :key="navType.value"
-                  :class="{ 's--on': type === navType.value, 's--disabled' : type !== navType.value && strict }">
-                <a href="#" @click.prevent="updateType(navType.value)"><span class="secondarynav__link">{{ navType.text }}</span><span
-                  v-if="navType.total > 0" class="secondarynav__number">({{ navType.total }})</span></a>
-              </li>
-            </ul>
+          <a17-filter
+            @submit="submitFilter"
+            :clearOption="true"
+            @clear="clearFilters"
+          >
+            <template #navigation>
+              <div class="medialibrary__folders-nav">
+                <nav class="breadcrumbs" aria-label="Folder path">
+                  <a
+                    href="#"
+                    @click.prevent="goToRoot"
+                    :class="{ 'is-active': currentFolderPath.length === 0 }"
+                    >All</a
+                  >
+                  <span
+                    v-for="(seg, i) in currentFolderPath"
+                    :key="currentFolderPath.slice(0, i + 1).join('/')"
+                  >
+                    <span class="sep">/</span>
+                    <a
+                      href="#"
+                      @click.prevent="goToIndex(i)"
+                      :class="{
+                        'is-active': i === currentFolderPath.length - 1
+                      }"
+                      >{{ seg }}</a
+                    >
+                  </span>
+                </nav>
+                <a17-button
+                  size="small"
+                  variant="secondary"
+                  @click="promptNewFolder"
+                  >New folder</a17-button
+                >
+              </div>
+              <ul
+                class="secondarynav secondarynav--desktop"
+                v-if="types.length"
+              >
+                <li
+                  class="secondarynav__item"
+                  v-for="navType in types"
+                  :key="navType.value"
+                  :class="{
+                    's--on': type === navType.value,
+                    's--disabled': type !== navType.value && strict
+                  }"
+                >
+                  <a href="#" @click.prevent="updateType(navType.value)">
+                    <span class="secondarynav__link">{{ navType.text }}</span>
+                    <span v-if="navType.total > 0" class="secondarynav__number"
+                      >({{ navType.total }})</span
+                    >
+                  </a>
+                </li>
 
-            <div class="secondarynav secondarynav--mobile secondarynav--dropdown" slot="navigation">
-              <a17-dropdown ref="secondaryNavDropdown" position="bottom-left" width="full" :offset="0">
-                <a17-button class="secondarynav__button" variant="dropdown-transparent" size="small"
-                            @click="$refs.secondaryNavDropdown.toggle()" v-if="selectedType">
-                  <span class="secondarynav__link">{{ selectedType.text }}</span><span class="secondarynav__number">{{ selectedType.total }}</span>
-                </a17-button>
-                <div slot="dropdown__content">
-                  <ul>
-                    <li v-for="navType in types" :key="navType.value" class="secondarynav__item">
-                      <a href="#" v-on:click.prevent="updateType(navType.value)"><span class="secondarynav__link">{{ navType.text }}</span><span
-                        class="secondarynav__number">{{ navType.total }}</span></a>
-                    </li>
-                  </ul>
+                <li class="secondarynav__item secondarynav__item--action">
+                  <a17-button
+                    size="small"
+                    variant="secondary"
+                    @click="promptNewFolder"
+                    >New folder</a17-button
+                  >
+                </li>
+              </ul>
+
+              <div
+                class="secondarynav secondarynav--mobile secondarynav--dropdown"
+              >
+                <a17-dropdown
+                  ref="secondaryNavDropdown"
+                  position="bottom-left"
+                  width="full"
+                  :offset="0"
+                >
+                  <a17-button
+                    class="secondarynav__button"
+                    variant="dropdown-transparent"
+                    size="small"
+                    @click="$refs.secondaryNavDropdown.toggle()"
+                    v-if="selectedType"
+                  >
+                    <span class="secondarynav__link">{{
+                      selectedType.text
+                    }}</span>
+                    <span class="secondarynav__number">{{
+                      selectedType.total
+                    }}</span>
+                  </a17-button>
+                  <div slot="dropdown__content">
+                    <ul>
+                      <li
+                        v-for="navType in types"
+                        :key="navType.value"
+                        class="secondarynav__item"
+                      >
+                        <a href="#" @click.prevent="updateType(navType.value)">
+                          <span class="secondarynav__link">{{
+                            navType.text
+                          }}</span>
+                          <span class="secondarynav__number">{{
+                            navType.total
+                          }}</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </a17-dropdown>
+
+                <div class="mt-2">
+                  <a17-button
+                    size="small"
+                    variant="secondary"
+                    @click="promptNewFolder"
+                    >New folder</a17-button
+                  >
                 </div>
-              </a17-dropdown>
-            </div>
+              </div>
+            </template>
 
             <div slot="hidden-filters">
-              <a17-vselect class="medialibrary__filter-item" ref="filter" name="tag" :options="tags"
-                           :placeholder="$trans('media-library.filter-select-label', 'Filter by tag')" :searchable="true" maxHeight="175px"/>
-              <a17-checkbox class="medialibrary__filter-item" ref="unused" name="unused" :initial-value="0" :value="1" :label="$trans('media-library.unused-filter-label', 'Show unused only')"/>
+              <a17-vselect
+                class="medialibrary__filter-item"
+                ref="filter"
+                name="tag"
+                :options="tags"
+                :placeholder="
+                  $trans('media-library.filter-select-label', 'Filter by tag')
+                "
+                :searchable="true"
+                maxHeight="175px"
+              />
+              <a17-checkbox
+                class="medialibrary__filter-item"
+                ref="unused"
+                name="unused"
+                :initial-value="0"
+                :value="1"
+                :label="
+                  $trans(
+                    'media-library.unused-filter-label',
+                    'Show unused only'
+                  )
+                "
+              />
             </div>
           </a17-filter>
         </div>
         <div class="medialibrary__inner">
           <div class="medialibrary__grid">
             <aside class="medialibrary__sidebar">
-              <a17-mediasidebar :medias="selectedMedias" :authorized="authorized" :extraMetadatas="extraMetadatas"
-                                @clear="clearSelectedMedias" @delete="deleteSelectedMedias" @tagUpdated="reloadTags"
-                                :type="currentTypeObject" :translatableMetadatas="translatableMetadatas" @triggerMediaReplace="replaceMedia" />
+              <a17-mediasidebar
+                :medias="selectedMedias"
+                :authorized="authorized"
+                :extraMetadatas="extraMetadatas"
+                @clear="clearSelectedMedias"
+                @delete="deleteSelectedMedias"
+                @tagUpdated="reloadTags"
+                :type="currentTypeObject"
+                :folder="currentFolderFullPath"
+                :translatableMetadatas="translatableMetadatas"
+                @triggerMediaReplace="replaceMedia"
+              />
             </aside>
-            <footer class="medialibrary__footer" v-if="selectedMedias.length && showInsert && connector">
-              <a17-button v-if="canInsert" variant="action" @click="saveAndClose">{{ btnLabel }}</a17-button>
-              <a17-button v-else variant="action" :disabled="true">{{ btnLabel }}</a17-button>
+            <footer
+              class="medialibrary__footer"
+              v-if="selectedMedias.length && showInsert && connector"
+            >
+              <a17-button
+                v-if="canInsert"
+                variant="action"
+                @click="saveAndClose"
+                >{{ btnLabel }}</a17-button
+              >
+              <a17-button v-else variant="action" :disabled="true">{{
+                btnLabel
+              }}</a17-button>
+              <a17-button
+                class="ml-2"
+                variant="secondary"
+                :disabled="!selectedMedias.length"
+                @click="moveSelectedToCurrentFolder"
+              >
+                Move to “{{ currentFolderLabel }}”
+              </a17-button>
             </footer>
             <div class="medialibrary__list" ref="list">
-              <a17-uploader ref="uploader" v-if="authorized" @loaded="addMedia" @clear="clearSelectedMedias"
-                            :type="currentTypeObject"/>
+              <a17-uploader
+                ref="uploader"
+                v-if="authorized"
+                @loaded="addMedia"
+                @clear="clearSelectedMedias"
+                :type="currentTypeObject"
+                :folder="currentFolderFullPath"
+              />
               <div class="medialibrary__list-items">
-                <a17-itemlist v-if="type === 'file'" :items="renderedMediaItems" :selected-items="selectedMedias"
-                              :used-items="usedMedias" @change="updateSelectedMedias"
-                              @shiftChange="updateSelectedMedias"/>
-                <a17-mediagrid v-else :items="renderedMediaItems" :selected-items="selectedMedias" :used-items="usedMedias"
-                               @change="updateSelectedMedias" @shiftChange="updateSelectedMedias"/>
-                <a17-spinner v-if="loading" class="medialibrary__spinner">Loading&hellip;</a17-spinner>
+                <a17-itemlist
+                  v-if="type === 'file'"
+                  :items="renderedMediaItems"
+                  :selected-items="selectedMedias"
+                  :used-items="usedMedias"
+                  @change="updateSelectedMedias"
+                  @shiftChange="updateSelectedMedias"
+                />
+                <a17-mediagrid
+                  v-else
+                  :items="renderedMediaItems"
+                  :selected-items="selectedMedias"
+                  :used-items="usedMedias"
+                  @change="updateSelectedMedias"
+                  @shiftChange="updateSelectedMedias"
+                />
+                <a17-spinner v-if="loading" class="medialibrary__spinner"
+                  >Loading&hellip;</a17-spinner
+                >
               </div>
             </div>
           </div>
@@ -71,7 +233,7 @@
 
   import a17Checkbox from '@/components/Checkbox.vue'
   import a17Spinner from '@/components/Spinner.vue'
-  import { MEDIA_LIBRARY,NOTIFICATION } from '@/store/mutations'
+  import { MEDIA_LIBRARY, NOTIFICATION } from '@/store/mutations'
   import FormDataAsObj from '@/utils/formDataAsObj.js'
   import scrollToY from '@/utils/scrollToY.js'
 
@@ -96,25 +258,25 @@
     props: {
       modalTitlePrefix: {
         type: String,
-        default: function () {
+        default: function() {
           return this.$trans('media-library.title', 'Media Library')
         }
       },
       btnLabelSingle: {
         type: String,
-        default: function () {
+        default: function() {
           return this.$trans('media-library.insert', 'Insert')
         }
       },
       btnLabelUpdate: {
         type: String,
-        default: function () {
+        default: function() {
           return this.$trans('media-library.update', 'Update')
         }
       },
       btnLabelMulti: {
         type: String,
-        default: function () {
+        default: function() {
           return this.$trans('media-library.insert', 'Insert')
         }
       },
@@ -132,18 +294,18 @@
       },
       extraMetadatas: {
         type: Array,
-        default () {
+        default() {
           return []
         }
       },
       translatableMetadatas: {
         type: Array,
-        default () {
+        default() {
           return []
         }
       }
     },
-    data: function () {
+    data: function() {
       return {
         loading: false,
         maxPage: 20,
@@ -153,58 +315,79 @@
         page: this.initialPage,
         tags: [],
         lastScrollTop: 0,
-        gridLoaded: false
+        gridLoaded: false,
+        currentFolderPath: []
       }
     },
     computed: {
-      renderedMediaItems: function () {
-        return this.mediaItems.map((item) => {
-          item.disabled = (this.filesizeMax > 0 && item.filesizeInMb > this.filesizeMax) ||
+      currentFolderFullPath() {
+        return this.currentFolderPath.join('/') // '' at root
+      },
+      currentFolderLabel() {
+        return this.currentFolderPath.length
+          ? this.currentFolderPath[this.currentFolderPath.length - 1]
+          : 'All'
+      },
+      renderedMediaItems: function() {
+        return this.mediaItems.map(item => {
+          item.disabled =
+            (this.filesizeMax > 0 && item.filesizeInMb > this.filesizeMax) ||
             (this.widthMin > 0 && item.width < this.widthMin) ||
             (this.heightMin > 0 && item.height < this.heightMin)
           return item
         })
       },
-      currentTypeObject: function () {
-        return this.types.find((type) => {
+      currentTypeObject: function() {
+        return this.types.find(type => {
           return type.value === this.type
         })
       },
-      endpoint: function () {
+      endpoint: function() {
         return this.currentTypeObject.endpoint
       },
-      modalTitle: function () {
+      modalTitle: function() {
         if (this.connector) {
-          if (this.indexToReplace > -1) return this.modalTitlePrefix + ' – ' + this.btnLabelUpdate
-          return this.selectedMedias.length > 1 ? this.modalTitlePrefix + ' – ' + this.btnLabelMulti : this.modalTitlePrefix + ' – ' + this.btnLabelSingle
+          if (this.indexToReplace > -1)
+            return this.modalTitlePrefix + ' – ' + this.btnLabelUpdate
+          return this.selectedMedias.length > 1
+            ? this.modalTitlePrefix + ' – ' + this.btnLabelMulti
+            : this.modalTitlePrefix + ' – ' + this.btnLabelSingle
         }
         return this.modalTitlePrefix
       },
-      btnLabel: function () {
-        let type = this.$trans('media-library.types.single.' + this.type, this.type)
+      btnLabel: function() {
+        let type = this.$trans(
+          'media-library.types.single.' + this.type,
+          this.type
+        )
 
         if (this.indexToReplace > -1) {
           return this.btnLabelUpdate + ' ' + type
         } else {
           if (this.selectedMedias.length > 1) {
-            type = this.$trans('media-library.types.multiple.' + this.type, this.type)
+            type = this.$trans(
+              'media-library.types.multiple.' + this.type,
+              this.type
+            )
           }
 
           return this.btnLabelSingle + ' ' + type
         }
       },
-      usedMedias: function () {
+      usedMedias: function() {
         return this.selected[this.connector] || []
       },
-      selectedType: function () {
+      selectedType: function() {
         const self = this
-        const navItem = self.types.filter(function (t) {
+        const navItem = self.types.filter(function(t) {
           return t.value === self.type
         })
         return navItem[0]
       },
-      canInsert: function () {
-        return !this.selectedMedias.some(sMedia => !!this.usedMedias.find(uMedia => uMedia.id === sMedia.id))
+      canInsert: function() {
+        return !this.selectedMedias.some(
+          sMedia => !!this.usedMedias.find(uMedia => uMedia.id === sMedia.id)
+        )
       },
       ...mapState({
         connector: state => state.mediaLibrary.connector,
@@ -220,22 +403,22 @@
       })
     },
     watch: {
-      type: function () {
+      type: function() {
         this.clearMediaItems()
         this.gridLoaded = false
       }
     },
     methods: {
-      replaceMedia: function ({ id }) {
+      replaceMedia: function({ id }) {
         this.$refs.uploader.replaceMedia(id)
       },
-      open: function () {
+      open: function() {
         this.$refs.modal.open()
       },
-      close: function () {
+      close: function() {
         this.$refs.modal.hide()
       },
-      opened: function () {
+      opened: function() {
         if (!this.gridLoaded) this.reloadGrid()
 
         this.listenScrollPosition()
@@ -245,13 +428,15 @@
 
         // in replace mode : select the media to replace when opening
         if (this.connector && this.indexToReplace > -1) {
-          const mediaInitSelect = this.selected[this.connector][this.indexToReplace]
+          const mediaInitSelect = this.selected[this.connector][
+            this.indexToReplace
+          ]
           if (mediaInitSelect) {
             this.selectedMedias.push(mediaInitSelect)
           }
         }
       },
-      updateType: function (newType) {
+      updateType: function(newType) {
         if (this.loading) return
         if (this.strict) return
         if (this.type === newType) return
@@ -259,8 +444,8 @@
         this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_TYPE, newType)
         this.submitFilter()
       },
-      addMedia: function (media) {
-        const index = this.mediaItems.findIndex(function (item) {
+      addMedia: function(media) {
+        const index = this.mediaItems.findIndex(function(item) {
           return item.id === media.id
         })
 
@@ -273,11 +458,23 @@
 
                 for (const crop in mediaCrop.crops) {
                   crops[crop] = {
-                    height: media.height === mediaCrop.height ? mediaCrop.crops[crop].height : media.height,
+                    height:
+                      media.height === mediaCrop.height
+                        ? mediaCrop.crops[crop].height
+                        : media.height,
                     name: crop,
-                    width: media.width === mediaCrop.width ? mediaCrop.crops[crop].width : media.width,
-                    x: media.width === mediaCrop.width ? mediaCrop.crops[crop].x : 0,
-                    y: media.height === mediaCrop.height ? mediaCrop.crops[crop].y : 0
+                    width:
+                      media.width === mediaCrop.width
+                        ? mediaCrop.crops[crop].width
+                        : media.width,
+                    x:
+                      media.width === mediaCrop.width
+                        ? mediaCrop.crops[crop].x
+                        : 0,
+                    y:
+                      media.height === mediaCrop.height
+                        ? mediaCrop.crops[crop].y
+                        : 0
                   }
                 }
 
@@ -285,8 +482,14 @@
                   index,
                   media: {
                     ...media,
-                    width: media.width === mediaCrop.width ? mediaCrop.width : media.width,
-                    height: media.height === mediaCrop.height ? mediaCrop.height : media.height,
+                    width:
+                      media.width === mediaCrop.width
+                        ? mediaCrop.width
+                        : media.width,
+                    height:
+                      media.height === mediaCrop.height
+                        ? mediaCrop.height
+                        : media.height,
                     crops
                   },
                   mediaRole
@@ -300,14 +503,19 @@
         } else {
           // add media in first position of the available media
           this.mediaItems.unshift(media)
-          this.$store.commit(MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL, this.type)
+          this.$store.commit(
+            MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL,
+            this.type
+          )
           // select it
           this.updateSelectedMedias(media.id)
         }
       },
-      updateSelectedMedias: function (item, shift = false) {
+      updateSelectedMedias: function(item, shift = false) {
         const id = item.id
-        const alreadySelectedMedia = this.selectedMedias.filter(function (media) {
+        const alreadySelectedMedia = this.selectedMedias.filter(function(
+          media
+        ) {
           return media.id === id
         })
 
@@ -317,10 +525,17 @@
           if (this.selectedMedias.length >= this.max && this.max > 0) return
 
           if (shift && this.selectedMedias.length > 0) {
-            const lastSelectedMedia = this.selectedMedias[this.selectedMedias.length - 1]
-            const lastSelectedMediaIndex = this.mediaItems.findIndex((media) => media.id === lastSelectedMedia.id)
-            const selectedMediaIndex = this.mediaItems.findIndex((media) => media.id === id)
-            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1) return
+            const lastSelectedMedia = this.selectedMedias[
+              this.selectedMedias.length - 1
+            ]
+            const lastSelectedMediaIndex = this.mediaItems.findIndex(
+              media => media.id === lastSelectedMedia.id
+            )
+            const selectedMediaIndex = this.mediaItems.findIndex(
+              media => media.id === id
+            )
+            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1)
+              return
 
             let start = null
             let end = null
@@ -334,15 +549,17 @@
 
             const selectedMedias = this.mediaItems.slice(start, end)
 
-            selectedMedias.forEach((media) => {
+            selectedMedias.forEach(media => {
               if (this.selectedMedias.length >= this.max && this.max > 0) return
-              const index = this.selectedMedias.findIndex((m) => m.id === media.id)
+              const index = this.selectedMedias.findIndex(
+                m => m.id === media.id
+              )
               if (index === -1) {
                 this.selectedMedias.push(media)
               }
             })
           } else {
-            const mediaToSelect = this.mediaItems.filter(function (media) {
+            const mediaToSelect = this.mediaItems.filter(function(media) {
               return media.id === id
             })
 
@@ -351,12 +568,12 @@
           }
         } else {
           // Remove one item from the selected media
-          this.selectedMedias = this.selectedMedias.filter(function (media) {
+          this.selectedMedias = this.selectedMedias.filter(function(media) {
             return media.id !== id
           })
         }
       },
-      getFormData: function (form) {
+      getFormData: function(form) {
         let data = FormDataAsObj(form)
 
         if (data) data.page = this.page
@@ -367,10 +584,11 @@
         if (Array.isArray(data.unused) && data.unused.length) {
           data.unused = data.unused[0]
         }
+        data.folder = this.currentFolderFullPath || ''
 
         return data
       },
-      clearFilters: function () {
+      clearFilters: function() {
         const self = this
         // reset tags
         if (this.$refs.filter) this.$refs.filter.value = null
@@ -380,63 +598,167 @@
           input && input.checked && input.click()
         }
 
-        this.$nextTick(function () {
+        this.$nextTick(function() {
           self.submitFilter()
         })
       },
-      clearSelectedMedias: function () {
+      loadFolderTree() {
+        // Fetch a nested tree for the current type
+        api.getFolders(
+          this.endpoint,
+          { type: this.type },
+          resp => {
+            // Expect resp.data.tree like: { name: '', children: [ { name: 'folder_name', children: [...] } ] }
+            this.folderTree = resp.data.tree || { name: '', children: [] }
+          },
+          error => {
+            this.folderTree = { name: '', children: [] }
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to load folders',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      moveSelectedToCurrentFolder() {
+        if (!this.selectedMedias.length) return
+        api.moveToFolder(
+          this.endpoint,
+          {
+            type: this.type,
+            target: this.currentFolderFullPath, // '' for root
+            mediaIds: this.selectedMedias.map(m => m.id)
+          },
+          () => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.moved', 'Moved to folder'),
+              variant: 'success'
+            })
+            // reload items for current folder
+            this.page = 1
+            this.clearMediaItems()
+            this.reloadGrid()
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to move items',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      selectFolderPath(pathArray) {
+        this.currentFolderPath = Array.isArray(pathArray) ? pathArray : []
+        this.submitFilter()
+      },
+      goToRoot() {
+        this.selectFolderPath([])
+      },
+      goToIndex(i) {
+        this.selectFolderPath(this.currentFolderPath.slice(0, i + 1))
+      },
+      promptNewFolder() {
+        const name = window.prompt(
+          this.$trans('media-library.new-folder', 'New folder name')
+        )
+        if (!name) return
+        this.createFolderAtPath(this.currentFolderPath, name)
+      },
+      createFolderAtPath(parentPath, forcedName = null) {
+        const name =
+          forcedName ||
+          window.prompt(
+            this.$trans('media-library.new-subfolder', 'New subfolder name')
+          )
+        if (!name) return
+        api.createFolder(
+          this.endpoint,
+          {
+            type: this.type,
+            parent: (parentPath || []).join('/'),
+            name
+          },
+          () => {
+            // stay in the same folder and reload the list
+            this.submitFilter()
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to create folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      clearSelectedMedias: function() {
         this.selectedMedias.splice(0)
       },
-      deleteSelectedMedias: function (mediasIds) {
+      deleteSelectedMedias: function(mediasIds) {
         let keepSelectedMedias = []
         if (mediasIds && mediasIds.length !== this.selectedMedias.length) {
-          keepSelectedMedias = this.selectedMedias.filter((media) => !media.deleteUrl)
+          keepSelectedMedias = this.selectedMedias.filter(
+            media => !media.deleteUrl
+          )
         }
         mediasIds.forEach(() => {
-          this.$store.commit(MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL, this.type)
+          this.$store.commit(
+            MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL,
+            this.type
+          )
         })
-        this.mediaItems = this.mediaItems.filter((media) => {
-          return !this.selectedMedias.includes(media) || keepSelectedMedias.includes(media)
+        this.mediaItems = this.mediaItems.filter(media => {
+          return (
+            !this.selectedMedias.includes(media) ||
+            keepSelectedMedias.includes(media)
+          )
         })
         this.selectedMedias = keepSelectedMedias
         if (this.mediaItems.length <= 40) {
           this.reloadGrid()
         }
       },
-      clearMediaItems: function () {
+      clearMediaItems: function() {
         this.mediaItems.splice(0)
       },
-      reloadGrid: function () {
+      reloadGrid: function() {
         this.loading = true
 
         const form = this.$refs.form
         const formdata = this.getFormData(form)
 
         // see api/media-library for actual ajax
-        api.get(this.endpoint, formdata, (resp) => {
-          // add medias here
-          resp.data.items.forEach(item => {
-            if (!this.mediaItems.find(media => media.id === item.id)) {
-              this.mediaItems.push(item)
-            }
-          })
-          this.maxPage = resp.data.maxPage || 1
-          this.tags = resp.data.tags || []
-          this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_TYPE_TOTAL, { type: this.type, total: resp.data.total })
-          this.loading = false
-          this.listenScrollPosition()
-          this.gridLoaded = true
-        }, (error) => {
-          this.$store.commit(NOTIFICATION.SET_NOTIF, {
-            message: error.data.message,
-            variant: 'error'
-          })
-        })
+        api.get(
+          this.endpoint,
+          formdata,
+          resp => {
+            // add medias here
+            resp.data.items.forEach(item => {
+              if (!this.mediaItems.find(media => media.id === item.id)) {
+                this.mediaItems.push(item)
+              }
+            })
+            this.maxPage = resp.data.maxPage || 1
+            this.tags = resp.data.tags || []
+            this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIA_TYPE_TOTAL, {
+              type: this.type,
+              total: resp.data.total
+            })
+            this.loading = false
+            this.listenScrollPosition()
+            this.gridLoaded = true
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data.message,
+              variant: 'error'
+            })
+          }
+        )
       },
-      reloadTags: function (tags = []) {
+      reloadTags: function(tags = []) {
         this.tags = tags
       },
-      submitFilter: function (formData) {
+      submitFilter: function(formData) {
         const self = this
         const el = this.$refs.list
         // when changing filters, reset the page to 1
@@ -454,14 +776,14 @@
           el,
           offset: 0,
           easing: 'easeOut',
-          onComplete: function () {
+          onComplete: function() {
             self.reloadGrid()
           }
         })
       },
-      listenScrollPosition: function () {
+      listenScrollPosition: function() {
         // re-listen for scroll position
-        this.$nextTick(function () {
+        this.$nextTick(function() {
           if (!this.gridLoaded) return
 
           const list = this.$refs.list
@@ -470,13 +792,16 @@
           }
         })
       },
-      scrollToPaginate: function () {
+      scrollToPaginate: function() {
         if (!this.gridLoaded) return
 
         const list = this.$refs.list
         const offset = 10
 
-        if (list.scrollTop > this.lastScrollTop && list.scrollTop + list.offsetHeight > list.scrollHeight - offset) {
+        if (
+          list.scrollTop > this.lastScrollTop &&
+          list.scrollTop + list.offsetHeight > list.scrollHeight - offset
+        ) {
           list.removeEventListener('scroll', this.scrollToPaginate)
 
           if (this.maxPage > this.page) {
@@ -489,7 +814,7 @@
 
         this.lastScrollTop = list.scrollTop
       },
-      saveAndClose: function () {
+      saveAndClose: function() {
         this.$store.commit(MEDIA_LIBRARY.SAVE_MEDIAS, this.selectedMedias)
         this.close()
       }
@@ -498,8 +823,11 @@
 </script>
 
 <style lang="scss" scoped>
-
-  $width_sidebar: (default: 290px, small: 250px, xsmall: 200px);
+  $width_sidebar: (
+    default: 290px,
+    small: 250px,
+    xsmall: 200px
+  );
 
   .medialibrary {
     display: block;
@@ -629,7 +957,6 @@
 </style>
 
 <style lang="scss">
-
   .medialibrary__filter-item {
     .vselect {
       min-width: 200px;
@@ -656,5 +983,27 @@
         flex-grow: 1;
       }
     }
+  }
+  .medialibrary__folders-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .breadcrumbs a {
+    text-decoration: none;
+  }
+  .breadcrumbs .sep {
+    margin: 0 6px;
+    color: #999;
+  }
+  .breadcrumbs .is-active {
+    font-weight: 600;
+  }
+  .ml-2 {
+    margin-left: 8px;
+  }
+  .mt-2 {
+    margin-top: 8px;
   }
 </style>
