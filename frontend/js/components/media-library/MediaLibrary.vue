@@ -9,7 +9,6 @@
             @clear="clearFilters"
           >
             <template #navigation>
-              <!-- Breadcrumbs + quick "New folder" -->
               <div class="medialibrary__folders-nav">
                 <nav class="breadcrumbs" aria-label="Folder path">
                   <a
@@ -33,13 +32,6 @@
                     >
                   </span>
                 </nav>
-                <a17-button
-                  size="small"
-                  variant="secondary"
-                  @click="promptNewFolder"
-                >
-                  New folder
-                </a17-button>
               </div>
 
               <!-- Type tabs -->
@@ -62,16 +54,6 @@
                       ({{ navType.total }})
                     </span>
                   </a>
-                </li>
-
-                <li class="secondarynav__item secondarynav__item--action">
-                  <a17-button
-                    size="small"
-                    variant="secondary"
-                    @click="promptNewFolder"
-                  >
-                    New folder
-                  </a17-button>
                 </li>
               </ul>
 
@@ -342,6 +324,7 @@
                   @click="toggleOpen" :aria-expanded="open.toString()">
             <span v-if="open">▾</span><span v-else>▸</span>
           </button>
+          <span class="folder-node__icon" v-if="node.id === null && (!node.children || !node.children.length)">📁</span>
 
           <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
             <span v-if="level===0">All</span>
