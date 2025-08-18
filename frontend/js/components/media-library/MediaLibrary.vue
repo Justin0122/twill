@@ -75,7 +75,6 @@
                 </li>
               </ul>
 
-              <!-- Mobile types dropdown + "New folder" -->
               <div
                 class="secondarynav secondarynav--mobile secondarynav--dropdown"
               >
@@ -118,16 +117,6 @@
                     </ul>
                   </div>
                 </a17-dropdown>
-
-                <div class="mt-2">
-                  <a17-button
-                    size="small"
-                    variant="secondary"
-                    @click="promptNewFolder"
-                  >
-                    New folder
-                  </a17-button>
-                </div>
               </div>
             </template>
 
@@ -1234,5 +1223,18 @@
   .mt-2 {
     margin-top: 8px;
   }
-  .folder-node__action.danger { color: #b00020; }
+  .folder-node__action{
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: #999;
+    &:hover {
+      color: #000;
+    }
+    &.is-active {
+      color: #000;
+    }
+    .folder-node__action.danger { color: #b00020; }
+  }
 </style>
