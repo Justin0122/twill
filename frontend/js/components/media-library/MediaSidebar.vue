@@ -3,7 +3,6 @@
     <a17-mediasidebar-upload v-if="mediasLoading.length" />
 
     <template v-else>
-      <!-- NEW: folder delete error / usage report -->
       <div v-if="folderError" class="mediasidebar__foldererror">
         <div class="mediasidebar__foldererror-head">
           <strong>{{ folderError }}</strong>
@@ -18,7 +17,9 @@
             <ul class="foldererror__places">
               <li v-for="(p, i) in item.places" :key="item.media_id + '-' + i">
                 <code>{{ p.type }}</code> #{{ p.id }}
-                <span v-if="p.role"> • {{ p.role }}</span>
+                <span v-if="p.admin_url">
+                  <a :href="p.admin_url" target="_blank">{{ p.admin_url }}</a>
+                </span>
                 <span v-if="p.title"> — {{ p.title }}</span>
               </li>
             </ul>
