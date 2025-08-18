@@ -217,7 +217,7 @@ class MediaFolderController extends Controller
                         'id'        => $pageId   ?: $row->mediable_id,
                         'role'      => $row->role,
                         'title'     => $title,
-                        'admin_url' => $this->adminEditUrlFor($pageType, $pageId), // << add this
+                        'admin_url' => $this->adminEditUrlFor($pageType, $pageId),
                         'via'       => [
                             'mediable_type' => $row->mediable_type,
                             'mediable_id'   => $row->mediable_id,
@@ -235,7 +235,7 @@ class MediaFolderController extends Controller
             })->values();
 
             return response()->json([
-                'message' => "This folder (or its subfolders) contains {$usedCount} used media. Remove usages first.",
+                'message' => "This folder (or its subfolders) contains used media. Remove usages first.",
                 'used'    => $usedReport,
             ], 422);
         }
