@@ -324,17 +324,15 @@
                   @click="toggleOpen" :aria-expanded="open.toString()">
             <span v-if="open">▾</span><span v-else>▸</span>
           </button>
-          <span class="folder-node__icon" v-if="node.id === null && (!node.children || !node.children.length)">📁</span>
-
           <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
             <span v-if="level===0">All</span>
             <span v-else>{{ node.name }}</span>
           </button>
 
-          <div class="folder-node__actions" v-if="level>0">
+          <div class="folder-node__actions">
             <button class="folder-node__action" title="New subfolder" @click="createHere">＋</button>
-            <button class="folder-node__action" title="Rename folder" @click="renameHere">✎</button>
-            <button class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })">🗑</button>
+            <button v-if="level>0" class="folder-node__action" title="Rename folder" @click="renameHere">✎</button>
+            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })">🗑</button>
           </div>
         </div>
 
