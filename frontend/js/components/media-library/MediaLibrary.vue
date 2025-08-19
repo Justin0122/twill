@@ -531,18 +531,10 @@
         // eslint-disable-next-line vue/no-reserved-keys
         _resizingFolderTree: false,
         // eslint-disable-next-line vue/no-reserved-keys
-        _resizeMax: 560,
-        // Bound listener refs for add/removeEventListener
+        _resizeMin: 160,
         // eslint-disable-next-line vue/no-reserved-keys
-        _onMove: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onUp: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onPMove: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onPUp: null
+        _resizeMax: 900
       }
-
     },
     computed: {
       currentFolderFullPath() {
@@ -686,30 +678,24 @@
       },
       /* ---------- /persistence helpers ---------- */
       onFolderTreeResizeStart(e) {
+        // Fallback for older browsers without Pointer Events
         this._resizingFolderTree = true
         document.body.classList.add('is-resizing-col')
-
-        this._onMove = this.onFolderTreeResizing.bind(this)
-        this._onUp = this.onFolderTreeResizeEnd.bind(this)
-
-        window.addEventListener('mousemove', this._onMove, { passive: false, capture: true })
-        window.addEventListener('mouseup', this._onUp, { passive: true, capture: true })
-
+        window.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false, capture: true })
+        window.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true, capture: true })
         e.preventDefault()
       },
       onFolderTreePointerDown(e) {
-        if (!e.pointerId) return // older browsers: mousedown fallback will handle
-        this._resizingFolderTree = true
-        document.body.classList.add('is-resizing-col')
-        try { e.target.setPointerCapture(e.pointerId) } catch (_) {}
-
-        this._onPMove = this.onFolderTreePointerMove.bind(this)
-        this._onPUp = this.onFolderTreePointerUp.bind(this)
-
-        window.addEventListener('pointermove', this._onPMove, { passive: false, capture: true })
-        window.addEventListener('pointerup', this._onPUp, { passive: true, capture: true })
-
-        e.preventDefault()
+        if (e.pointerType) {
+          this._resizingFolderTree = true
+          document.body.classList.add('is-resizing-col')
+          try {
+            e.target.setPointerCapture(e.pointerId)
+          } catch (_) {}
+          window.addEventListener('pointermove', this.onFolderTreePointerMove, { passive: false, capture: true })
+          window.addEventListener('pointerup', this.onFolderTreePointerUp, { passive: true, capture: true })
+          e.preventDefault()
+        }
       },
       onFolderTreePointerMove(e) {
         if (!this._resizingFolderTree) return
@@ -725,13 +711,11 @@
         if (!this._resizingFolderTree) return
         this._resizingFolderTree = false
         document.body.classList.remove('is-resizing-col')
-        try { if (e.target && e.pointerId) e.target.releasePointerCapture(e.pointerId) } catch (_) {}
-
-        if (this._onPMove) window.removeEventListener('pointermove', this._onPMove, true)
-        if (this._onPUp) window.removeEventListener('pointerup', this._onPUp, true)
-        this._onPMove = null
-        this._onPUp = null
-
+        try {
+          if (e.target && e.pointerId) e.target.releasePointerCapture(e.pointerId)
+        } catch (_) {}
+        window.removeEventListener('pointermove', this.onFolderTreePointerMove, true)
+        window.removeEventListener('pointerup', this.onFolderTreePointerUp, true)
         this.saveFolderTreeWidth()
       },
       onFolderTreeResizing(e) {
@@ -748,12 +732,8 @@
         if (!this._resizingFolderTree) return
         this._resizingFolderTree = false
         document.body.classList.remove('is-resizing-col')
-
-        if (this._onMove) window.removeEventListener('mousemove', this._onMove, true)
-        if (this._onUp) window.removeEventListener('mouseup', this._onUp, true)
-        this._onMove = null
-        this._onUp = null
-
+        window.removeEventListener('mousemove', this.onFolderTreeResizing, true)
+        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd, true)
         this.saveFolderTreeWidth()
       },
       measureSidebarWidth() {
@@ -1267,10 +1247,10 @@
         this.close()
       },
       beforeDestroy() {
-        if (this._onPMove) window.removeEventListener('pointermove', this._onPMove, true)
-        if (this._onPUp) window.removeEventListener('pointerup', this._onPUp, true)
-        if (this._onMove) window.removeEventListener('mousemove', this._onMove, true)
-        if (this._onUp) window.removeEventListener('mouseup', this._onUp, true)
+        window.removeEventListener('pointermove', this.onFolderTreePointerMove, true)
+        window.removeEventListener('pointerup', this.onFolderTreePointerUp, true)
+        window.removeEventListener('mousemove', this.onFolderTreeResizing, true)
+        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd, true)
       }
     }
   }
