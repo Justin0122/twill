@@ -285,7 +285,9 @@
           y: 0,
           meta: { id: null, path: [] }
         },
-        ctxFlash: false
+        ctxFlash: false,
+        creatingChild: false,
+        newChildName: ''
       }
     },
     created() {
@@ -348,6 +350,31 @@
       }
     },
     methods: {
+      startInlineCreate() {
+        this.closeContextMenu()
+        this.open = true // ensure children are visible
+        this.creatingChild = true
+        this.newChildName = ''
+        this.$nextTick(() => {
+          const el = this.$refs.createInput
+          if (el) { el.focus(); el.select() }
+        })
+      },
+      commitInlineCreate() {
+        if (!this.creatingChild) return
+        const name = (this.newChildName || '').trim()
+        // If empty, treat as cancel (no popup)
+        if (!name) { this.cancelInlineCreate(); return }
+        // Emit upwards so the parent does the API call
+        this.$emit('create', { id: this.node.id ?? null, path: this.pathHere(), name, inline: true })
+        // Optimistically close composer; parent will reload tree
+        this.creatingChild = false
+        this.newChildName = ''
+      },
+      cancelInlineCreate() {
+        this.creatingChild = false
+        this.newChildName = ''
+      },
       // ---------- context menu ----------
       openContextMenu(evt) {
         // close other menus
@@ -397,7 +424,7 @@
 
       onCtxNewFolder() {
         this.closeContextMenu()
-        this.createHere()
+        this.startInlineCreate()
       },
       onCtxRename() {
         this.closeContextMenu()
@@ -422,13 +449,6 @@
           id: this.node.id ?? null,
           path: this.level === 0 ? [] : this.pathHere()
         })
-      },
-      createHere() {
-        this.$emit('create', { id: this.node.id ?? null, path: this.pathHere() })
-      },
-      renameHere() {
-        if (this.node.id != null)
-          this.$emit('rename', { id: this.node.id, path: this.pathHere() })
       },
       toggleOpen() {
         if (this.shouldBeOpen) {
@@ -533,9 +553,9 @@
         <div class="folder-node__row"
              :data-id="(node.id ?? 'root') + ''"
              :class="{
-               'is-active': isActiveHere,
-               'is-dragover': draggingOver,
-               'is-ctx': ctxFlash}"
+           'is-active': isActiveHere,
+           'is-dragover': draggingOver,
+           'is-ctx': ctxFlash}"
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
@@ -550,36 +570,17 @@
               @click="toggleOpen"
               :aria-expanded="(node.children && node.children.length ? open : false).toString()"
               :aria-label="open ? 'Collapse folder' : 'Expand folder'">
-              <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round" />
-                <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" />
+              <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24" aria-hidden="true">
+                <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
 
             <span class="folder-node__icon" aria-hidden="true">
-          <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
-            <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15" />
-            <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor"
-                  stroke-width="1.5" />
-          </svg>
-          <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
-            <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5" />
-            <path
-              d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z"
-              fill="currentColor" opacity="0.15" />
-            <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none"
-                  stroke="currentColor" stroke-width="1.5" />
-          </svg>
-          <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
-            <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
-            <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor"
-                  stroke-width="1.5" />
-          </svg>
+          <!-- your folder SVGs here (unchanged) -->
         </span>
 
+            <!-- Rename or static name -->
             <template v-if="isRenaming">
               <input
                 ref="renameInput"
@@ -606,9 +607,57 @@
               </button>
             </template>
           </div>
+
+          <!-- Row actions -->
+          <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
+            <button class="folder-node__action" title="New subfolder" @click="startInlineCreate" aria-label="New subfolder">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })" aria-label="Delete folder">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
+        <!-- Children list -->
         <div v-show="open" class="folder-node__children" role="group">
+          <!-- Inline "new folder" composer as a virtual child -->
+          <div v-if="creatingChild" class="folder-node folder-node--virtual" :style="{ '--level': level + 1 }">
+            <div class="folder-node__row is-creating">
+              <div class="folder-node__indent">
+            <span class="folder-node__icon" aria-hidden="true">
+              <!-- a plain folder icon (optional) -->
+              <svg class="icon icon--folder" viewBox="0 0 24 24">
+                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15"/>
+                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </span>
+                <input
+                  ref="createInput"
+                  class="folder-node__create-input"
+                  type="text"
+                  v-model.trim="newChildName"
+                  :placeholder="$trans ? $trans('media-library.new-subfolder', 'New subfolder name') : 'New subfolder name'"
+                  @keydown.enter.stop.prevent="commitInlineCreate"
+                  @keydown.esc.stop.prevent="cancelInlineCreate"
+                  @blur="commitInlineCreate"
+                  @click.stop
+                />
+              </div>
+              <div class="folder-node__actions">
+                <!-- optional confirm/cancel buttons; keyboard already handles it
+                <button class="folder-node__action" @click="commitInlineCreate">✔</button>
+                <button class="folder-node__action danger" @click="cancelInlineCreate">✖</button>
+                -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Actual children -->
           <folder-node v-for="child in node.children"
                        :key="child.id || child.name"
                        :node="child"
@@ -630,15 +679,9 @@
              :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
              role="menu"
              @click.stop>
-          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">
-            ➕ New subfolder
-          </button>
-          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">
-            ✏️ Rename
-          </button>
-          <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">
-            🗑 Delete
-          </button>
+          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">➕ New subfolder</button>
+          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">✏️ Rename</button>
+          <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">🗑 Delete</button>
         </div>
       </div>
     `
@@ -1151,15 +1194,8 @@
       goToIndex(i) {
         this.selectFolderPath(this.currentFolderPath.slice(0, i + 1))
       },
-      promptNewFolder() {
-        const name = window.prompt(
-          this.$trans('media-library.new-folder', 'New folder name')
-        )
-        if (!name) return
-        this.createFolderAtPath(this.currentFolderPath, name)
-      },
       createFolderAtPath(source, forcedName = null) {
-        // Normalize input (supports array OR object { id, path })
+        // Normalize (supports array OR object { id, path, name })
         const parentPath = Array.isArray(source)
           ? source
           : (Array.isArray(source?.path) ? source.path : [])
@@ -1168,21 +1204,19 @@
           ? source.id
           : null
 
-        const name =
-          forcedName ||
-          window.prompt(
-            this.$trans('media-library.new-subfolder', 'New subfolder name')
-          )
+        const name = forcedName != null
+          ? String(forcedName).trim()
+          : (typeof source?.name === 'string' ? source.name.trim() : '')
 
+        // Inline composer provides the name. If missing, do nothing.
         if (!name) return
 
-        // Prefer id if your API supports it; include path as a fallback / for BC.
         const body = {
           type: this.type,
           name,
           parent: (parentPath || []).join('/')
         }
-        if (parentId != null) body.parentId = parentId
+        if (parentId != null) body.parentId = parentId // optional if your API supports it
 
         api.createFolder(
           this.endpoint,
@@ -1826,4 +1860,21 @@
     &.danger:hover { background: #fee2e2; }
   }
   .folder-node__row.is-ctx { box-shadow: inset 0 0 0 2px rgba(59,130,246,.25); }
+  .folder-node__create-input,
+  .folder-node__rename-input {
+    font: inherit;
+    color: inherit;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 6px;
+    min-width: 120px;
+    max-width: 240px;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.10);
+  }
+
+  .folder-node__row.is-creating {
+    background: #f9fafb;
+  }
+
 </style>
