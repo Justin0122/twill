@@ -138,7 +138,7 @@
                    @dragover.prevent="onFolderTreeDragOver"
                    @dragenter.prevent
                    @drop.prevent="$root.$emit('ml:dnd:hover:clear')">
-              <folder-node
+              <FolderNode
                 v-if="folderTree"
                 :node="folderTree"
                 :active-path="currentFolderPath"
@@ -1093,6 +1093,29 @@
     min-height: 100%;
   }
 
+  .folder-node__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.8;
+    padding: 2px 6px;
+  }
+  .folder-node__toggle,
+  .folder-node__name,
+  .folder-node__create {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .folder-node__name.is-active {
+    font-weight: 600;
+    text-decoration: underline;
+  }
+  .folder-node__children {
+    margin-left: 0;
+  }
+
   .medialibrary__folders-nav {
     display: flex;
     align-items: center;
@@ -1115,5 +1138,34 @@
   .mt-2 {
     margin-top: 8px;
   }
+  .folder-node__action{
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: #999;
+    &:hover {
+      color: #000;
+    }
+    &.is-active {
+      color: #000;
+    }
+  }
+  .folder-node__action.danger { color: #b00020; }
 
+  .folder-node__row {
+    position: relative;
+    min-height: 32px;
+    padding: 6px 8px;
+  }
+
+  .folder-node__row.is-dragover {
+    outline: 2px dashed rgba(0, 0, 0, 0.25);
+    outline-offset: -2px;
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .folder-node__row.is-dragover * {
+    pointer-events: none !important;
+  }
 </style>
