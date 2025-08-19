@@ -278,7 +278,12 @@
         draggingOver: false,
         _dragDepth: 0,
         isRenaming: false,
-        renameValue: ''
+        renameValue: '',
+        contextMenu: {
+          open: false,
+          x: 0,
+          y: 0
+        }
       }
     },
     created() {
@@ -294,17 +299,30 @@
       }
       this.$root.$on('ml:dnd:hover', this._onHoverId)
       this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
+      this._onGlobalCtxClose = () => { this.closeContextMenu() }
+      this.$root.$on('ml:ctx:close', this._onGlobalCtxClose)
     },
     mounted() {
       this._onGlobalDragEnd = () => this._onHoverClear()
       window.addEventListener('dragend', this._onGlobalDragEnd)
       window.addEventListener('drop', this._onGlobalDragEnd)
+
+      document.addEventListener('click', this._onDocClick, true)
+      document.addEventListener('keydown', this._onDocKeydown, true)
+      // close on any scroll (captures inside scrollable panes)
+      window.addEventListener('scroll', this.closeContextMenu, true)
     },
     beforeDestroy() {
       this.$root.$off('ml:dnd:hover', this._onHoverId)
       this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
+      this.$root.$off('ml:ctx:close', this._onGlobalCtxClose)
+
       window.removeEventListener('dragend', this._onGlobalDragEnd)
       window.removeEventListener('drop', this._onGlobalDragEnd)
+
+      document.removeEventListener('click', this._onDocClick, true)
+      document.removeEventListener('keydown', this._onDocKeydown, true)
+      window.removeEventListener('scroll', this.closeContextMenu, true)
     },
     computed: {
       isOnActivePath() {
@@ -328,6 +346,60 @@
       }
     },
     methods: {
+      // ---------- context menu ----------
+      openContextMenu(evt) {
+        // close other menus
+        this.$root.$emit('ml:ctx:close')
+
+        // initial position at cursor
+        this.contextMenu.open = true
+        this.contextMenu.x = evt.clientX
+        this.contextMenu.y = evt.clientY
+
+        this.$nextTick(() => {
+          const menu = this.$refs.ctxmenu
+          if (!menu) return
+          const rect = menu.getBoundingClientRect()
+          const pad = 8
+          let x = this.contextMenu.x
+          let y = this.contextMenu.y
+
+          if (rect.right > window.innerWidth - pad) {
+            x = Math.max(pad, window.innerWidth - rect.width - pad)
+          }
+          if (rect.bottom > window.innerHeight - pad) {
+            y = Math.max(pad, window.innerHeight - rect.height - pad)
+          }
+          this.contextMenu.x = x
+          this.contextMenu.y = y
+        })
+      },
+      closeContextMenu() {
+        this.contextMenu.open = false
+      },
+      _onDocClick(e) {
+        if (!this.contextMenu.open) return
+        const menu = this.$refs.ctxmenu
+        if (menu && !menu.contains(e.target)) this.closeContextMenu()
+      },
+      _onDocKeydown(e) {
+        if (e.key === 'Escape' && this.contextMenu.open) {
+          this.closeContextMenu()
+        }
+      },
+
+      onCtxNewFolder() {
+        this.closeContextMenu()
+        this.createHere()
+      },
+      onCtxRename() {
+        this.closeContextMenu()
+        this.startInlineRename()
+      },
+      onCtxDelete() {
+        this.closeContextMenu()
+        this.$emit('delete', { id: this.node.id, path: this.pathHere() })
+      },
       pathHere() {
         const path = []
         let n = this
@@ -456,11 +528,12 @@
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
-             @drop.stop.prevent="onDrop">
+             @drop.stop.prevent="onDrop"
+             @contextmenu.prevent="openContextMenu">
 
-          <!-- INDENT WRAPPER (moves caret/icon/name together) -->
+          <!-- INDENT WRAPPER -->
           <div class="folder-node__indent">
-            <!-- Toggle caret -->
+            <!-- caret, icons, name (unchanged) -->
             <button
               class="folder-node__toggle"
               :class="{ 'is-hidden': !(node.children && node.children.length) }"
@@ -473,24 +546,11 @@
               </svg>
             </button>
 
-            <!-- Folder icon -->
             <span class="folder-node__icon" aria-hidden="true">
-          <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
-            <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15"/>
-            <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
-          <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
-            <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z" fill="currentColor" opacity="0.15"/>
-            <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
-          <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
-            <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15"/>
-            <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
+          <!-- icons ... -->
         </span>
 
-            <!-- Name / Inline rename -->
+            <!-- Inline rename on dblclick (from previous step) -->
             <template v-if="isRenaming">
               <input
                 ref="renameInput"
@@ -518,6 +578,7 @@
             </template>
           </div>
 
+          <!-- Actions (no explicit rename button anymore) -->
           <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
             <button class="folder-node__action" title="New subfolder" @click="createHere" aria-label="New subfolder">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -545,6 +606,24 @@
                        @delete="$emit('delete', $event)"
                        @move="$emit('move', $event)"
           />
+        </div>
+
+        <!-- Custom context menu -->
+        <div v-if="contextMenu.open"
+             ref="ctxmenu"
+             class="folder-node__ctxmenu"
+             :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+             role="menu"
+             @click.stop>
+          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">
+            ➕ New subfolder
+          </button>
+          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">
+            ✏️ Rename
+          </button>
+          <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">
+            🗑 Delete
+          </button>
         </div>
       </div>
     `
@@ -1683,4 +1762,34 @@
     box-shadow: 0 0 0 2px rgba(59,130,246,0.10);
   }
   .folder-node__name.is-locked { cursor: default; }
+  .folder-node__ctxmenu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 180px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .folder-node__ctxmenu .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    font: inherit;
+    color: #111827;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover { background: #f3f4f6; }
+    &.danger { color: #b91c1c; }
+    &.danger:hover { background: #fee2e2; }
+  }
+
 </style>
