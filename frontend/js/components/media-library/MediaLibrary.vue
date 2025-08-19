@@ -695,6 +695,7 @@
           window.addEventListener('pointermove', this.onFolderTreePointerMove, { passive: false, capture: true })
           window.addEventListener('pointerup', this.onFolderTreePointerUp, { passive: true, capture: true })
           e.preventDefault()
+        } else {
         }
       },
       onFolderTreePointerMove(e) {
