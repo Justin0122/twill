@@ -156,6 +156,7 @@
                 @rename="onRenameFolder"
                 @delete="onDeleteFolder"
                 @move="onMoveToFolder"
+                @moveFolder="onReparentFolder"
               />
             </aside>
 
@@ -350,24 +351,6 @@
       }
     },
     methods: {
-      onReparentFolder({ sourceId, targetId }) {
-        if (sourceId === targetId) return
-        api.reparentFolder(
-          this.endpoint,
-          { sourceId, targetId }, // null targetId = move to root
-          () => {
-            // try to keep the moved node in view
-            this.loadFolderTree()
-            this.submitFilter()
-          },
-          (error) => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error?.data?.message || 'Unable to move folder',
-              variant: 'error'
-            })
-          }
-        )
-      },
       startInlineCreate() {
         this.closeContextMenu()
         this.open = true // ensure children are visible
@@ -731,7 +714,6 @@
                        @rename="$emit('rename', $event)"
                        @delete="$emit('delete', $event)"
                        @move="$emit('move', $event)"
-                       @moveFolder="onReparentFolder"
           />
         </div>
 
@@ -1380,6 +1362,23 @@
           () => {
             // Refresh anyway to keep UI in sync with server
             refresh()
+          }
+        )
+      },
+      onReparentFolder({ sourceId, targetId }) {
+        if (sourceId === targetId) return
+        api.reparentFolder(
+          this.endpoint,
+          { sourceId, targetId }, // null targetId = move to root
+          () => {
+            this.loadFolderTree()
+            this.submitFilter()
+          },
+          (error) => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error?.data?.message || 'Unable to move folder',
+              variant: 'error'
+            })
           }
         )
       },
