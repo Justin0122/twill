@@ -135,7 +135,6 @@
           <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
             <aside class="medialibrary__foldertree"
-                   :style="{ width: folderTreeWidth + 'px' }"
                    @dragover.prevent="onFolderTreeDragOver"
                    @dragenter.prevent
                    @drop.prevent="$root.$emit('ml:dnd:hover:clear')">
@@ -150,9 +149,6 @@
                 @delete="onDeleteFolder"
                 @move="onMoveToFolder"
               />
-              <div class="medialibrary__foldertree-resizer"
-                   title="Resize"
-                   @mousedown="onFolderTreeResizeStart"></div>
             </aside>
 
             <!-- RIGHT: selected media details -->
@@ -523,13 +519,6 @@
         currentFolderId: null,
         folderDeleteError: null,
         folderDeleteUsed: [],
-        folderTreeWidth: 260,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _resizingFolderTree: false,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _resizeMin: 160,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _resizeMax: 560
       }
     },
     computed: {
@@ -649,51 +638,7 @@
         const path = raw.split('/').filter(Boolean)
         return path.length ? path : []
       },
-
-      loadFolderTreeWidth() {
-        try {
-          const v = localStorage.getItem(this.storageWidthKey())
-          const n = parseInt(v, 10)
-          if (!isNaN(n) && n >= this._resizeMin && n <= this._resizeMax) {
-            this.folderTreeWidth = n
-          }
-        } catch (e) {}
-      },
-      saveFolderTreeWidth() {
-        try {
-          localStorage.setItem(this.storageWidthKey(), String(this.folderTreeWidth))
-        } catch (e) {}
-      },
       /* ---------- /persistence helpers ---------- */
-      onFolderTreeResizeStart(e) {
-        this._resizingFolderTree = true
-        document.body.classList.add('is-resizing-col')
-        window.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false })
-        window.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true })
-        // Prevent accidental text selection
-        e.preventDefault()
-      },
-      onFolderTreeResizing(e) {
-        if (!this._resizingFolderTree) return
-        // Compute relative to the left edge of the folder tree container
-        const aside = this.$el.querySelector('.medialibrary__foldertree')
-        if (!aside) return
-        const rect = aside.getBoundingClientRect()
-        // New width equals cursor distance from left edge
-        let w = Math.round(e.clientX - rect.left)
-        // Clamp
-        w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
-        this.folderTreeWidth = w
-        e.preventDefault()
-      },
-      onFolderTreeResizeEnd() {
-        if (!this._resizingFolderTree) return
-        this._resizingFolderTree = false
-        document.body.classList.remove('is-resizing-col')
-        window.removeEventListener('mousemove', this.onFolderTreeResizing)
-        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
-        this.saveFolderTreeWidth()
-      },
 
       replaceMedia({ id }) {
         this.$refs.uploader.replaceMedia(id)
@@ -707,7 +652,6 @@
       opened() {
         const saved = this.getSavedFolderPath()
         if (saved !== null) this.currentFolderPath = saved
-        this.loadFolderTreeWidth()
 
         if (!this.gridLoaded) this.reloadGrid()
         if (!this.folderTree) this.loadFolderTree()
@@ -1420,49 +1364,12 @@
     padding: 6px 8px;
   }
 
-  .medialibrary__foldertree {
-    position: relative;
-    flex: none; /* keep fixed width */
-    min-width: 160px;
-    max-width: 560px;
-    border-right: 1px solid rgba(0,0,0,0.06);
-  }
-
-  .medialibrary__foldertree-resizer {
-    position: absolute;
-    top: 0;
-    right: -3px;
-    width: 6px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 5;
-  }
-  .medialibrary__foldertree-resizer:after {
-    content: '';
-    position: absolute;
-    left: 2px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: transparent;
-    transition: background 0.15s ease;
-  }
-  .medialibrary__foldertree-resizer:hover:after,
-  .is-resizing-col .medialibrary__foldertree-resizer:after {
-    background: rgba(0,0,0,0.15);
-  }
-
-  /* Optional: prevent selecting text while resizing */
-  .is-resizing-col {
-    user-select: none;
-  }
-
-  /* Existing hover highlight for folder rows remains */
   .folder-node__row.is-dragover {
     outline: 2px dashed rgba(0, 0, 0, 0.25);
     outline-offset: -2px;
     background: rgba(0, 0, 0, 0.04);
   }
+
   .folder-node__row.is-dragover * {
     pointer-events: none !important;
   }
