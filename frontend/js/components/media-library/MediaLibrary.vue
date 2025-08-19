@@ -250,6 +250,33 @@
     data() {
       return { open: false, draggingOver: false, _dragDepth: 0 }
     },
+    created() {
+      // Single-active: listen for broadcasted hover changes
+      this._onHoverId = id => {
+        const myId = this.node.id ?? 'root'
+        // When a new id is announced, activate only if it matches me
+        this.draggingOver = id !== null && id === myId
+        if (!this.draggingOver) this._dragDepth = 0
+      }
+      this._onHoverClear = () => {
+        this.draggingOver = false
+        this._dragDepth = 0
+      }
+      this.$root.$on('ml:dnd:hover', this._onHoverId)
+      this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
+    },
+    mounted() {
+      // Ensure cleanup even if drop happens outside any folder row
+      this._onGlobalDragEnd = () => this._onHoverClear()
+      window.addEventListener('dragend', this._onGlobalDragEnd)
+      window.addEventListener('drop', this._onGlobalDragEnd)
+    },
+    beforeDestroy() {
+      this.$root.$off('ml:dnd:hover', this._onHoverId)
+      this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
+      window.removeEventListener('dragend', this._onGlobalDragEnd)
+      window.removeEventListener('drop', this._onGlobalDragEnd)
+    },
     computed: {
       isOnActivePath() {
         const here = this.pathHere()
@@ -312,6 +339,8 @@
       onDragEnter(evt) {
         if (!this.hasMediaPayload(evt)) return
         this._dragDepth += 1
+        // Announce I am the active hover target (single-active)
+        this.$root.$emit('ml:dnd:hover', this.node.id ?? 'root')
         this.draggingOver = true
         evt.preventDefault()
         evt.stopPropagation()
@@ -323,15 +352,20 @@
         evt.stopPropagation()
       },
       onDragLeave(evt) {
-        // Only clear when we've fully left the row (not just a child)
         if (this._dragDepth > 0) this._dragDepth -= 1
-        if (this._dragDepth === 0) this.draggingOver = false
+        if (this._dragDepth === 0) {
+          this.draggingOver = false
+          // If leaving completely, clear global hover so nothing remains active
+          this.$root.$emit('ml:dnd:hover:clear')
+        }
         evt.stopPropagation()
       },
       onDrop(evt) {
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
+        // Clear any other hovered rows
+        this.$root.$emit('ml:dnd:hover:clear')
         if (!payload || !payload.ids || !payload.ids.length) {
           evt.preventDefault()
           evt.stopPropagation()
@@ -371,7 +405,6 @@
       }
       // ---------------------------------------------------
     },
-
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
         <div class="folder-node__row"
@@ -414,8 +447,6 @@
       </div>
     `
   }
-
-
   export default {
     name: 'A17Medialibrary',
     components: {
@@ -1322,5 +1353,4 @@
   .folder-node__row.is-dragover * {
     pointer-events: none !important;
   }
-
 </style>
