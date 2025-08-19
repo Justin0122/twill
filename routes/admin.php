@@ -33,6 +33,7 @@ if (config('twill.enabled.media-library')) {
         Route::post('medias/folders/move', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'move']);
 
         Route::delete('medias/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'destroy']);
+        Route::post('medias/folders/reparent', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'reparent']);
     });
 }
 

@@ -307,7 +307,65 @@ class MediaFolderController extends Controller
         // direct usage on a model (e.g., App\Models\Page)
         return [$mediableType, $mediableId];
     }
+    public function reparent(Request $request)
+    {
+        $data = $request->validate([
+            'sourceId' => 'required|integer',
+            'targetId' => 'nullable|integer',
+        ]);
 
+        $source = LibraryFolder::where('library', 'media')->find($data['sourceId']);
+        if (!$source) return response()->json(['message' => 'Source folder not found'], 404);
+
+        $target = null;
+        if (!empty($data['targetId'])) {
+            $target = LibraryFolder::where('library', 'media')->find($data['targetId']);
+            if (!$target) return response()->json(['message' => 'Target folder not found'], 422);
+        }
+
+        // Prevent moving into self/descendant
+        $targetPath = trim($target->path ?? '', '/');     // '' means root
+        $sourcePath = trim($source->path ?? '', '/');
+        if ($targetPath !== '' && ($targetPath === $sourcePath || str_starts_with($targetPath . '/', $sourcePath . '/'))) {
+            return response()->json(['message' => 'Cannot move a folder into itself or its descendant.'], 422);
+        }
+
+        // New path (keep same name)
+        $newPath = trim(($targetPath ? $targetPath . '/' : '') . $source->name, '/');
+
+        // Ensure uniqueness at destination
+        $exists = LibraryFolder::where('library', 'media')
+            ->where('path', $newPath)
+            ->where('id', '!=', $source->id)
+            ->exists();
+        if ($exists) {
+            return response()->json(['message' => 'A folder with that name already exists in the destination.'], 422);
+        }
+
+        $oldPath = $source->path;
+
+        DB::transaction(function () use ($source, $data, $oldPath, $newPath, $target) {
+            // Move source
+            $source->update([
+                'parent_id' => $target?->id,
+                'path'      => $newPath,
+            ]);
+
+            // Cascade descendants
+            $like = $oldPath === '' ? '%' : $oldPath . '/%';
+            $descendants = LibraryFolder::where('library', 'media')
+                ->where('path', 'like', $like)
+                ->get();
+
+            foreach ($descendants as $child) {
+                $child->update([
+                    'path' => preg_replace('#^'.preg_quote($oldPath, '#').'#', $newPath, $child->path)
+                ]);
+            }
+        });
+
+        return response()->json(['ok' => true, 'folder' => $source->fresh()]);
+    }
     private function buildTreeFromRows($rows): array
     {
         // Index by id

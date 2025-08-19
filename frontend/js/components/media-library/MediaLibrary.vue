@@ -457,50 +457,98 @@
         }
         this.open = !this.open
       },
+      // --- FOLDER DRAG SOURCE ---
+      onFolderDragStart(evt) {
+        // don't drag the synthetic root
+        if (this.node.id == null) { evt.preventDefault(); return }
+        const payload = { folderId: this.node.id, path: this.pathHere() }
+        try {
+          evt.dataTransfer.setData('application/x-folder', JSON.stringify(payload))
+        } catch (e) {
+          evt.dataTransfer.setData('text/plain', JSON.stringify({ __folder__: payload }))
+        }
+        evt.dataTransfer.effectAllowed = 'move'
+        // clear any previous hover states
+        this.$root.$emit('ml:dnd:hover:clear')
+      },
+
+      // --- DROP TARGETS (accept media OR folder) ---
+      hasFolderPayload(evt) {
+        try {
+          const types = Array.from(evt?.dataTransfer?.types || [])
+          return types.includes('application/x-folder') || types.includes('text/plain')
+        } catch (e) { return false }
+      },
+      readFolderPayload(evt) {
+        try {
+          const raw = evt.dataTransfer.getData('application/x-folder') || evt.dataTransfer.getData('text/plain')
+          const obj = JSON.parse(raw)
+          return obj.__folder__ || obj
+        } catch (e) { return null }
+      },
       // --- Drag-and-drop targets (accept moving medias) ---
       onDragEnter(evt) {
-        if (!this.hasMediaPayload(evt)) return
+        // react to either media OR folder payloads
+        if (!(this.hasMediaPayload(evt) || this.hasFolderPayload(evt))) return
         this._dragDepth += 1
-        // Announce I am the active hover target (single-active)
         this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
         this.draggingOver = true
-        evt.preventDefault()
-        evt.stopPropagation()
+        evt.preventDefault(); evt.stopPropagation()
       },
       onDragOver(evt) {
-        if (!this.hasMediaPayload(evt)) return
+        if (!(this.hasMediaPayload(evt) || this.hasFolderPayload(evt))) return
         evt.dataTransfer.dropEffect = 'move'
-        evt.preventDefault()
-        evt.stopPropagation()
+        evt.preventDefault(); evt.stopPropagation()
       },
       onDragLeave(evt) {
         if (this._dragDepth > 0) this._dragDepth -= 1
-        if (this._dragDepth === 0) {
-          this.draggingOver = false
-        }
+        if (this._dragDepth === 0) this.draggingOver = false
         evt.stopPropagation()
       },
       onDrop(evt) {
+        const folderPayload = this.readFolderPayload(evt)
+        if (folderPayload && folderPayload.folderId != null) {
+          // reparent folder => emit up
+          const sourceId  = folderPayload.folderId
+          const targetId  = this.node.id ?? null
+          const sourcePath = folderPayload.path || []
+          const targetPath = this.pathHere()
+
+          // guard: no self/descendant
+          if (sourceId === targetId) { this._clearHover(evt); return }
+          if (targetPath.join('/').startsWith(sourcePath.join('/'))) {
+            // cannot move into its own descendant
+            this.$root.$emit('ml:dnd:hover:clear')
+            this.draggingOver = false
+            // optional: toast
+            this.$emit('toast', { variant: 'error', message: 'Cannot move a folder into itself or its descendant.' })
+            evt.preventDefault(); evt.stopPropagation(); return
+          }
+
+          this.$emit('moveFolder', { sourceId, targetId })
+          this._clearHover(evt)
+          return
+        }
+
+        // fallback: existing media-move flow
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
-        // Clear any other hovered rows
         this.$root.$emit('ml:dnd:hover:clear')
+
         if (!payload || !payload.ids || !payload.ids.length) {
-          evt.preventDefault()
-          evt.stopPropagation()
-          return
+          evt.preventDefault(); evt.stopPropagation(); return
         }
-        const targetPath = this.level === 0 ? [] : this.pathHere()
         const targetId = this.node.id ?? null
-        this.$emit('move', {
-          targetPath,
-          targetId,
-          mediaIds: payload.ids,
-          type: payload.type || null
-        })
-        evt.preventDefault()
-        evt.stopPropagation()
+        this.$emit('move', { targetPath: this.level === 0 ? [] : this.pathHere(), targetId, mediaIds: payload.ids, type: payload.type || null })
+        evt.preventDefault(); evt.stopPropagation()
+      },
+
+      _clearHover(evt) {
+        this._dragDepth = 0
+        this.draggingOver = false
+        this.$root.$emit('ml:dnd:hover:clear')
+        evt.preventDefault(); evt.stopPropagation()
       },
       hasMediaPayload(evt) {
         try {
@@ -551,11 +599,10 @@
       <div class="folder-node" :class="{ 'is-root': level === 0 }" :style="{ '--level': level}" role="treeitem"
            :aria-level="level + 1">
         <div class="folder-node__row"
+             draggable="true"
+             @dragstart="onFolderDragStart"
              :data-id="(node.id ?? 'root') + ''"
-             :class="{
-           'is-active': isActiveHere,
-           'is-dragover': draggingOver,
-           'is-ctx': ctxFlash}"
+             :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver, 'is-ctx': ctxFlash }"
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
@@ -666,6 +713,7 @@
                        @rename="$emit('rename', $event)"
                        @delete="$emit('delete', $event)"
                        @move="$emit('move', $event)"
+                       @moveFolder="onReparentFolder"
           />
         </div>
 
@@ -873,7 +921,24 @@
           /* ignore */
         }
       },
-
+      onReparentFolder({ sourceId, targetId }) {
+        if (sourceId === targetId) return
+        api.reparentFolder(
+          this.endpoint,
+          { sourceId, targetId }, // null targetId = move to root
+          () => {
+            // try to keep the moved node in view
+            this.loadFolderTree()
+            this.submitFilter()
+          },
+          (error) => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error?.data?.message || 'Unable to move folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
       // your existing responsive logic, now respectful of user's choice
       updateDynamicWidths() {
         // LEFT folder tree: only set if user hasn't resized
