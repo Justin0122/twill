@@ -15,7 +15,7 @@
                     href="#"
                     @click.prevent="goToRoot"
                     :class="{ 'is-active': currentFolderPath.length === 0 }"
-                    >All</a
+                  >All</a
                   >
                   <span
                     v-for="(seg, i) in currentFolderPath"
@@ -28,7 +28,7 @@
                       :class="{
                         'is-active': i === currentFolderPath.length - 1
                       }"
-                      >{{ seg }}</a
+                    >{{ seg }}</a
                     >
                   </span>
                 </nav>
@@ -74,11 +74,11 @@
                     v-if="selectedType"
                   >
                     <span class="secondarynav__link">{{
-                      selectedType.text
-                    }}</span>
+                        selectedType.text
+                      }}</span>
                     <span class="secondarynav__number">{{
-                      selectedType.total
-                    }}</span>
+                        selectedType.total
+                      }}</span>
                   </a17-button>
                   <div slot="dropdown__content">
                     <ul>
@@ -89,11 +89,11 @@
                       >
                         <a href="#" @click.prevent="updateType(navType.value)">
                           <span class="secondarynav__link">{{
-                            navType.text
-                          }}</span>
+                              navType.text
+                            }}</span>
                           <span class="secondarynav__number">{{
-                            navType.total
-                          }}</span>
+                              navType.total
+                            }}</span>
                         </a>
                       </li>
                     </ul>
@@ -183,15 +183,15 @@
                 v-if="canInsert"
                 variant="action"
                 @click="saveAndClose"
-                >{{ btnLabel }}</a17-button
+              >{{ btnLabel }}</a17-button
               >
               <a17-button v-else variant="action" :disabled="true">{{
-                btnLabel
-              }}</a17-button>
+                  btnLabel
+                }}</a17-button>
             </footer>
 
             <!-- CENTER: media list + uploader -->
-            <div class="medialibrary__list" ref="list">
+            <div class="medialibrary__list" ref="list" :style="{ left: folderTreeWidth + 'px' }">
               <a17-uploader
                 ref="uploader"
                 v-if="authorized"
@@ -617,6 +617,9 @@
       storageKey() {
         return `twill:ml:lastFolder:${this.endpoint}:${this.type}`
       },
+      storageWidthKey() {
+        return `twill:ml:folderTreeWidth:${this.endpoint}:${this.type}`
+      },
       saveLastFolder() {
         try {
           localStorage.setItem(this.storageKey(), this.currentFolderFullPath)
@@ -675,14 +678,15 @@
       },
       onFolderTreeResizing(e) {
         if (!this._resizingFolderTree) return
-        // Compute relative to the left edge of the folder tree container
+        // Compute relative to the left edge of the entire grid area
         const aside = this.$el.querySelector('.medialibrary__foldertree')
         if (!aside) return
         const rect = aside.getBoundingClientRect()
-        // New width equals cursor distance from left edge
+        // New width equals cursor distance from the aside's left edge
         let w = Math.round(e.clientX - rect.left)
         // Clamp
         w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
+        // Apply
         this.folderTreeWidth = w
         e.preventDefault()
       },
@@ -718,7 +722,7 @@
         if (this.connector && this.indexToReplace > -1) {
           const mediaInitSelect = this.selected[this.connector][
             this.indexToReplace
-          ]
+            ]
           if (mediaInitSelect) this.selectedMedias.push(mediaInitSelect)
         }
       },
@@ -1198,6 +1202,14 @@
 </script>
 
 <style lang="scss">
+  .medialibrary,
+  .medialibrary__frame,
+  .medialibrary__inner,
+  .medialibrary__grid {
+    height: 100%;
+    min-height: 100%;
+  }
+
   .medialibrary__filter-item {
     .vselect {
       min-width: 200px;
@@ -1257,7 +1269,6 @@
   }
   .medialibrary__grid {
     position: relative;
-    height: 100%;
   }
 
   .medialibrary__foldertree {
@@ -1265,11 +1276,14 @@
     top: 0;
     bottom: 0;
     left: 0;
-    width: 220px;
-    max-height: calc(100vh - 220px);
+    /* width set via :style */
     overflow: auto;
-    border-right: 1px solid #eee;
+    border-right: 1px solid rgba(0,0,0,0.06);
     padding: 8px 0;
+    flex: none; /* keep fixed width */
+    min-width: 160px;
+    max-width: 560px;
+
     @media screen and (max-width: 700px) {
       display: none;
     }
@@ -1324,11 +1338,12 @@
     }
   }
 
+  /* The center list now shifts based on the live folderTreeWidth (inline style) */
   .medialibrary__list {
     margin: 0;
     position: absolute;
     top: 0;
-    left: 220px;
+    /* left set via :style to match folderTreeWidth */
     right: map-get($width_sidebar, default);
     bottom: 0;
     overflow: auto;
@@ -1340,7 +1355,7 @@
       right: map-get($width_sidebar, xsmall);
     }
     @media screen and (max-width: 700px) {
-      left: 0;
+      left: 0 !important; /* folder tree hidden */
     }
     @media screen and (max-width: 550px) {
       right: 0;
@@ -1418,14 +1433,6 @@
     position: relative;
     min-height: 32px;
     padding: 6px 8px;
-  }
-
-  .medialibrary__foldertree {
-    position: relative;
-    flex: none; /* keep fixed width */
-    min-width: 160px;
-    max-width: 560px;
-    border-right: 1px solid rgba(0,0,0,0.06);
   }
 
   .medialibrary__foldertree-resizer {
