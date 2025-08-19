@@ -65,21 +65,15 @@
             : '0%'
         }
       },
-      // Begin drag-and-drop support for moving to folders
       onDragStart(item, evt) {
         if (item.disabled) return
         const selectedIds = (this.selectedItems || []).map(m => m.id)
         const ids =
-          this.isSelected(item) && selectedIds.length
-            ? selectedIds
-            : [item.id]
+          this.isSelected(item) && selectedIds.length ? selectedIds : [item.id]
         try {
           evt.dataTransfer.setData(
             'application/x-media-ids',
-            JSON.stringify({
-              ids,
-              type: this.type || null
-            })
+            JSON.stringify({ ids, type: this.type || null })
           )
         } catch (e) {
           evt.dataTransfer.setData('text/plain', JSON.stringify({ ids }))
@@ -87,7 +81,7 @@
         evt.dataTransfer.effectAllowed = 'move'
       },
       onDragEnd(item, evt) {
-
+        this.$root.$emit('ml:dnd:hover:clear')
       }
     }
   }
