@@ -1248,10 +1248,7 @@
         this.close()
       },
       beforeDestroy() {
-        window.removeEventListener('pointermove', this.onFolderTreePointerMove, true)
-        window.removeEventListener('pointerup', this.onFolderTreePointerUp, true)
-        window.removeEventListener('mousemove', this.onFolderTreeResizing, true)
-        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd, true)
+        window.removeEventListener('resize', this.measureSidebarWidth)
       }
     }
   }
