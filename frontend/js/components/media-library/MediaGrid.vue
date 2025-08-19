@@ -8,10 +8,10 @@
     >
       <span class="mediagrid__button s--loading">
         <span class="mediagrid__progress" v-if="!item.error"
-          ><span
-            class="mediagrid__progressBar"
-            :style="loadingProgress(index)"
-          ></span
+        ><span
+          class="mediagrid__progressBar"
+          :style="loadingProgress(index)"
+        ></span
         ></span>
         <span class="mediagrid__progressError" v-else>Upload Error</span>
       </span>
@@ -29,6 +29,7 @@
           's--used': isUsed(item) || !!replacingMediaIds[item.id],
           's--disabled': item.disabled
         }"
+        data-ml-selectable
         @click.exact="toggleSelection(item)"
         @click.shift.exact="shiftToggleSelection(item)"
         @click.ctrl.exact="ctrlToggleSelection(item)"
@@ -46,9 +47,9 @@
   </div>
 </template>
 
+
 <script>
   import { mapState } from 'vuex'
-
   import mediaItemsMixin from '@/mixins/mediaLibrary/mediaItems'
 
   export default {
@@ -60,14 +61,13 @@
       })
     },
     methods: {
-      loadingProgress: function(index) {
+      loadingProgress(index) {
         return {
           width: this.itemsLoading[index].progress
             ? this.itemsLoading[index].progress + '%'
             : '0%'
         }
       },
-      // Toggle for Ctrl/Cmd multi-select
       ctrlToggleSelection(item) {
         this.$emit('ctrlChange', item)
       },
@@ -86,12 +86,13 @@
         }
         evt.dataTransfer.effectAllowed = 'move'
       },
-      onDragEnd(item, evt) {
+      onDragEnd() {
         this.$root.$emit('ml:dnd:hover:clear')
       }
     }
   }
 </script>
+
 
 <style lang="scss" scoped>
   $height_text: 17px;
