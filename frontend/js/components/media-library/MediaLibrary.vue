@@ -159,6 +159,9 @@
               />
             </aside>
 
+            <div class="medialibrary__foldertree-resizer"
+                 @mousedown="startResizingFolderTree"></div>
+
             <!-- RIGHT: selected media details -->
             <aside class="medialibrary__sidebar">
               <a17-mediasidebar
@@ -620,6 +623,24 @@
       }
     },
     methods: {
+      startResizingFolderTree(e) {
+        e.preventDefault()
+        const startX = e.clientX
+        const startWidth = this.folderTreeWidth
+
+        const doDrag = (moveEvent) => {
+          const newWidth = Math.max(150, startWidth + (moveEvent.clientX - startX)) // min 150px
+          this.folderTreeWidth = newWidth
+        }
+
+        const stopDrag = () => {
+          document.removeEventListener('mousemove', doDrag)
+          document.removeEventListener('mouseup', stopDrag)
+        }
+
+        document.addEventListener('mousemove', doDrag)
+        document.addEventListener('mouseup', stopDrag)
+      },
       /* ---------- persistence helpers ---------- */
       storageKey() {
         return `twill:ml:lastFolder:${this.endpoint}:${this.type}`
@@ -1418,5 +1439,19 @@
 
   .folder-node__row.is-dragover * {
     pointer-events: none !important;
+  }
+  .medialibrary__foldertree-resizer {
+    position: absolute;
+    top: 0;
+    left: var(--foldertree-width);
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 </style>
