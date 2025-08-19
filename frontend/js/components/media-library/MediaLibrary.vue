@@ -1308,8 +1308,8 @@
         const parentPath = Array.isArray(source)
           ? source
           : Array.isArray(source?.path)
-          ? source.path
-          : []
+            ? source.path
+            : []
 
         const parentId =
           source && typeof source === 'object' && 'id' in source
@@ -1320,8 +1320,8 @@
           forcedName != null
             ? String(forcedName).trim()
             : typeof source?.name === 'string'
-            ? source.name.trim()
-            : ''
+              ? source.name.trim()
+              : ''
 
         // Inline composer provides the name. If missing, do nothing.
         if (!name) return
