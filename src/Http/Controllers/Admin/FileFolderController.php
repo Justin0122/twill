@@ -3,53 +3,50 @@
 namespace A17\Twill\Http\Controllers\Admin;
 
 use A17\Twill\Models\LibraryFolder;
+use A17\Twill\Models\File;
+use A17\Twill\Models\Block;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class FileFolderController extends Controller
 {
     public function index(Request $request)
     {
-        $explicit = LibraryFolder::query()->where('library', 'file')->get(['path'])->pluck('path')->all();
+        $rows = LibraryFolder::where('library', 'file')
+            ->orderBy('path')
+            ->get(['id', 'name', 'path', 'parent_id']);
 
-        $fromFiles = DB::table('twill_files')
-            ->whereNotNull('folder_path')
-            ->where('folder_path', '!=', '')
-            ->distinct()
-            ->pluck('folder_path')
-            ->all();
-
-        $paths = collect($explicit)->merge($fromFiles)->unique()->values()->all();
-
-        return response()->json([
-            'tree' => $this->buildTree($paths),
-        ]);
+        return response()->json(['tree' => $this->buildTreeFromRows($rows)]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|in:file',
+            'type'   => 'required|in:file',
             'parent' => 'nullable|string',
-            'name' => 'required|string|max:255',
+            'name'   => 'required|string|max:255',
         ]);
 
-        $parent = $this->normalize($data['parent'] ?? '');
-        $name = $this->sanitizeName($data['name']);
-        $path = trim($parent . '/' . $name, '/');
+        $parentPath = trim((string) ($data['parent'] ?? ''), '/');
+        $name       = trim($data['name'], '/');
 
-        if ($path === '') return response()->json(['message' => 'Invalid folder name'], 422);
+        $parent = $parentPath === ''
+            ? null
+            : LibraryFolder::where('library', 'file')->where('path', $parentPath)->first();
 
-        LibraryFolder::firstOrCreate([
-            'path' => $path,
-        ], [
-            'library' => 'file',
-            'name' => $name,
-            'parent_id' => optional(LibraryFolder::where('path', $parent)->first())->id,
-        ]);
+        $path = trim(($parent->path ?? '') . '/' . $name, '/');
 
-        return response()->json(['ok' => true], 201);
+        $folder = LibraryFolder::firstOrCreate(
+            ['library' => 'file', 'path' => $path],
+            [
+                'name'      => $name,
+                'parent_id' => $parent?->id,
+            ]
+        );
+
+        return response()->json(['ok' => true, 'folder' => $folder], 201);
     }
 
     // Rename folder
@@ -57,23 +54,18 @@ class FileFolderController extends Controller
     {
         abort_unless($folder->library === 'file', 404);
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        $data = $request->validate(['name' => 'required|string|max:255']);
 
         $oldPath = $folder->path;
         $newPath = trim(($folder->parent?->path ?? '') . '/' . $data['name'], '/');
 
-        // Ensure uniqueness
         if (LibraryFolder::where('library', 'file')->where('path', $newPath)->where('id', '!=', $folder->id)->exists()) {
             return response()->json(['message' => 'A folder with that name already exists here.'], 422);
         }
 
         DB::transaction(function () use ($folder, $data, $oldPath, $newPath) {
-            // 1) Update this folder
             $folder->update(['name' => $data['name'], 'path' => $newPath]);
 
-            // 2) Cascade paths to descendants
             $like = $oldPath === '' ? '%' : $oldPath . '/%';
             $descendants = LibraryFolder::where('library', 'file')
                 ->where('path', 'like', $like)
@@ -81,11 +73,7 @@ class FileFolderController extends Controller
 
             foreach ($descendants as $child) {
                 $child->update([
-                    'path' => preg_replace(
-                        '#^' . preg_quote($oldPath, '#') . '#',
-                        $newPath,
-                        $child->path
-                    )
+                    'path' => preg_replace('#^'.preg_quote($oldPath, '#').'#', $newPath, $child->path)
                 ]);
             }
         });
@@ -93,40 +81,28 @@ class FileFolderController extends Controller
         return response()->json(['ok' => true, 'folder' => $folder->fresh()]);
     }
 
+    // Move files to a target folder by ID (or to root if null)
     public function move(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|in:file',
-            'target' => 'nullable|string',
-            'mediaIds' => 'required|array|min:1',
+            'type'       => 'required|in:file',
+            'targetId'   => 'nullable|integer',
+            'mediaIds'   => 'required|array|min:1',
             'mediaIds.*' => 'integer',
         ]);
 
-        $target = $this->normalize($data['target'] ?? '');
+        $targetId = $data['targetId'] ?? null;
+        if ($targetId !== null) {
+            $exists = LibraryFolder::where('id', $targetId)->where('library', 'file')->exists();
+            if (!$exists) {
+                return response()->json(['message' => 'Target folder not found'], 422);
+            }
+        }
 
         DB::table('twill_files')->whereIn('id', $data['mediaIds'])
-            ->update(['folder_path' => $target]);
+            ->update(['folder_id' => $targetId]); // null => root
 
         return response()->json(['ok' => true]);
-    }
-
-    private function normalize(?string $path): string
-    {
-        $path = trim($path ?? '', '/');
-        // reject unsafe segments
-        if (Str::contains($path, ['..', "\0"])) return '';
-        // collapse duplicate slashes
-        $path = preg_replace('#/+#', '/', $path);
-        return $path;
-    }
-
-    private function sanitizeName(string $name): string
-    {
-        $name = trim($name);
-        // strip slashes and control chars
-        $name = preg_replace('#[\/\0]#', '', $name);
-        // optional: restrict to a safe charset
-        return $name;
     }
 
     public function reparent(Request $request)
@@ -145,17 +121,14 @@ class FileFolderController extends Controller
             if (!$target) return response()->json(['message' => 'Target folder not found'], 422);
         }
 
-        // Prevent moving into self/descendant
-        $targetPath = trim($target->path ?? '', '/');     // '' means root
+        $targetPath = trim($target->path ?? '', '/'); // '' = root
         $sourcePath = trim($source->path ?? '', '/');
         if ($targetPath !== '' && ($targetPath === $sourcePath || str_starts_with($targetPath . '/', $sourcePath . '/'))) {
             return response()->json(['message' => 'Cannot move a folder into itself or its descendant.'], 422);
         }
 
-        // New path (keep same name)
         $newPath = trim(($targetPath ? $targetPath . '/' : '') . $source->name, '/');
 
-        // Ensure uniqueness at destination
         $exists = LibraryFolder::where('library', 'file')
             ->where('path', $newPath)
             ->where('id', '!=', $source->id)
@@ -166,14 +139,12 @@ class FileFolderController extends Controller
 
         $oldPath = $source->path;
 
-        DB::transaction(function () use ($source, $data, $oldPath, $newPath, $target) {
-            // Move source
+        DB::transaction(function () use ($source, $oldPath, $newPath, $target) {
             $source->update([
                 'parent_id' => $target?->id,
                 'path'      => $newPath,
             ]);
 
-            // Cascade descendants
             $like = $oldPath === '' ? '%' : $oldPath . '/%';
             $descendants = LibraryFolder::where('library', 'file')
                 ->where('path', 'like', $like)
@@ -189,13 +160,10 @@ class FileFolderController extends Controller
         return response()->json(['ok' => true, 'folder' => $source->fresh()]);
     }
 
-
     public function destroy(Request $request, LibraryFolder $folder)
     {
-        // Library flag is 'file' (adjust to 'files' if your data uses that)
         abort_unless($folder->library === 'file', 404);
 
-        // Collect this folder + its descendants
         $ids = collect([$folder->id])
             ->merge(
                 LibraryFolder::where('library', 'file')
@@ -205,12 +173,10 @@ class FileFolderController extends Controller
             ->unique()
             ->values();
 
-        // All files (directly) in these folders
         $fileIds = DB::table('twill_files')
             ->whereIn('folder_id', $ids)
             ->pluck('id');
 
-        // Short-circuit if no files at all
         if ($fileIds->isEmpty()) {
             LibraryFolder::whereIn('id', $ids)->delete();
 
@@ -220,16 +186,13 @@ class FileFolderController extends Controller
             ]);
         }
 
-        // Any usages?
         $usages = DB::table('twill_fileables')
             ->whereIn('file_id', $fileIds)
             ->select('file_id', 'fileable_type', 'fileable_id', 'role')
             ->orderBy('file_id')
             ->get();
 
-        $usedCount = $usages->count();
-
-        if ($usedCount > 0) {
+        if ($usages->count() > 0) {
             $fileMeta = DB::table('twill_files')
                 ->whereIn('id', $fileIds)
                 ->pluck('filename', 'id');
@@ -248,39 +211,38 @@ class FileFolderController extends Controller
                                     ?? (method_exists($model, 'getTitle') ? $model->getTitle() : null)
                                     ?? (method_exists($model, '__toString') ? (string)$model : null);
                             }
-                        } catch (\Throwable $e) { /* ignore */
-                        }
+                        } catch (\Throwable $e) {}
                     }
 
                     return [
-                        'type' => $pageType ?: $row->fileable_type,
-                        'id' => $pageId ?: $row->fileable_id,
-                        'role' => $row->role,
-                        'title' => $title,
+                        'type'      => $pageType ?: $row->fileable_type,
+                        'id'        => $pageId   ?: $row->fileable_id,
+                        'role'      => $row->role,
+                        'title'     => $title,
                         'admin_url' => $this->adminEditUrlFor($pageType, $pageId),
-                        'via' => [
+                        'via'       => [
                             'fileable_type' => $row->fileable_type,
-                            'fileable_id' => $row->fileable_id,
+                            'fileable_id'   => $row->fileable_id,
                         ],
                     ];
                 })
-                    ->unique(fn($p) => ($p['type'] ?? '') . '#' . ($p['id'] ?? '') . '|' . ($p['role'] ?? ''))
+                    ->unique(fn($p) => ($p['type'] ?? '').'#'.($p['id'] ?? '').'|'.($p['role'] ?? ''))
                     ->values();
 
                 return [
-                    'file_id' => (int)$fileId,
-                    'filename' => (string)($fileMeta[$fileId] ?? ''),
-                    'places' => $places,
+                    'file_id'  => (int) $fileId,
+                    'filename' => (string) ($fileMeta[$fileId] ?? ''),
+                    'places'   => $places,
                 ];
             })->values();
 
             return response()->json([
                 'message' => "This folder (or its subfolders) contains used files. Remove usages first.",
-                'used' => $usedReport,
+                'used'    => $usedReport,
             ], 422);
         }
 
-        // No usages: delete all (unused) files in these folders (soft-delete ok)
+        // No usages: delete all (unused) files (soft-delete ok)
         File::whereIn('id', $fileIds)->get()->each->delete();
 
         // Finally delete subfolders + the folder itself
@@ -289,36 +251,99 @@ class FileFolderController extends Controller
         return response()->json([
             'ok' => true,
             'deleted' => [
-                'files' => $fileIds->count(),
+                'files'   => $fileIds->count(),
                 'folders' => $ids->count(),
             ],
         ]);
     }
 
-
-    private function buildTree(array $paths): array
+    private function adminEditUrlFor(?string $modelClass, ?int $id): ?string
     {
-        $root = ['name' => '', 'children' => []];
+        if (!$modelClass || !$id || !class_exists($modelClass)) return null;
 
-        foreach ($paths as $p) {
-            $segments = array_values(array_filter(explode('/', $p), 'strlen'));
-            $node = &$root;
-            foreach ($segments as $seg) {
-                if (!isset($node['children'])) $node['children'] = [];
-                $idx = null;
-                foreach ($node['children'] as $k => $child) {
-                    if ($child['name'] === $seg) {
-                        $idx = $k;
-                        break;
-                    }
-                }
-                if ($idx === null) {
-                    $node['children'][] = ['name' => $seg, 'children' => []];
-                    $idx = array_key_last($node['children']);
-                }
-                $node = &$node['children'][$idx];
+        try {
+            $model = app($modelClass);
+            if ($model instanceof \Illuminate\Database\Eloquent\Model) {
+                $module = $model->getTable();
+            } else {
+                $module = Str::snake(Str::pluralStudly(class_basename($modelClass)));
             }
-            unset($node);
+        } catch (\Throwable $e) {
+            $module = Str::snake(Str::pluralStudly(class_basename($modelClass)));
+        }
+
+        $routeName = "admin.$module.edit";
+        if (app('router')->has($routeName)) {
+            try {
+                return route($routeName, $id);
+            } catch (\Throwable $e) {}
+        }
+
+        return url("/admin/{$module}/{$id}/edit");
+    }
+
+    /**
+     * Lifted from MediaFolderController, adapted name-wise.
+     * Resolves a fileable to its owning page if the file is attached via a Block.
+     */
+    private function resolveUsageToPage(?string $fileableType, int $fileableId): array
+    {
+        $isBlockType = function ($type) {
+            return in_array($type, ['blocks', Block::class, 'A17\\Twill\\Models\\Block'], true);
+        };
+
+        if ($isBlockType($fileableType)) {
+            $visited = [];
+            $currentId = $fileableId;
+
+            while ($currentId && !in_array($currentId, $visited, true)) {
+                $visited[] = $currentId;
+
+                $block = Block::query()->find($currentId);
+                if (!$block) {
+                    $block = DB::table('twill_blocks')->where('id', $currentId)->first();
+                    if (!$block) break;
+                    $blockableType = $block->blockable_type;
+                    $blockableId   = (int)$block->blockable_id;
+                } else {
+                    $blockableType = $block->blockable_type;
+                    $blockableId   = (int)$block->blockable_id;
+                }
+
+                if ($isBlockType($blockableType)) {
+                    $currentId = $blockableId; // parent block
+                    continue;
+                }
+
+                return [$blockableType, $blockableId];
+            }
+
+            return [$fileableType, $fileableId];
+        }
+
+        return [$fileableType, $fileableId];
+    }
+
+    private function buildTreeFromRows($rows): array
+    {
+        $nodes = [];
+        foreach ($rows as $r) {
+            $nodes[$r->id] = [
+                'id'       => $r->id,
+                'name'     => $r->name,
+                'path'     => $r->path,
+                'children' => [],
+            ];
+        }
+
+        $root = ['id' => null, 'name' => '', 'path' => '', 'children' => []];
+
+        foreach ($rows as $r) {
+            if ($r->parent_id && isset($nodes[$r->parent_id])) {
+                $nodes[$r->parent_id]['children'][] = &$nodes[$r->id];
+            } else {
+                $root['children'][] = &$nodes[$r->id];
+            }
         }
 
         return $root;
