@@ -144,6 +144,7 @@
                 @create="createFolderAtPath"
                 @rename="onRenameFolder"
                 @delete="onDeleteFolder"
+                @move="onMoveToFolder"
               />
             </aside>
 
@@ -865,12 +866,37 @@
           }
         )
       },
+      onMoveToFolder({ targetId, mediaIds, type }) {
+        // Build request to move to targetId (root may be null)
+        const body = {
+          type: type || this.type,
+          targetId: targetId, // use id instead of path
+          mediaIds
+        }
 
+        const refresh = () => {
+          this.clearSelectedMedias()
+          this.submitFilter()
+          if (typeof this.fetchFolders === 'function') this.fetchFolders()
+        }
+
+        api.moveToFolder(
+          this.endpoint,
+          body,
+          () => {
+            refresh()
+          },
+          () => {
+            // Refresh anyway to keep UI in sync with server
+            refresh()
+          }
+        )
+      },
       onSelectFolder(payload) {
         // payload: { id: number|null, path: string[] }
         this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
-        this.saveLastFolder() // persists "path"; you can optionally persist id too
+        this.saveLastFolder()
         this.submitFilter()
       },
 
