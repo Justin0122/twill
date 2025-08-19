@@ -1,6 +1,6 @@
 <template>
   <a17-modal :title="modalTitle" mode="wide" ref="modal" @open="opened">
-    <div class="medialibrary">
+    <div class="medialibrary" :style="{ '--sidebar-width': sidebarWidth + 'px' }">
       <div class="medialibrary__frame">
         <div class="medialibrary__header" ref="form">
           <a17-filter
@@ -273,12 +273,15 @@
       this._onGlobalDragEnd = () => this._onHoverClear()
       window.addEventListener('dragend', this._onGlobalDragEnd)
       window.addEventListener('drop', this._onGlobalDragEnd)
+      this.updateSidebarWidth()
+      window.addEventListener('resize', this.updateSidebarWidth)
     },
     beforeDestroy() {
       this.$root.$off('ml:dnd:hover', this._onHoverId)
       this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
       window.removeEventListener('dragend', this._onGlobalDragEnd)
       window.removeEventListener('drop', this._onGlobalDragEnd)
+      window.removeEventListener('resize', this.updateSidebarWidth)
     },
     computed: {
       isOnActivePath() {
@@ -302,11 +305,16 @@
       }
     },
     methods: {
-      onSelectFolder(payload) {
-        this.currentFolderId = payload.id ?? null
-        this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
-        this.saveLastFolder()
-        this.submitFilter()
+      updateSidebarWidth() {
+        if (window.innerWidth < 550) {
+          this.sidebarWidth = 0 // hide sidebar
+        } else if (window.innerWidth < 700) {
+          this.sidebarWidth = 200
+        } else if (window.innerWidth < 900) {
+          this.sidebarWidth = 250
+        } else {
+          this.sidebarWidth = 290
+        }
       },
       pathHere() {
         const path = []
@@ -519,6 +527,7 @@
         currentFolderId: null,
         folderDeleteError: null,
         folderDeleteUsed: [],
+        sidebarWidth: 290
       }
     },
     computed: {
@@ -1251,17 +1260,17 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: map-get($width_sidebar, default);
+    width: var(--sidebar-width);
     padding: 0 0 80px 0;
     z-index: 75;
     background: $color__border--light;
     overflow: auto;
 
     @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
+      width: var(--sidebar-width);
     }
     @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
+      width: var(--sidebar-width);
     }
     @media screen and (max-width: 550px) {
       display: none;
@@ -1273,7 +1282,7 @@
     position: absolute;
     top: 0;
     left: 220px;
-    right: map-get($width_sidebar, default);
+    right: var(--sidebar-width);
     bottom: 0;
     overflow: auto;
     padding: 10px;
