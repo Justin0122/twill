@@ -159,8 +159,10 @@
               />
             </aside>
 
-            <div class="medialibrary__foldertree-resizer"
-                 @mousedown="startResizingFolderTree"></div>
+            <div
+              class="medialibrary__foldertree-resizer"
+              @mousedown="startResizingFolderTree"
+            ></div>
 
             <!-- RIGHT: selected media details -->
             <aside class="medialibrary__sidebar">
@@ -419,7 +421,7 @@
       // ---------------------------------------------------
     },
     template: `
-      <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
+      <div class="folder-node" :class="{ 'is-root': level === 0 }" :style="{ '--level': level}" role="treeitem" :aria-level="level + 1">
         <div class="folder-node__row"
              :data-id="(node.id ?? 'root') + ''"
              :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
@@ -429,7 +431,7 @@
              @drop.stop.prevent="onDrop">
 
           <!-- INDENT WRAPPER (moves caret/icon/name together) -->
-          <div class="folder-node__indent" :style="{ marginLeft: (level * 18) + 'px' }">
+          <div class="folder-node__indent">
             <!-- Toggle caret -->
             <button
               class="folder-node__toggle"
@@ -675,7 +677,10 @@
     methods: {
       saveFolderTreeWidth() {
         try {
-          localStorage.setItem(this.folderTreeWidthKey, String(this.folderTreeWidth))
+          localStorage.setItem(
+            this.folderTreeWidthKey,
+            String(this.folderTreeWidth)
+          )
         } catch (e) {
           /* ignore */
         }
@@ -725,8 +730,11 @@
         const startX = e.clientX
         const startWidth = this.folderTreeWidth
 
-        const doDrag = (moveEvent) => {
-          const newWidth = Math.max(150, startWidth + (moveEvent.clientX - startX))
+        const doDrag = moveEvent => {
+          const newWidth = Math.max(
+            150,
+            startWidth + (moveEvent.clientX - startX)
+          )
           this.folderTreeWidth = newWidth
           this.userResizedFolderTree = true
         }
@@ -1459,16 +1467,20 @@
   .breadcrumbs .is-active {
     font-weight: 600;
   }
-  .ml-2 { margin-left: 8px; }
-  .mt-2 { margin-top: 8px; }
+  .ml-2 {
+    margin-left: 8px;
+  }
+  .mt-2 {
+    margin-top: 8px;
+  }
 
   // ===============================
   // Folder tree: explorer-like UI
   // ===============================
   .folder-node {
     --row-h: 32px;
-    --pad-x: 6px;
     --indent: 18px;
+    --gutter: 8px;
     --guide: #d9d9d9;
     --text: #1f2937;
     --muted: #6b7280;
@@ -1487,31 +1499,51 @@
     padding: 2px var(--pad-x);
     border-radius: 4px;
     color: var(--text);
-
-    &:hover { background: var(--hover); }
-    &.is-active { background: var(--active); }
+    &::before {
+      content: '';
+      position: absolute;
+      /* start at THIS level’s indent column */
+      left: calc(var(--gutter) + var(--indent) * var(--level));
+      top: calc(var(--row-h) / 2);
+      /* draw over to the NEXT level’s column */
+      width: var(--indent);
+      height: calc(var(--row-h) / 2);
+      border-left: 1px solid var(--guide);
+      border-bottom: 1px solid var(--guide);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    &:hover {
+      background: var(--hover);
+    }
+    &.is-active {
+      background: var(--active);
+    }
 
     &.is-dragover {
       outline: 2px dashed #3b82f6;
       outline-offset: -2px;
       background: rgba(59, 130, 246, 0.06);
     }
-    &.is-dragover * { pointer-events: none !important; }
+    &.is-dragover * {
+      pointer-events: none !important;
+    }
   }
 
   // suppress elbow at top level (root node container)
-  .is-root > .folder-node__row::before { display: none; }
+  .is-root > .folder-node__row::before {
+    display: none;
+  }
 
   // The group that actually indents (caret + icon + name)
   .folder-node__indent {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-width: 0; // allow ellipsis
-    // NOTE: actual left offset is applied inline via :style="{ marginLeft: (level * 18) + 'px' }"
+    min-width: 0;
+    margin-left: calc(var(--indent) * var(--level));
   }
 
-  // Toggle caret
   .folder-node__toggle {
     width: 22px;
     height: 22px;
@@ -1523,22 +1555,19 @@
     background: none;
     cursor: pointer;
     margin-right: 2px;
-
     &.is-hidden {
-      visibility: hidden; // keep alignment even when no children
+      visibility: hidden;
       pointer-events: none;
     }
   }
-
-  // Icons
   .folder-node__icon .icon {
     width: 18px;
     height: 18px;
-    color: #f59e0b; // default folder amber
+    color: #f59e0b;
   }
-  .folder-node__icon .icon--root { color: #6366f1; } // root purple
-
-  // Name
+  .folder-node__icon .icon--root {
+    color: #6366f1;
+  }
   .folder-node__name {
     text-align: left;
     width: 100%;
@@ -1553,11 +1582,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    &.is-active { font-weight: 600; }
+    &.is-active {
+      font-weight: 600;
+    }
   }
-
-  // Right-aligned actions
   .folder-node__actions {
     display: inline-flex;
     align-items: center;
@@ -1570,35 +1598,39 @@
     border-radius: 4px;
     cursor: pointer;
     color: var(--muted);
-
-    &:hover {
-      background: #edf2f7;
-      color: #111827;
-    }
-
-    &.danger:hover {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
-    .icon { width: 16px; height: 16px; display: block; line-height: 0; }
+  }
+  .folder-node__action:hover {
+    background: #edf2f7;
+    color: #111827;
+  }
+  .folder-node__action.danger:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  .folder-node__action .icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    line-height: 0;
   }
 
   // Vertical guide for nested children block
   .folder-node__children {
     position: relative;
-    margin-left: 0;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: calc(-2px + var(--indent));
-      width: 10px;
-      height: calc(var(--row-h) / 2);
-      border-left: 1px solid var(--guide);
-      border-bottom: 1px solid var(--guide);
-      opacity: 0.6;
-      pointer-events: none;
-    }
+  }
+  .folder-node__children::before {
+    content: '';
+    position: absolute;
+    /* trunk sits at the NEXT level’s indent column */
+    left: calc(var(--gutter) + var(--indent) * (var(--level) + 1));
+    top: 0;
+    bottom: 0; /* makes it grow to include all subfolders */
+    width: 1px;
+    background: var(--guide);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .folder-node__children:empty::before {
+    display: none;
   }
 </style>
