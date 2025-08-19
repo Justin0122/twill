@@ -285,7 +285,7 @@
           y: 0,
           meta: { id: null, path: [] }
         },
-        _ctxFlash: false
+        ctxFlash: false
       }
     },
     created() {
@@ -353,7 +353,13 @@
         // close other menus
         this.$root.$emit('ml:ctx:close')
 
-        // initial position at cursor
+        // capture THIS node as the target for actions
+        this.contextMenu.meta = {
+          id: this.node.id ?? null,
+          path: this.pathHere()
+        }
+
+        // initial position
         this.contextMenu.open = true
         this.contextMenu.x = evt.clientX
         this.contextMenu.y = evt.clientY
@@ -365,19 +371,15 @@
           const pad = 8
           let x = this.contextMenu.x
           let y = this.contextMenu.y
-
-          if (rect.right > window.innerWidth - pad) {
-            x = Math.max(pad, window.innerWidth - rect.width - pad)
-          }
-          if (rect.bottom > window.innerHeight - pad) {
-            y = Math.max(pad, window.innerHeight - rect.height - pad)
-          }
+          if (rect.right > window.innerWidth - pad) x = Math.max(pad, window.innerWidth - rect.width - pad)
+          if (rect.bottom > window.innerHeight - pad) y = Math.max(pad, window.innerHeight - rect.height - pad)
           this.contextMenu.x = x
           this.contextMenu.y = y
         })
 
-        this._ctxFlash = true
-        setTimeout(() => (this._ctxFlash = false), 150)
+        // flash highlight
+        this.ctxFlash = true
+        setTimeout(() => { this.ctxFlash = false }, 150)
       },
       closeContextMenu() {
         this.contextMenu.open = false
@@ -533,7 +535,7 @@
              :class="{
                'is-active': isActiveHere,
                'is-dragover': draggingOver,
-               'is-ctx': _ctxFlash}"
+               'is-ctx': ctxFlash}"
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
