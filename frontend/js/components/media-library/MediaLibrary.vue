@@ -134,7 +134,10 @@
         <div class="medialibrary__inner">
           <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
-            <aside class="medialibrary__foldertree">
+            <aside class="medialibrary__foldertree"
+                   @dragover.prevent="onFolderTreeDragOver"
+                   @dragenter.prevent
+                   @drop.prevent="$root.$emit('ml:dnd:hover:clear')">
               <folder-node
                 v-if="folderTree"
                 :node="folderTree"
@@ -253,8 +256,7 @@
     created() {
       // Single-active: listen for broadcasted hover changes
       this._onHoverId = id => {
-        const myId = this.node.id ?? 'root'
-        // When a new id is announced, activate only if it matches me
+        const myId = (this.node.id ?? 'root') + ''
         this.draggingOver = id !== null && id === myId
         if (!this.draggingOver) this._dragDepth = 0
       }
@@ -266,7 +268,6 @@
       this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
     },
     mounted() {
-      // Ensure cleanup even if drop happens outside any folder row
       this._onGlobalDragEnd = () => this._onHoverClear()
       window.addEventListener('dragend', this._onGlobalDragEnd)
       window.addEventListener('drop', this._onGlobalDragEnd)
@@ -340,7 +341,7 @@
         if (!this.hasMediaPayload(evt)) return
         this._dragDepth += 1
         // Announce I am the active hover target (single-active)
-        this.$root.$emit('ml:dnd:hover', this.node.id ?? 'root')
+        this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
         this.draggingOver = true
         evt.preventDefault()
         evt.stopPropagation()
@@ -355,8 +356,6 @@
         if (this._dragDepth > 0) this._dragDepth -= 1
         if (this._dragDepth === 0) {
           this.draggingOver = false
-          // If leaving completely, clear global hover so nothing remains active
-          this.$root.$emit('ml:dnd:hover:clear')
         }
         evt.stopPropagation()
       },
@@ -408,6 +407,7 @@
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
         <div class="folder-node__row"
+             :data-id="(node.id ?? 'root') + ''"
              :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
              :style="{ paddingLeft: (level * 14) + 'px' }"
              @dragenter.stop.prevent="onDragEnter"
@@ -447,6 +447,7 @@
       </div>
     `
   }
+
   export default {
     name: 'A17Medialibrary',
     components: {
@@ -611,7 +612,7 @@
             this.currentFolderId ?? ''
           )
         } catch (e) {
-          /* fallback cookie like before */
+
         }
       },
       readCookie(name) {
@@ -816,6 +817,21 @@
             })
           }
         )
+      },
+      onFolderTreeDragOver(e) {
+        // Coalesce with rAF to avoid spamming
+        if (this._hoverRaf) return
+        this._hoverRaf = requestAnimationFrame(() => {
+          this._hoverRaf = null
+          // Find the row under the pointer
+          const el = document.elementFromPoint(e.clientX, e.clientY)
+          const row = el && el.closest && el.closest('.folder-node__row')
+          if (row && row.dataset && row.dataset.id) {
+            this.$root.$emit('ml:dnd:hover', row.dataset.id)
+          } else {
+            this.$root.$emit('ml:dnd:hover:clear')
+          }
+        })
       },
       selectFolderPath(pathArray) {
         this.currentFolderPath = Array.isArray(pathArray) ? pathArray : []
