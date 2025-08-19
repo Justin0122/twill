@@ -722,7 +722,7 @@
         if (this.connector && this.indexToReplace > -1) {
           const mediaInitSelect = this.selected[this.connector][
             this.indexToReplace
-            ]
+          ]
           if (mediaInitSelect) this.selectedMedias.push(mediaInitSelect)
         }
       },
@@ -1016,7 +1016,7 @@
         // Build request to move to targetId (root may be null)
         const body = {
           type: type || this.type,
-          targetId: targetId, // use id instead of path
+          targetId, // use id instead of path
           mediaIds
         }
 
