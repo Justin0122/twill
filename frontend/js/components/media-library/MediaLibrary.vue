@@ -150,11 +150,9 @@
                 @delete="onDeleteFolder"
                 @move="onMoveToFolder"
               />
-              <div
-                class="medialibrary__foldertree-resizer"
-                title="Resize"
-                @mousedown.stop.prevent="onFolderTreeResizeStart"
-              />
+              <div class="medialibrary__foldertree-resizer"
+                   title="Resize"
+                   @mousedown="onFolderTreeResizeStart"></div>
             </aside>
 
             <!-- RIGHT: selected media details -->
@@ -673,11 +671,13 @@
       onFolderTreeResizeStart(e) {
         this._resizingFolderTree = true
         document.body.classList.add('is-resizing-col')
+
         document.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false })
         document.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true })
 
         e.preventDefault()
       },
+
       onFolderTreeResizing(e) {
         if (!this._resizingFolderTree) return
         const grid = this.$el.querySelector('.medialibrary__grid')
@@ -688,8 +688,10 @@
         w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
 
         this.folderTreeWidth = w
+
         e.preventDefault()
       },
+
       onFolderTreeResizeEnd() {
         if (!this._resizingFolderTree) return
         this._resizingFolderTree = false
@@ -697,6 +699,7 @@
 
         document.removeEventListener('mousemove', this.onFolderTreeResizing)
         document.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
+
         this.saveFolderTreeWidth()
       },
 
@@ -1282,7 +1285,6 @@
     padding: 8px 0;
     min-width: 160px;
     max-width: 560px;
-    z-index: 80;
 
     @media screen and (max-width: 700px) {
       display: none;
@@ -1438,8 +1440,8 @@
   .medialibrary__foldertree-resizer {
     position: absolute;
     top: 0;
-    right: 0;
-    width: 10px;
+    right: -3px;
+    width: 6px;
     height: 100%;
     cursor: col-resize;
     z-index: 5;
@@ -1447,7 +1449,7 @@
   .medialibrary__foldertree-resizer:after {
     content: '';
     position: absolute;
-    left: 4px;
+    left: 2px;
     top: 0;
     bottom: 0;
     width: 2px;
