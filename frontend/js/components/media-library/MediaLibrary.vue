@@ -671,35 +671,31 @@
       onFolderTreeResizeStart(e) {
         this._resizingFolderTree = true
         document.body.classList.add('is-resizing-col')
-
-        document.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false })
-        document.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true })
-
+        window.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false })
+        window.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true })
+        // Prevent accidental text selection
         e.preventDefault()
       },
-
       onFolderTreeResizing(e) {
         if (!this._resizingFolderTree) return
-        const grid = this.$el.querySelector('.medialibrary__grid')
-        if (!grid) return
-        const gridRect = grid.getBoundingClientRect()
-        let w = Math.round(e.clientX - gridRect.left)
-
+        // Compute relative to the left edge of the entire grid area
+        const aside = this.$el.querySelector('.medialibrary__foldertree')
+        if (!aside) return
+        const rect = aside.getBoundingClientRect()
+        // New width equals cursor distance from the aside's left edge
+        let w = Math.round(e.clientX - rect.left)
+        // Clamp
         w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
-
+        // Apply
         this.folderTreeWidth = w
-
         e.preventDefault()
       },
-
       onFolderTreeResizeEnd() {
         if (!this._resizingFolderTree) return
         this._resizingFolderTree = false
         document.body.classList.remove('is-resizing-col')
-
-        document.removeEventListener('mousemove', this.onFolderTreeResizing)
-        document.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
-
+        window.removeEventListener('mousemove', this.onFolderTreeResizing)
+        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
         this.saveFolderTreeWidth()
       },
 
@@ -1280,9 +1276,11 @@
     top: 0;
     bottom: 0;
     left: 0;
+    /* width set via :style */
     overflow: auto;
     border-right: 1px solid rgba(0,0,0,0.06);
     padding: 8px 0;
+    flex: none; /* keep fixed width */
     min-width: 160px;
     max-width: 560px;
 
