@@ -417,7 +417,29 @@
         } catch (e) {
           return null
         }
-      }
+      },
+      startInlineRename() {
+        // prevent renaming the virtual root or an id-less node
+        if (this.level === 0 || this.node.id == null) return
+        this.isRenaming = true
+        this.renameValue = this.node.name || ''
+        this.$nextTick(() => {
+          const el = this.$refs.renameInput
+          if (el) { el.focus(); el.select() }
+        })
+      },
+      commitInlineRename() {
+        if (!this.isRenaming) return
+        const next = (this.renameValue || '').trim()
+        this.isRenaming = false
+        if (!next || next === this.node.name) return
+        // Emit up with the new name; parent should handle API call.
+        this.$emit('rename', { id: this.node.id, path: this.pathHere(), name: next })
+      },
+      cancelInlineRename() {
+        this.isRenaming = false
+        this.renameValue = ''
+      },
       // ---------------------------------------------------
     },
     template: `
@@ -462,27 +484,38 @@
           </svg>
         </span>
 
-            <!-- Name -->
-            <button
-              class="folder-node__name"
-              :class="{ 'is-active': isActiveHere }"
-              :aria-selected="isActiveHere.toString()"
-              @click="selectSelf">
-              <span v-if="level===0">All</span>
-              <span v-else>{{ node.name }}</span>
-            </button>
+            <!-- Name / Inline rename -->
+            <template v-if="isRenaming">
+              <input
+                ref="renameInput"
+                class="folder-node__rename-input"
+                type="text"
+                v-model.trim="renameValue"
+                :aria-label="$trans ? $trans('media-library.rename-folder', 'Rename folder') : 'Rename folder'"
+                @keydown.enter.stop.prevent="commitInlineRename"
+                @keydown.esc.stop.prevent="cancelInlineRename"
+                @blur="commitInlineRename"
+                @click.stop
+              />
+            </template>
+            <template v-else>
+              <button
+                class="folder-node__name"
+                :class="{ 'is-active': isActiveHere, 'is-locked': level===0 || node.id==null }"
+                :aria-selected="isActiveHere.toString()"
+                @click="selectSelf"
+                @dblclick.stop.prevent="startInlineRename"
+                :title="(level===0 || node.id==null) ? '' : 'Double-click to rename'">
+                <span v-if="level===0">All</span>
+                <span v-else>{{ node.name }}</span>
+              </button>
+            </template>
           </div>
 
-          <!-- Actions -->
           <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
             <button class="folder-node__action" title="New subfolder" @click="createHere" aria-label="New subfolder">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <button v-if="level>0" class="folder-node__action" title="Rename folder" @click="renameHere" aria-label="Rename folder">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 21h6M14 3l7 7-11 11H3V14z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })" aria-label="Delete folder">
@@ -1145,24 +1178,24 @@
 
       // Rename folder
       onRenameFolder(payload) {
-        // payload: { id, path }
         const currentName = payload.path.slice(-1)[0] || ''
-        const name = window.prompt(
-          this.$trans('media-library.rename-folder', 'Rename folder'),
-          currentName
-        )
-        if (!name) return
+        let name = (payload && typeof payload.name === 'string') ? payload.name.trim() : ''
+
+        if (!name) {
+          name = window.prompt(
+            this.$trans('media-library.rename-folder', 'Rename folder'),
+            currentName
+          )
+          if (!name) return
+        }
 
         api.renameFolder(
           this.endpoint,
           payload.id,
           { type: this.type, name },
           resp => {
-            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
             if (this.currentFolderId === payload.id) {
-              const newPath = (resp.data.folder.path || '')
-                .split('/')
-                .filter(Boolean)
+              const newPath = (resp.data.folder.path || '').split('/').filter(Boolean)
               this.currentFolderPath = newPath
             }
             this.loadFolderTree()
@@ -1632,4 +1665,16 @@
   .folder-node__children:empty::before {
     display: none;
   }
+  .folder-node__rename-input {
+    font: inherit;
+    color: inherit;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 6px;
+    min-width: 80px;
+    max-width: 220px;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.10);
+  }
+  .folder-node__name.is-locked { cursor: default; }
 </style>
