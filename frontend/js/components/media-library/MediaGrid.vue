@@ -31,6 +31,9 @@
         }"
         @click.exact="toggleSelection(item)"
         @click.shift.exact="shiftToggleSelection(item)"
+        draggable="true"
+        @dragstart="onDragStart(item, $event)"
+        @dragend="onDragEnd(item, $event)"
       >
         <img :src="item.thumbnail" class="mediagrid__img" />
       </span>
@@ -61,6 +64,30 @@
             ? this.itemsLoading[index].progress + '%'
             : '0%'
         }
+      },
+      // Begin drag-and-drop support for moving to folders
+      onDragStart(item, evt) {
+        if (item.disabled) return
+        const selectedIds = (this.selectedItems || []).map(m => m.id)
+        const ids =
+          this.isSelected(item) && selectedIds.length
+            ? selectedIds
+            : [item.id]
+        try {
+          evt.dataTransfer.setData(
+            'application/x-media-ids',
+            JSON.stringify({
+              ids,
+              type: this.type || null
+            })
+          )
+        } catch (e) {
+          evt.dataTransfer.setData('text/plain', JSON.stringify({ ids }))
+        }
+        evt.dataTransfer.effectAllowed = 'move'
+      },
+      onDragEnd(item, evt) {
+
       }
     }
   }

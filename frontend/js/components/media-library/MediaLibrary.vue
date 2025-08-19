@@ -180,15 +180,6 @@
               <a17-button v-else variant="action" :disabled="true">{{
                 btnLabel
               }}</a17-button>
-
-              <a17-button
-                class="ml-2"
-                variant="secondary"
-                :disabled="!selectedMedias.length"
-                @click="moveSelectedToCurrentFolder"
-              >
-                Move to “{{ currentFolderLabel }}”
-              </a17-button>
             </footer>
 
             <!-- CENTER: media list + uploader -->
@@ -256,7 +247,7 @@
       activeId: { type: [Number, String, null], default: null }
     },
     data() {
-      return { open: false }
+      return { open: false, draggingOver: false }
     },
     computed: {
       isOnActivePath() {
@@ -315,11 +306,72 @@
           return
         }
         this.open = !this.open
+      },
+      // --- Drag-and-drop targets (accept moving medias) ---
+      onDragEnter(evt) {
+        // accept only our custom payload
+        if (this.hasMediaPayload(evt)) {
+          this.draggingOver = true
+          evt.preventDefault()
+        }
+      },
+      onDragOver(evt) {
+        if (this.hasMediaPayload(evt)) {
+          evt.dataTransfer.dropEffect = 'move'
+          evt.preventDefault()
+        }
+      },
+      onDragLeave(evt) {
+        this.draggingOver = false
+      },
+      onDrop(evt) {
+        this.draggingOver = false
+        const payload = this.readMediaPayload(evt)
+        if (!payload || !payload.ids || !payload.ids.length) return
+        const targetPath = this.level === 0 ? [] : this.pathHere()
+        const targetId = this.node.id ?? null
+        this.$emit('move', {
+          targetPath,
+          targetId,
+          mediaIds: payload.ids,
+          type: payload.type || null
+        })
+        evt.preventDefault()
+      },
+      hasMediaPayload(evt) {
+        try {
+          return (
+            (evt.dataTransfer &&
+              Array.from(evt.dataTransfer.types || []).includes(
+                'application/x-media-ids'
+              )) ||
+            Array.from(evt.dataTransfer.types || []).includes('text/plain')
+          )
+        } catch (e) {
+          return false
+        }
+      },
+      readMediaPayload(evt) {
+        let data = null
+        try {
+          const raw =
+            evt.dataTransfer.getData('application/x-media-ids') ||
+            evt.dataTransfer.getData('text/plain')
+          data = JSON.parse(raw)
+        } catch (e) {
+          data = null
+        }
+        return data
       }
+      // ---------------------------------------------------
     },
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
-        <div class="folder-node__row" :class="{ 'is-active': isActiveHere }" :style="{ paddingLeft: (level * 14) + 'px' }">
+        <div class="folder-node__row" :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }" :style="{ paddingLeft: (level * 14) + 'px' }"
+             @dragenter="onDragEnter"
+             @dragover="onDragOver"
+             @dragleave="onDragLeave"
+             @drop="onDrop">
           <button class="folder-node__toggle" v-if="node.children && node.children.length"
                   @click="toggleOpen" :aria-expanded="open.toString()">
             <span v-if="open">▾</span><span v-else>▸</span>
@@ -347,6 +399,7 @@
                        @create="$emit('create', $event)"
                        @rename="$emit('rename', $event)"
                        @delete="$emit('delete', $event)"
+                       @move="$emit('move', $event)"
           />
         </div>
       </div>
@@ -1216,6 +1269,13 @@
     &.is-active {
       color: #000;
     }
-    .folder-node__action.danger { color: #b00020; }
   }
+  .folder-node__action.danger { color: #b00020; }
+
+  .folder-node__row.is-dragover {
+    outline: 2px dashed rgba(0, 0, 0, 0.2);
+    outline-offset: -2px;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
 </style>

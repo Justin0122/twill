@@ -128,7 +128,7 @@ export default {
   },
 
   // Move media items to a target folder
-  // POST {endpoint}/folders/move  body: { type, target: 'tuwi/sub', mediaIds: [1,2,3] }
+  // POST {endpoint}/folders/move  body: { type, target: 'folder/sub', mediaIds: [1,2,3] }
   moveToFolder(endpoint, body, callback, errorCallback) {
     axios.post(`${endpoint}/folders/move`, body).then(
       function(resp) {
