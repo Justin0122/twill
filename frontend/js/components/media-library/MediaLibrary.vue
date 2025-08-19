@@ -205,8 +205,7 @@
                 :folder="currentFolderFullPath"
                 :folder-id="currentFolderId"
               />
-              <div class="medialibrary__list-items"
-                   @click.capture="onBlankClickClearSelection">
+              <div class="medialibrary__list-items">
                 <a17-itemlist
                   v-if="type === 'file'"
                   :items="renderedMediaItems"
@@ -226,6 +225,9 @@
                 />
                 <a17-spinner v-if="loading" class="medialibrary__spinner"
                 >Loading&hellip;</a17-spinner
+                >
+                <a17-spinner v-if="loading" class="medialibrary__spinner"
+                  >Loading&hellip;</a17-spinner
                 >
               </div>
             </div>
@@ -551,7 +553,7 @@
       currentFolderLabel() {
         return this.currentFolderPath.length
           ? this.currentFolderPath[this.currentFolderPath.length - 1]
-          : 'Home'
+          : 'All'
       },
       renderedMediaItems() {
         return this.mediaItems.map(item => {
@@ -868,8 +870,9 @@
           if (this.selectedMedias.length >= this.max && this.max > 0) return
 
           if (shift && this.selectedMedias.length > 0) {
-            const lastSelectedMedia =
-              this.selectedMedias[this.selectedMedias.length - 1]
+            const lastSelectedMedia = this.selectedMedias[
+              this.selectedMedias.length - 1
+            ]
             const lastSelectedMediaIndex = this.mediaItems.findIndex(
               media => media.id === lastSelectedMedia.id
             )
@@ -883,39 +886,34 @@
             let end = null
             if (lastSelectedMediaIndex < selectedMediaIndex) {
               start = lastSelectedMediaIndex + 1
-              end = selectedMediaIndex
+              end = selectedMediaIndex + 1
             } else {
               start = selectedMediaIndex
-              end = lastSelectedMediaIndex - 1
+              end = lastSelectedMediaIndex
             }
-            for (let i = start; i <= end; i++) {
-              if (this.selectedMedias.length >= this.max && this.max > 0) break
-              const media = this.mediaItems[i]
-              if (!this.selectedMedias.find(sMedia => sMedia.id === media.id)) {
-                this.selectedMedias.push(media)
-              }
-            }
+
+            const selectedMedias = this.mediaItems.slice(start, end)
+            selectedMedias.forEach(media => {
+              if (this.selectedMedias.length >= this.max && this.max > 0) return
+              const index = this.selectedMedias.findIndex(
+                m => m.id === media.id
+              )
+              if (index === -1) this.selectedMedias.push(media)
+            })
           } else {
-            this.selectedMedias.push(item)
-          }
-        } else if (!shift) {
-          if (this.max !== 1) {
-            this.selectedMedias = this.selectedMedias.filter(
-              media => media.id !== id
+            const mediaToSelect = this.mediaItems.filter(
+              media => media.id === id
             )
-          } else {
-            this.selectedMedias = [item]
+            if (mediaToSelect.length) this.selectedMedias.push(mediaToSelect[0])
           }
+        } else {
+          this.selectedMedias = this.selectedMedias.filter(
+            media => media.id !== id
+          )
         }
       },
       updateSelectedMediasSingle(item) {
-        if (
-          this.selectedMedias.length === 1 &&
-          this.selectedMedias[0].id === item.id
-        ) {
-          this.clearSelectedMedias()
-          return
-        }
+        // Clear then reuse existing add logic
         this.clearSelectedMedias()
         this.updateSelectedMedias(item, false)
       },
@@ -923,9 +921,12 @@
         const id = item.id
         const idx = this.selectedMedias.findIndex(m => m.id === id)
         if (idx >= 0) {
+          // remove
           this.selectedMedias.splice(idx, 1)
         } else {
+          // add (respect max if any)
           if (this.max === 1) {
+            // if max is 1, behave like single-select
             this.updateSelectedMediasSingle(item)
             return
           }
@@ -933,11 +934,6 @@
           this.selectedMedias.push(item)
         }
       },
-      onBlankClickClearSelection(e) {
-        const inSelectable = e.target.closest('[data-ml-selectable]')
-        if (!inSelectable) this.clearSelectedMedias()
-      },
-
       getFormData(form) {
         let data = FormDataAsObj(form)
         if (data) data.page = this.page
@@ -1146,6 +1142,32 @@
           error => {
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
               message: error.data?.message || 'Unable to rename folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      moveSelectedToCurrentFolder() {
+        if (!this.selectedMedias.length) return
+        api.moveToFolder(
+          this.endpoint,
+          {
+            type: this.type,
+            targetId: this.currentFolderId,
+            mediaIds: this.selectedMedias.map(m => m.id)
+          },
+          () => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.moved', 'Moved to folder'),
+              variant: 'success'
+            })
+            this.page = 1
+            this.clearMediaItems()
+            this.reloadGrid()
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to move items',
               variant: 'error'
             })
           }
