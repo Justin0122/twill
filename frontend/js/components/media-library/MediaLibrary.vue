@@ -154,6 +154,7 @@
               <div
                 class="medialibrary__foldertree-resizer"
                 title="Resize"
+                @pointerdown.stop.prevent="onFolderTreePointerDown"
                 @mousedown.stop.prevent="onFolderTreeResizeStart"
               />
             </aside>
@@ -677,12 +678,46 @@
       },
       /* ---------- /persistence helpers ---------- */
       onFolderTreeResizeStart(e) {
+        // Fallback for older browsers without Pointer Events
         this._resizingFolderTree = true
         document.body.classList.add('is-resizing-col')
-        document.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false })
-        document.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true })
-
+        window.addEventListener('mousemove', this.onFolderTreeResizing, { passive: false, capture: true })
+        window.addEventListener('mouseup', this.onFolderTreeResizeEnd, { passive: true, capture: true })
         e.preventDefault()
+      },
+      onFolderTreePointerDown(e) {
+        if (e.pointerType) {
+          this._resizingFolderTree = true
+          document.body.classList.add('is-resizing-col')
+          try {
+            e.target.setPointerCapture(e.pointerId)
+          } catch (_) {}
+          window.addEventListener('pointermove', this.onFolderTreePointerMove, { passive: false, capture: true })
+          window.addEventListener('pointerup', this.onFolderTreePointerUp, { passive: true, capture: true })
+          e.preventDefault()
+        } else {
+        }
+      },
+      onFolderTreePointerMove(e) {
+        if (!this._resizingFolderTree) return
+        const grid = this.$el.querySelector('.medialibrary__grid')
+        if (!grid) return
+        const gridRect = grid.getBoundingClientRect()
+        let w = Math.round(e.clientX - gridRect.left)
+        w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
+        this.folderTreeWidth = w
+        e.preventDefault()
+      },
+      onFolderTreePointerUp(e) {
+        if (!this._resizingFolderTree) return
+        this._resizingFolderTree = false
+        document.body.classList.remove('is-resizing-col')
+        try {
+          if (e.target && e.pointerId) e.target.releasePointerCapture(e.pointerId)
+        } catch (_) {}
+        window.removeEventListener('pointermove', this.onFolderTreePointerMove, true)
+        window.removeEventListener('pointerup', this.onFolderTreePointerUp, true)
+        this.saveFolderTreeWidth()
       },
       onFolderTreeResizing(e) {
         if (!this._resizingFolderTree) return
@@ -690,9 +725,7 @@
         if (!grid) return
         const gridRect = grid.getBoundingClientRect()
         let w = Math.round(e.clientX - gridRect.left)
-
         w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
-
         this.folderTreeWidth = w
         e.preventDefault()
       },
@@ -700,9 +733,8 @@
         if (!this._resizingFolderTree) return
         this._resizingFolderTree = false
         document.body.classList.remove('is-resizing-col')
-
-        document.removeEventListener('mousemove', this.onFolderTreeResizing)
-        document.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
+        window.removeEventListener('mousemove', this.onFolderTreeResizing, true)
+        window.removeEventListener('mouseup', this.onFolderTreeResizeEnd, true)
         this.saveFolderTreeWidth()
       },
       measureSidebarWidth() {
