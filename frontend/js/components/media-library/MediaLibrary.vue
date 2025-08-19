@@ -1545,8 +1545,7 @@
   }
 
   .folder-node__toggle {
-    width: 22px;
-    height: 22px;
+    width: 2.5rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
