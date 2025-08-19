@@ -304,7 +304,9 @@
       }
       this.$root.$on('ml:dnd:hover', this._onHoverId)
       this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
-      this._onGlobalCtxClose = () => { this.closeContextMenu() }
+      this._onGlobalCtxClose = () => {
+        this.closeContextMenu()
+      }
       this.$root.$on('ml:ctx:close', this._onGlobalCtxClose)
     },
     mounted() {
@@ -351,6 +353,9 @@
       }
     },
     methods: {
+      onReparentFolder(payload) {
+        this.$emit('moveFolder', payload)
+      },
       startInlineCreate() {
         this.closeContextMenu()
         this.open = true // ensure children are visible
@@ -358,16 +363,27 @@
         this.newChildName = ''
         this.$nextTick(() => {
           const el = this.$refs.createInput
-          if (el) { el.focus(); el.select() }
+          if (el) {
+            el.focus()
+            el.select()
+          }
         })
       },
       commitInlineCreate() {
         if (!this.creatingChild) return
         const name = (this.newChildName || '').trim()
         // If empty, treat as cancel (no popup)
-        if (!name) { this.cancelInlineCreate(); return }
+        if (!name) {
+          this.cancelInlineCreate()
+          return
+        }
         // Emit upwards so the parent does the API call
-        this.$emit('create', { id: this.node.id ?? null, path: this.pathHere(), name, inline: true })
+        this.$emit('create', {
+          id: this.node.id ?? null,
+          path: this.pathHere(),
+          name,
+          inline: true
+        })
         // Optimistically close composer; parent will reload tree
         this.creatingChild = false
         this.newChildName = ''
@@ -399,15 +415,19 @@
           const pad = 8
           let x = this.contextMenu.x
           let y = this.contextMenu.y
-          if (rect.right > window.innerWidth - pad) x = Math.max(pad, window.innerWidth - rect.width - pad)
-          if (rect.bottom > window.innerHeight - pad) y = Math.max(pad, window.innerHeight - rect.height - pad)
+          if (rect.right > window.innerWidth - pad)
+            x = Math.max(pad, window.innerWidth - rect.width - pad)
+          if (rect.bottom > window.innerHeight - pad)
+            y = Math.max(pad, window.innerHeight - rect.height - pad)
           this.contextMenu.x = x
           this.contextMenu.y = y
         })
 
         // flash highlight
         this.ctxFlash = true
-        setTimeout(() => { this.ctxFlash = false }, 150)
+        setTimeout(() => {
+          this.ctxFlash = false
+        }, 150)
       },
       closeContextMenu() {
         this.contextMenu.open = false
@@ -461,12 +481,21 @@
       // --- FOLDER DRAG SOURCE ---
       onFolderDragStart(evt) {
         // don't drag the synthetic root
-        if (this.node.id == null) { evt.preventDefault(); return }
+        if (this.node.id == null) {
+          evt.preventDefault()
+          return
+        }
         const payload = { folderId: this.node.id, path: this.pathHere() }
         try {
-          evt.dataTransfer.setData('application/x-folder', JSON.stringify(payload))
+          evt.dataTransfer.setData(
+            'application/x-folder',
+            JSON.stringify(payload)
+          )
         } catch (e) {
-          evt.dataTransfer.setData('text/plain', JSON.stringify({ __folder__: payload }))
+          evt.dataTransfer.setData(
+            'text/plain',
+            JSON.stringify({ __folder__: payload })
+          )
         }
         evt.dataTransfer.effectAllowed = 'move'
         // clear any previous hover states
@@ -477,15 +506,24 @@
       hasFolderPayload(evt) {
         try {
           const types = Array.from(evt?.dataTransfer?.types || [])
-          return types.includes('application/x-folder') || types.includes('text/plain')
-        } catch (e) { return false }
+          return (
+            types.includes('application/x-folder') ||
+            types.includes('text/plain')
+          )
+        } catch (e) {
+          return false
+        }
       },
       readFolderPayload(evt) {
         try {
-          const raw = evt.dataTransfer.getData('application/x-folder') || evt.dataTransfer.getData('text/plain')
+          const raw =
+            evt.dataTransfer.getData('application/x-folder') ||
+            evt.dataTransfer.getData('text/plain')
           const obj = JSON.parse(raw)
           return obj.__folder__ || obj
-        } catch (e) { return null }
+        } catch (e) {
+          return null
+        }
       },
       // --- Drag-and-drop targets (accept moving medias) ---
       onDragEnter(evt) {
@@ -494,12 +532,14 @@
         this._dragDepth += 1
         this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
         this.draggingOver = true
-        evt.preventDefault(); evt.stopPropagation()
+        evt.preventDefault()
+        evt.stopPropagation()
       },
       onDragOver(evt) {
         if (!(this.hasMediaPayload(evt) || this.hasFolderPayload(evt))) return
         evt.dataTransfer.dropEffect = 'move'
-        evt.preventDefault(); evt.stopPropagation()
+        evt.preventDefault()
+        evt.stopPropagation()
       },
       onDragLeave(evt) {
         if (this._dragDepth > 0) this._dragDepth -= 1
@@ -510,20 +550,28 @@
         const folderPayload = this.readFolderPayload(evt)
         if (folderPayload && folderPayload.folderId != null) {
           // reparent folder => emit up
-          const sourceId  = folderPayload.folderId
-          const targetId  = this.node.id ?? null
+          const sourceId = folderPayload.folderId
+          const targetId = this.node.id ?? null
           const sourcePath = folderPayload.path || []
           const targetPath = this.pathHere()
 
           // guard: no self/descendant
-          if (sourceId === targetId) { this._clearHover(evt); return }
+          if (sourceId === targetId) {
+            this._clearHover(evt)
+            return
+          }
           if (targetPath.join('/').startsWith(sourcePath.join('/'))) {
             // cannot move into its own descendant
             this.$root.$emit('ml:dnd:hover:clear')
             this.draggingOver = false
             // optional: toast
-            this.$emit('toast', { variant: 'error', message: 'Cannot move a folder into itself or its descendant.' })
-            evt.preventDefault(); evt.stopPropagation(); return
+            this.$emit('toast', {
+              variant: 'error',
+              message: 'Cannot move a folder into itself or its descendant.'
+            })
+            evt.preventDefault()
+            evt.stopPropagation()
+            return
           }
 
           this.$emit('moveFolder', { sourceId, targetId })
@@ -538,18 +586,27 @@
         this.$root.$emit('ml:dnd:hover:clear')
 
         if (!payload || !payload.ids || !payload.ids.length) {
-          evt.preventDefault(); evt.stopPropagation(); return
+          evt.preventDefault()
+          evt.stopPropagation()
+          return
         }
         const targetId = this.node.id ?? null
-        this.$emit('move', { targetPath: this.level === 0 ? [] : this.pathHere(), targetId, mediaIds: payload.ids, type: payload.type || null })
-        evt.preventDefault(); evt.stopPropagation()
+        this.$emit('move', {
+          targetPath: this.level === 0 ? [] : this.pathHere(),
+          targetId,
+          mediaIds: payload.ids,
+          type: payload.type || null
+        })
+        evt.preventDefault()
+        evt.stopPropagation()
       },
 
       _clearHover(evt) {
         this._dragDepth = 0
         this.draggingOver = false
         this.$root.$emit('ml:dnd:hover:clear')
-        evt.preventDefault(); evt.stopPropagation()
+        evt.preventDefault()
+        evt.stopPropagation()
       },
       hasMediaPayload(evt) {
         try {
@@ -579,7 +636,10 @@
         this.renameValue = this.node.name || ''
         this.$nextTick(() => {
           const el = this.$refs.renameInput
-          if (el) { el.focus(); el.select() }
+          if (el) {
+            el.focus()
+            el.select()
+          }
         })
       },
       commitInlineRename() {
@@ -588,19 +648,23 @@
         this.isRenaming = false
         if (!next || next === this.node.name) return
         // Emit up with the new name; parent should handle API call.
-        this.$emit('rename', { id: this.node.id, path: this.pathHere(), name: next })
+        this.$emit('rename', {
+          id: this.node.id,
+          path: this.pathHere(),
+          name: next
+        })
       },
       cancelInlineRename() {
         this.isRenaming = false
         this.renameValue = ''
-      },
+      }
       // ---------------------------------------------------
     },
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" :style="{ '--level': level}" role="treeitem"
            :aria-level="level + 1">
         <div class="folder-node__row"
-             draggable="true"
+             :draggable="node.id != null"
              @dragstart="onFolderDragStart"
              :data-id="(node.id ?? 'root') + ''"
              :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver, 'is-ctx': ctxFlash }"
@@ -714,6 +778,7 @@
                        @rename="$emit('rename', $event)"
                        @delete="$emit('delete', $event)"
                        @move="$emit('move', $event)"
+                       @moveFolder="$emit('moveFolder', $event)"
           />
         </div>
 
@@ -834,7 +899,7 @@
         })
       },
       currentTypeObject() {
-        return this.types.find(type => type.value === this.type)
+        return (this.types || []).find(t => t.value === this.type) || {}
       },
       endpoint() {
         return this.currentTypeObject.endpoint
@@ -1242,15 +1307,21 @@
         // Normalize (supports array OR object { id, path, name })
         const parentPath = Array.isArray(source)
           ? source
-          : (Array.isArray(source?.path) ? source.path : [])
+          : Array.isArray(source?.path)
+          ? source.path
+          : []
 
-        const parentId = (source && typeof source === 'object' && 'id' in source)
-          ? source.id
-          : null
+        const parentId =
+          source && typeof source === 'object' && 'id' in source
+            ? source.id
+            : null
 
-        const name = forcedName != null
-          ? String(forcedName).trim()
-          : (typeof source?.name === 'string' ? source.name.trim() : '')
+        const name =
+          forcedName != null
+            ? String(forcedName).trim()
+            : typeof source?.name === 'string'
+            ? source.name.trim()
+            : ''
 
         // Inline composer provides the name. If missing, do nothing.
         if (!name) return
@@ -1374,7 +1445,7 @@
             this.loadFolderTree()
             this.submitFilter()
           },
-          (error) => {
+          error => {
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
               message: error?.data?.message || 'Unable to move folder',
               variant: 'error'
@@ -1393,7 +1464,8 @@
       // Rename folder
       onRenameFolder(payload) {
         const currentName = payload.path.slice(-1)[0] || ''
-        let name = (payload && typeof payload.name === 'string') ? payload.name.trim() : ''
+        let name =
+          payload && typeof payload.name === 'string' ? payload.name.trim() : ''
 
         if (!name) {
           name = window.prompt(
@@ -1409,7 +1481,9 @@
           { type: this.type, name },
           resp => {
             if (this.currentFolderId === payload.id) {
-              const newPath = (resp.data.folder.path || '').split('/').filter(Boolean)
+              const newPath = (resp.data.folder.path || '')
+                .split('/')
+                .filter(Boolean)
               this.currentFolderPath = newPath
             }
             this.loadFolderTree()
@@ -1726,6 +1800,7 @@
   // ===============================
   .folder-node {
     --row-h: 32px;
+    --pad-x: 6px;
     --indent: 18px;
     --gutter: 8px;
     --guide: #d9d9d9;
@@ -1888,9 +1963,11 @@
     padding: 2px 6px;
     min-width: 80px;
     max-width: 220px;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.10);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
-  .folder-node__name.is-locked { cursor: default; }
+  .folder-node__name.is-locked {
+    cursor: default;
+  }
   .folder-node__ctxmenu {
     position: fixed;
     z-index: 1000;
@@ -1899,7 +1976,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 6px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
   }
 
   .folder-node__ctxmenu .ctx-item {
@@ -1916,11 +1993,19 @@
     border-radius: 6px;
     cursor: pointer;
 
-    &:hover { background: #f3f4f6; }
-    &.danger { color: #b91c1c; }
-    &.danger:hover { background: #fee2e2; }
+    &:hover {
+      background: #f3f4f6;
+    }
+    &.danger {
+      color: #b91c1c;
+    }
+    &.danger:hover {
+      background: #fee2e2;
+    }
   }
-  .folder-node__row.is-ctx { box-shadow: inset 0 0 0 2px rgba(59,130,246,.25); }
+  .folder-node__row.is-ctx {
+    box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.25);
+  }
   .folder-node__create-input,
   .folder-node__rename-input {
     font: inherit;
@@ -1931,11 +2016,10 @@
     padding: 2px 6px;
     min-width: 120px;
     max-width: 240px;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.10);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 
   .folder-node__row.is-creating {
     background: #f9fafb;
   }
-
 </style>
