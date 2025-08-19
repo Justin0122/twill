@@ -284,7 +284,8 @@
           x: 0,
           y: 0,
           meta: { id: null, path: [] }
-        }
+        },
+        _ctxFlash: false
       }
     },
     created() {
