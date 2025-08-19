@@ -1,10 +1,10 @@
 <?php
 
+use A17\Twill\Facades\TwillRoutes;
 use A17\Twill\Http\Controllers\Admin\AppSettingsController;
 use A17\Twill\Http\Controllers\Admin\MediaFolderController;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
-use A17\Twill\Facades\TwillRoutes;
 
 if (config('twill.enabled.users-management')) {
     TwillRoutes::module('users', ['except' => ['sort', 'feature']]);
@@ -27,20 +27,18 @@ if (config('twill.enabled.media-library')) {
         Route::resource('medias', 'MediaLibraryController', ['only' => ['index', 'store', 'destroy']]);
 
         // Folders (by ID)
-        Route::get('medias/folders',  [MediaFolderController::class, 'index']);
+        Route::get('medias/folders', [MediaFolderController::class, 'index']);
         Route::post('medias/folders', [MediaFolderController::class, 'store']);
 
-        Route::post('medias/folders/move',     [MediaFolderController::class, 'move']);
+        Route::post('medias/folders/move', [MediaFolderController::class, 'move']);
         Route::post('medias/folders/reparent', [MediaFolderController::class, 'reparent']);
 
         // constrain {folder} to numbers to prevent catching "reparent"
         Route::patch('medias/folders/{folder}', [MediaFolderController::class, 'update'])->whereNumber('folder');
-        Route::put('medias/folders/{folder}',   [MediaFolderController::class, 'update'])->whereNumber('folder');
+        Route::put('medias/folders/{folder}', [MediaFolderController::class, 'update'])->whereNumber('folder');
         Route::delete('medias/folders/{folder}', [MediaFolderController::class, 'destroy'])->whereNumber('folder');
-
     });
 }
-
 
 if (config('twill.enabled.file-library')) {
     Route::group(['prefix' => 'file-library', 'as' => 'file-library.'], function () {
@@ -51,11 +49,18 @@ if (config('twill.enabled.file-library')) {
         Route::put('files/bulk-delete', ['as' => 'files.bulk-delete', 'uses' => 'FileLibraryController@bulkDelete']);
         Route::get('files/tags', ['as' => 'files.tags', 'uses' => 'FileLibraryController@tags']);
         Route::resource('files', 'FileLibraryController', ['only' => ['index', 'store', 'destroy']]);
-        Route::get('files/folders', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'index']);
-        Route::post('files/folders', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'store']);
-        Route::post('files/folders/move', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'move']);
-        Route::put('files/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'update']);
-        Route::patch('files/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'update']);
+
+        // Folders (by ID) — mirror media-library
+        Route::get('files/folders', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'index']);
+        Route::post('files/folders', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'store']);
+
+        Route::post('files/folders/move', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'move']);
+        Route::post('files/folders/reparent', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'reparent']);
+
+        // constrain {folder} to numbers to prevent catching "reparent"
+        Route::patch('files/folders/{folder}', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'update'])->whereNumber('folder');
+        Route::put('files/folders/{folder}', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'update'])->whereNumber('folder');
+        Route::delete('files/folders/{folder}', [A17\Twill\Http\Controllers\Admin\FileFolderController::class, 'destroy'])->whereNumber('folder');
     });
 }
 
@@ -78,7 +83,7 @@ if (config('twill.enabled.buckets')) {
     }
 }
 
-if (\A17\Twill\Facades\TwillAppSettings::settingsAreEnabled()) {
+if (A17\Twill\Facades\TwillAppSettings::settingsAreEnabled()) {
     Route::name('app.settings.page')->get('/settings/list/{group}', [AppSettingsController::class, 'editSettings']);
     Route::name('app.settings.update')->put('/settings/update/{appSetting}', [AppSettingsController::class, 'update']);
 

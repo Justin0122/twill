@@ -1331,7 +1331,7 @@
           name,
           parent: (parentPath || []).join('/')
         }
-        if (parentId != null) body.parentId = parentId // optional if your API supports it
+        if (parentId != null) body.parentId = parentId
 
         api.createFolder(
           this.endpoint,
@@ -1383,7 +1383,6 @@
             this.loadFolderTree()
           },
           error => {
-            // Prefer the detailed 422 from your controller
             if (error?.status === 422 && error?.data) {
               this.folderDeleteError =
                 error.data.message ||
