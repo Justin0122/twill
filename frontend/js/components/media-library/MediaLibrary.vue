@@ -132,8 +132,7 @@
         </div>
 
         <div class="medialibrary__inner">
-          <div class="medialibrary__grid"
-               :style="gridInlineStyle">
+          <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
             <aside class="medialibrary__foldertree"
                    :style="{ width: folderTreeWidth + 'px' }"
@@ -532,7 +531,7 @@
         // eslint-disable-next-line vue/no-reserved-keys
         _resizeMin: 160,
         // eslint-disable-next-line vue/no-reserved-keys
-        _resizeMax: 900
+        _resizeMax: 560
       }
     },
     computed: {
@@ -592,11 +591,6 @@
         return !this.selectedMedias.some(
           sMedia => !!this.usedMedias.find(uMedia => uMedia.id === sMedia.id)
         )
-      },
-      gridInlineStyle() {
-        return {
-          gridTemplateColumns: `${this.folderTreeWidth}px 1fr ${this._sidebarWidth}px`
-        }
       },
       ...mapState({
         connector: state => state.mediaLibrary.connector,
@@ -705,15 +699,6 @@
         document.removeEventListener('mouseup', this.onFolderTreeResizeEnd)
         this.saveFolderTreeWidth()
       },
-      measureSidebarWidth() {
-        this.$nextTick(() => {
-          const el = this.$el && this.$el.querySelector('.medialibrary__sidebar')
-          if (!el) return
-          const w = Math.round(el.getBoundingClientRect().width)
-          if (w && w !== this._sidebarWidth) this._sidebarWidth = w
-        })
-      },
-
 
       replaceMedia({ id }) {
         this.$refs.uploader.replaceMedia(id)
@@ -728,7 +713,6 @@
         const saved = this.getSavedFolderPath()
         if (saved !== null) this.currentFolderPath = saved
         this.loadFolderTreeWidth()
-        this.measureSidebarWidth()
 
         if (!this.gridLoaded) this.reloadGrid()
         if (!this.folderTree) this.loadFolderTree()
@@ -742,7 +726,6 @@
           ]
           if (mediaInitSelect) this.selectedMedias.push(mediaInitSelect)
         }
-        window.addEventListener('resize', this.measureSidebarWidth, { passive: true })
       },
       updateType(newType) {
         if (this.loading || this.strict || this.type === newType) return
@@ -1214,9 +1197,6 @@
       saveAndClose() {
         this.$store.commit(MEDIA_LIBRARY.SAVE_MEDIAS, this.selectedMedias)
         this.close()
-      },
-      beforeDestroy() {
-        window.removeEventListener('resize', this.measureSidebarWidth)
       }
     }
   }
