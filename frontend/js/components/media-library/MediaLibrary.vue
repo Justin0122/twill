@@ -533,7 +533,6 @@
 
           <!-- INDENT WRAPPER -->
           <div class="folder-node__indent">
-            <!-- caret, icons, name (unchanged) -->
             <button
               class="folder-node__toggle"
               :class="{ 'is-hidden': !(node.children && node.children.length) }"
@@ -547,10 +546,21 @@
             </button>
 
             <span class="folder-node__icon" aria-hidden="true">
-          <!-- icons ... -->
+          <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
+            <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
+            <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
+            <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
         </span>
 
-            <!-- Inline rename on dblclick (from previous step) -->
             <template v-if="isRenaming">
               <input
                 ref="renameInput"
@@ -576,20 +586,6 @@
                 <span v-else>{{ node.name }}</span>
               </button>
             </template>
-          </div>
-
-          <!-- Actions (no explicit rename button anymore) -->
-          <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
-            <button class="folder-node__action" title="New subfolder" @click="createHere" aria-label="New subfolder">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })" aria-label="Delete folder">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -1231,7 +1227,7 @@
         // Build request to move to targetId (root may be null)
         const body = {
           type: type || this.type,
-          targetId: targetId, // use id instead of path
+          targetId, // use id instead of path
           mediaIds
         }
 
