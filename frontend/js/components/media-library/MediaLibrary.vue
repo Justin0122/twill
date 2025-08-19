@@ -1497,20 +1497,6 @@
       background: rgba(59, 130, 246, 0.06);
     }
     &.is-dragover * { pointer-events: none !important; }
-
-    // elbow connector for hierarchy
-    &::before {
-      content: '';
-      position: absolute;
-      left: 8px;
-      top: calc(var(--row-h) / 2);
-      width: 10px;
-      height: calc(var(--row-h) / 2);
-      border-left: 1px solid var(--guide);
-      border-bottom: 1px solid var(--guide);
-      opacity: 0.6;
-      pointer-events: none;
-    }
   }
 
   // suppress elbow at top level (root node container)
@@ -1607,11 +1593,12 @@
       content: '';
       position: absolute;
       left: calc(8px + var(--indent));
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background: var(--guide);
-      opacity: 0.4;
+      top: calc(var(--row-h) / 2);
+      width: 10px;
+      height: calc(var(--row-h) / 2);
+      border-left: 1px solid var(--guide);
+      border-bottom: 1px solid var(--guide);
+      opacity: 0.6;
       pointer-events: none;
     }
   }
