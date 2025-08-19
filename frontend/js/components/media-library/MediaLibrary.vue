@@ -423,28 +423,73 @@
         <div class="folder-node__row"
              :data-id="(node.id ?? 'root') + ''"
              :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
-             :style="{ paddingLeft: (level * 14) + 'px' }"
+             :style="{ paddingLeft: (level * 18) + 'px' }"
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
              @drop.stop.prevent="onDrop">
-          <button class="folder-node__toggle" v-if="node.children && node.children.length"
-                  @click="toggleOpen" :aria-expanded="open.toString()">
-            <span v-if="open">▾</span><span v-else>▸</span>
+
+          <!-- Toggle caret -->
+          <button
+            class="folder-node__toggle"
+            :class="{ 'is-hidden': !(node.children && node.children.length) }"
+            @click="toggleOpen"
+            :aria-expanded="(node.children && node.children.length ? open : false).toString()"
+            :aria-label="open ? 'Collapse folder' : 'Expand folder'">
+            <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
-          <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
+
+          <!-- Folder icon -->
+          <span class="folder-node__icon" aria-hidden="true">
+          <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
+            <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
+            <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
+            <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15"/>
+            <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </span>
+
+          <!-- Name -->
+          <button
+            class="folder-node__name"
+            :class="{ 'is-active': isActiveHere }"
+            :aria-selected="isActiveHere.toString()"
+            @click="selectSelf">
             <span v-if="level===0">All</span>
             <span v-else>{{ node.name }}</span>
           </button>
 
-          <div class="folder-node__actions">
-            <button class="folder-node__action" title="New subfolder" @click="createHere">＋</button>
-            <button v-if="level>0" class="folder-node__action" title="Rename folder" @click="renameHere">✎</button>
-            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })">🗑</button>
+          <!-- Actions -->
+          <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
+            <button class="folder-node__action" title="New subfolder" @click="createHere" aria-label="New subfolder">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button v-if="level>0" class="folder-node__action" title="Rename folder" @click="renameHere" aria-label="Rename folder">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 21h6M14 3l7 7-11 11H3V14z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })" aria-label="Delete folder">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <div v-show="open" class="folder-node__children">
+        <div v-show="open" class="folder-node__children" role="group">
           <folder-node v-for="child in node.children"
                        :key="child.id || child.name"
                        :node="child"
@@ -1441,22 +1486,147 @@
   .mt-2 {
     margin-top: 8px;
   }
-  .folder-node__action {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-    color: #999;
+  /* Explorer-like tree styles */
+  .folder-node {
+    --row-h: 32px;
+    --pad-x: 6px;
+    --indent: 18px;
+    --guide: #d9d9d9;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --hover: #f3f4f6;
+    --active: #e5f2ff;
+  }
+
+  .folder-node__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px 22px 1fr auto;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--row-h);
+    padding: 2px var(--pad-x);
+    border-radius: 4px;
+    color: var(--text);
+
+    /* elbow connector to children */
+    &::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: calc(var(--row-h) / 2);
+      width: 10px;
+      height: calc(var(--row-h) / 2);
+      border-left: 1px solid var(--guide);
+      border-bottom: 1px solid var(--guide);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* top-level has no elbow */
+    .is-root > &::before {
+      display: none;
+    }
+
     &:hover {
-      color: #000;
+      background: var(--hover);
     }
+
     &.is-active {
-      color: #000;
+      background: var(--active);
+    }
+
+    &.is-dragover {
+      outline: 2px dashed #3b82f6;
+      outline-offset: -2px;
     }
   }
-  .folder-node__action.danger {
-    color: #b00020;
+
+  /* vertical guides for nested levels */
+  .folder-node__children {
+    position: relative;
+    margin-left: 0;
   }
+
+  .folder-node__children::before {
+    content: '';
+    position: absolute;
+    left: calc(8px + var(--indent));
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--guide);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* toggle caret */
+  .folder-node__toggle {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .folder-node__toggle.is-hidden {
+    visibility: hidden; /* keeps alignment even when no children */
+  }
+
+  .folder-node__icon .icon {
+    width: 18px;
+    height: 18px;
+    color: #f59e0b; /* amber-ish folder */
+  }
+  .folder-node__icon .icon--root { color: #6366f1; } /* root is purple */
+
+  .folder-node__name {
+    text-align: left;
+    width: 100%;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: inherit;
+    font-size: 13px;
+  }
+  .folder-node__name.is-active {
+    font-weight: 600;
+  }
+
+  /* actions aligned right */
+  .folder-node__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .folder-node__action {
+    border: 0;
+    background: none;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .folder-node__action:hover {
+    background: #edf2f7;
+    color: #111827;
+  }
+  .folder-node__action .icon {
+    width: 16px;
+    height: 16px;
+  }
+  .folder-node__action.danger:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  /* reduce icon jitter on hover */
+  .icon { display: block; line-height: 0; }
 
   .folder-node__row {
     position: relative;
