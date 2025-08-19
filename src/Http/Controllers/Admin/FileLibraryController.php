@@ -3,6 +3,7 @@
 namespace A17\Twill\Http\Controllers\Admin;
 
 use A17\Twill\Http\Requests\Admin\FileRequest;
+use A17\Twill\Models\LibraryFolder;
 use A17\Twill\Services\Listings\Filters\BasicFilter;
 use A17\Twill\Services\Listings\Filters\TableFilters;
 use A17\Twill\Services\Uploader\SignAzureUpload;
@@ -87,6 +88,24 @@ class FileLibraryController extends ModuleController implements SignUploadListen
         $this->endpointType = $this->config->get('twill.file_library.endpoint_type');
     }
 
+    protected function resolveFolderId(Request $request): int|null|string
+    {
+        // prefer explicit id
+        $raw = $request->input('folder_id');
+        if ($raw !== null && $raw !== '') {
+            $id = (int) $raw;
+            $ok = LibraryFolder::where('library', 'file')->whereKey($id)->exists();
+            return $ok ? $id : 'invalid';
+        }
+
+        // fallback to legacy "folder" path (do NOT auto-create here; UI already creates folders)
+        $path = trim((string) $request->input('folder', ''), '/');
+        if ($path === '') return null;
+
+        $folder = LibraryFolder::where('library', 'file')->where('path', $path)->first();
+        return $folder?->id ?? null;
+    }
+
     public function setUpController(): void
     {
         $this->setSearchColumns(['filename']);
@@ -109,22 +128,17 @@ class FileLibraryController extends ModuleController implements SignUploadListen
                 }
                 return $builder;
             }),
-            // ⭐ NEW: folder filter
-            BasicFilter::make()->queryString('folder')->apply(function (Builder $builder, ?string $value) {
-                $col = $this->folderColumn;
-                if (!Schema::hasColumn('twill_files', $col)) {
-                    // If the column does not exist, ignore filter gracefully
-                    return $builder;
-                }
-                $folder = trim((string)$value, '/');
-                if ($folder === '') {
-                    // root: null or empty
-                    return $builder->where(function ($q) use ($col) {
-                        $q->whereNull($col)->orWhere($col, '');
-                    });
-                }
-                return $builder->where($col, $folder);
-            }),
+            BasicFilter::make()
+                ->queryString('folder_id')
+                ->apply(function (Builder $builder, $value) {
+                    if (!Schema::hasColumn('twill_files', 'folder_id')) {
+                        return $builder;
+                    }
+                    if ($value === null || $value === '' || $value === 'null') {
+                        return $builder->whereNull('folder_id');
+                    }
+                    return $builder->where('folder_id', (int)$value);
+                }),
         ]);
     }
 
@@ -237,13 +251,17 @@ class FileLibraryController extends ModuleController implements SignUploadListen
 
         $request->file('qqfile')->storeAs($fileDirectory, $cleanFilename, $disk);
 
+        $folderId = $this->resolveFolderId($request);
+        if ($folderId === 'invalid') $folderId = null;
+
         $fields = [
-            'uuid' => $uuid,
-            'filename' => $cleanFilename,
-            'size' => $request->input('qqtotalfilesize'),
+            'uuid'        => $uuid,
+            'filename'    => $cleanFilename,
+            'size'        => $request->input('qqtotalfilesize'),
+            'folder_id'   => $folderId,
+            'folder_path' => trim((string)$request->input('folder', ''), '/'),
         ];
 
-        // ⭐ NEW: persist folder if column exists
         $this->maybeAttachFolder($fields, $request);
 
         if ($this->shouldReplaceFile($id = $request->input('media_to_replace_id'))) {
@@ -262,12 +280,16 @@ class FileLibraryController extends ModuleController implements SignUploadListen
      */
     public function storeReference($request)
     {
+        $folderId = $this->resolveFolderId($request);
+        if ($folderId === 'invalid') $folderId = null;
+
         $fields = [
-            'uuid' => $request->input('key') ?? $request->input('blob'),
-            'filename' => $request->input('name'),
+            'uuid'        => $request->input('key') ?? $request->input('blob'),
+            'filename'    => $request->input('name'),
+            'folder_id'   => $folderId,
+            'folder_path' => trim((string)$request->input('folder', ''), '/'),
         ];
 
-        // ⭐ NEW: persist folder if column exists
         $this->maybeAttachFolder($fields, $request);
 
         if ($this->shouldReplaceFile($id = $request->input('media_to_replace_id'))) {
