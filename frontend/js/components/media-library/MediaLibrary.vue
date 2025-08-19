@@ -15,8 +15,7 @@
                     href="#"
                     @click.prevent="goToRoot"
                     :class="{ 'is-active': currentFolderPath.length === 0 }"
-                  >All</a
-                  >
+                  >All</a>
                   <span
                     v-for="(seg, i) in currentFolderPath"
                     :key="currentFolderPath.slice(0, i + 1).join('/')"
@@ -25,47 +24,29 @@
                     <a
                       href="#"
                       @click.prevent="goToIndex(i)"
-                      :class="{
-                        'is-active': i === currentFolderPath.length - 1
-                      }"
-                    >{{ seg }}</a
-                    >
+                      :class="{ 'is-active': i === currentFolderPath.length - 1 }"
+                    >{{ seg }}</a>
                   </span>
                 </nav>
               </div>
 
               <!-- Type tabs -->
-              <ul
-                class="secondarynav secondarynav--desktop"
-                v-if="types.length"
-              >
+              <ul class="secondarynav secondarynav--desktop" v-if="types.length">
                 <li
                   class="secondarynav__item"
                   v-for="navType in types"
                   :key="navType.value"
-                  :class="{
-                    's--on': type === navType.value,
-                    's--disabled': type !== navType.value && strict
-                  }"
+                  :class="{ 's--on': type === navType.value, 's--disabled': type !== navType.value && strict }"
                 >
                   <a href="#" @click.prevent="updateType(navType.value)">
                     <span class="secondarynav__link">{{ navType.text }}</span>
-                    <span v-if="navType.total > 0" class="secondarynav__number">
-                      ({{ navType.total }})
-                    </span>
+                    <span v-if="navType.total > 0" class="secondarynav__number">({{ navType.total }})</span>
                   </a>
                 </li>
               </ul>
 
-              <div
-                class="secondarynav secondarynav--mobile secondarynav--dropdown"
-              >
-                <a17-dropdown
-                  ref="secondaryNavDropdown"
-                  position="bottom-left"
-                  width="full"
-                  :offset="0"
-                >
+              <div class="secondarynav secondarynav--mobile secondarynav--dropdown">
+                <a17-dropdown ref="secondaryNavDropdown" position="bottom-left" width="full" :offset="0">
                   <a17-button
                     class="secondarynav__button"
                     variant="dropdown-transparent"
@@ -73,27 +54,15 @@
                     @click="$refs.secondaryNavDropdown.toggle()"
                     v-if="selectedType"
                   >
-                    <span class="secondarynav__link">{{
-                        selectedType.text
-                      }}</span>
-                    <span class="secondarynav__number">{{
-                        selectedType.total
-                      }}</span>
+                    <span class="secondarynav__link">{{ selectedType.text }}</span>
+                    <span class="secondarynav__number">{{ selectedType.total }}</span>
                   </a17-button>
                   <div slot="dropdown__content">
                     <ul>
-                      <li
-                        v-for="navType in types"
-                        :key="navType.value"
-                        class="secondarynav__item"
-                      >
+                      <li v-for="navType in types" :key="navType.value" class="secondarynav__item">
                         <a href="#" @click.prevent="updateType(navType.value)">
-                          <span class="secondarynav__link">{{
-                              navType.text
-                            }}</span>
-                          <span class="secondarynav__number">{{
-                              navType.total
-                            }}</span>
+                          <span class="secondarynav__link">{{ navType.text }}</span>
+                          <span class="secondarynav__number">{{ navType.total }}</span>
                         </a>
                       </li>
                     </ul>
@@ -108,9 +77,7 @@
                 ref="filter"
                 name="tag"
                 :options="tags"
-                :placeholder="
-                  $trans('media-library.filter-select-label', 'Filter by tag')
-                "
+                :placeholder="$trans('media-library.filter-select-label', 'Filter by tag')"
                 :searchable="true"
                 maxHeight="175px"
               />
@@ -120,27 +87,20 @@
                 name="unused"
                 :initial-value="0"
                 :value="1"
-                :label="
-                  $trans(
-                    'media-library.unused-filter-label',
-                    'Show unused only'
-                  )
-                "
+                :label="$trans('media-library.unused-filter-label', 'Show unused only')"
               />
             </div>
           </a17-filter>
         </div>
 
         <div class="medialibrary__inner">
-          <div class="medialibrary__grid"
-               :style="gridInlineStyle">
+          <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
             <aside class="medialibrary__foldertree"
-                   :style="{ width: folderTreeWidth + 'px' }"
                    @dragover.prevent="onFolderTreeDragOver"
                    @dragenter.prevent
                    @drop.prevent="$root.$emit('ml:dnd:hover:clear')">
-              <folder-node
+              <FolderNode
                 v-if="folderTree"
                 :node="folderTree"
                 :active-path="currentFolderPath"
@@ -150,12 +110,6 @@
                 @rename="onRenameFolder"
                 @delete="onDeleteFolder"
                 @move="onMoveToFolder"
-              />
-              <div
-                class="medialibrary__foldertree-resizer"
-                title="Resize"
-                @pointerdown.stop.prevent="onFolderTreePointerDown"
-                @mousedown.stop.prevent="onFolderTreeResizeStart"
               />
             </aside>
 
@@ -179,23 +133,13 @@
             </aside>
 
             <!-- FOOTER actions -->
-            <footer
-              class="medialibrary__footer"
-              v-if="selectedMedias.length && showInsert && connector"
-            >
-              <a17-button
-                v-if="canInsert"
-                variant="action"
-                @click="saveAndClose"
-              >{{ btnLabel }}</a17-button
-              >
-              <a17-button v-else variant="action" :disabled="true">{{
-                  btnLabel
-                }}</a17-button>
+            <footer class="medialibrary__footer" v-if="selectedMedias.length && showInsert && connector">
+              <a17-button v-if="canInsert" variant="action" @click="saveAndClose">{{ btnLabel }}</a17-button>
+              <a17-button v-else variant="action" :disabled="true">{{ btnLabel }}</a17-button>
             </footer>
 
             <!-- CENTER: media list + uploader -->
-            <div class="medialibrary__list" ref="list" :style="{ left: folderTreeWidth + 'px' }">
+            <div class="medialibrary__list" ref="list">
               <a17-uploader
                 ref="uploader"
                 v-if="authorized"
@@ -205,7 +149,7 @@
                 :folder="currentFolderFullPath"
                 :folder-id="currentFolderId"
               />
-              <div class="medialibrary__list-items">
+              <div class="medialibrary__list-items" @click.capture="onBlankClickClearSelection">
                 <a17-itemlist
                   v-if="type === 'file'"
                   :items="renderedMediaItems"
@@ -223,12 +167,7 @@
                   @ctrlChange="updateSelectedMediasCtrl"
                   @shiftChange="updateSelectedMedias"
                 />
-                <a17-spinner v-if="loading" class="medialibrary__spinner"
-                >Loading&hellip;</a17-spinner
-                >
-                <a17-spinner v-if="loading" class="medialibrary__spinner"
-                  >Loading&hellip;</a17-spinner
-                >
+                <a17-spinner v-if="loading" class="medialibrary__spinner">Loading&hellip;</a17-spinner>
               </div>
             </div>
           </div>
@@ -253,212 +192,7 @@
   import a17MediaGrid from './MediaGrid.vue'
   import a17MediaSidebar from './MediaSidebar.vue'
   import a17Uploader from './Uploader.vue'
-
-  const FolderNode = {
-    name: 'folder-node',
-    props: {
-      node: { type: Object, required: true }, // { id, name, path, children: [] }, root: { id:null, name:'', path:'' }
-      level: { type: Number, default: 0 },
-      activePath: { type: Array, default: () => [] },
-      activeId: { type: [Number, String, null], default: null }
-    },
-    data() {
-      return { open: false, draggingOver: false, _dragDepth: 0 }
-    },
-    created() {
-      // Single-active: listen for broadcasted hover changes
-      this._onHoverId = id => {
-        const myId = (this.node.id ?? 'root') + ''
-        this.draggingOver = id !== null && id === myId
-        if (!this.draggingOver) this._dragDepth = 0
-      }
-      this._onHoverClear = () => {
-        this.draggingOver = false
-        this._dragDepth = 0
-      }
-      this.$root.$on('ml:dnd:hover', this._onHoverId)
-      this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
-    },
-    mounted() {
-      this._onGlobalDragEnd = () => this._onHoverClear()
-      window.addEventListener('dragend', this._onGlobalDragEnd)
-      window.addEventListener('drop', this._onGlobalDragEnd)
-    },
-    beforeDestroy() {
-      this.$root.$off('ml:dnd:hover', this._onHoverId)
-      this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
-      window.removeEventListener('dragend', this._onGlobalDragEnd)
-      window.removeEventListener('drop', this._onGlobalDragEnd)
-    },
-    computed: {
-      isOnActivePath() {
-        const here = this.pathHere()
-        return here.every((seg, idx) => this.activePath[idx] === seg)
-      },
-      shouldBeOpen() {
-        return this.level === 0 || this.isOnActivePath
-      },
-      isActiveHere() {
-        return this.node.id !== null && this.node.id === this.activeId
-      }
-    },
-    watch: {
-      activePath: {
-        handler() {
-          if (this.shouldBeOpen) this.open = true
-        },
-        deep: true,
-        immediate: true
-      }
-    },
-    methods: {
-      onSelectFolder(payload) {
-        this.currentFolderId = payload.id ?? null
-        this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
-        this.saveLastFolder()
-        this.submitFilter()
-      },
-      pathHere() {
-        const path = []
-        let n = this
-        while (n && n.node) {
-          if (n.level > 0 || n.node.name) path.unshift(n.node.name)
-          n = n.$parent
-          if (!n || n.$options.name !== 'folder-node') break
-        }
-        return path
-      },
-      selectSelf() {
-        this.$emit('select', {
-          id: this.node.id ?? null,
-          path: this.level === 0 ? [] : this.pathHere()
-        })
-      },
-      createHere() {
-        this.$emit('create', this.pathHere())
-      },
-      renameHere() {
-        if (this.node.id != null)
-          this.$emit('rename', { id: this.node.id, path: this.pathHere() })
-      },
-      toggleOpen() {
-        if (this.shouldBeOpen) {
-          this.open = true
-          return
-        }
-        this.open = !this.open
-      },
-      // --- Drag-and-drop targets (accept moving medias) ---
-      onDragEnter(evt) {
-        if (!this.hasMediaPayload(evt)) return
-        this._dragDepth += 1
-        // Announce I am the active hover target (single-active)
-        this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
-        this.draggingOver = true
-        evt.preventDefault()
-        evt.stopPropagation()
-      },
-      onDragOver(evt) {
-        if (!this.hasMediaPayload(evt)) return
-        evt.dataTransfer.dropEffect = 'move'
-        evt.preventDefault()
-        evt.stopPropagation()
-      },
-      onDragLeave(evt) {
-        if (this._dragDepth > 0) this._dragDepth -= 1
-        if (this._dragDepth === 0) {
-          this.draggingOver = false
-        }
-        evt.stopPropagation()
-      },
-      onDrop(evt) {
-        const payload = this.readMediaPayload(evt)
-        this._dragDepth = 0
-        this.draggingOver = false
-        // Clear any other hovered rows
-        this.$root.$emit('ml:dnd:hover:clear')
-        if (!payload || !payload.ids || !payload.ids.length) {
-          evt.preventDefault()
-          evt.stopPropagation()
-          return
-        }
-        const targetPath = this.level === 0 ? [] : this.pathHere()
-        const targetId = this.node.id ?? null
-        this.$emit('move', {
-          targetPath,
-          targetId,
-          mediaIds: payload.ids,
-          type: payload.type || null
-        })
-        evt.preventDefault()
-        evt.stopPropagation()
-      },
-      hasMediaPayload(evt) {
-        try {
-          const types = Array.from(evt?.dataTransfer?.types || [])
-          return (
-            types.includes('application/x-media-ids') ||
-            types.includes('text/plain')
-          )
-        } catch (e) {
-          return false
-        }
-      },
-      readMediaPayload(evt) {
-        try {
-          const raw =
-            evt.dataTransfer.getData('application/x-media-ids') ||
-            evt.dataTransfer.getData('text/plain')
-          return JSON.parse(raw)
-        } catch (e) {
-          return null
-        }
-      }
-      // ---------------------------------------------------
-    },
-    template: `
-      <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
-        <div class="folder-node__row"
-             :data-id="(node.id ?? 'root') + ''"
-             :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
-             :style="{ paddingLeft: (level * 14) + 'px' }"
-             @dragenter.stop.prevent="onDragEnter"
-             @dragover.stop.prevent="onDragOver"
-             @dragleave.stop="onDragLeave"
-             @drop.stop.prevent="onDrop">
-          <button class="folder-node__toggle" v-if="node.children && node.children.length"
-                  @click="toggleOpen" :aria-expanded="open.toString()">
-            <span v-if="open">▾</span><span v-else>▸</span>
-          </button>
-          <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
-            <span v-if="level===0">All</span>
-            <span v-else>{{ node.name }}</span>
-          </button>
-
-          <div class="folder-node__actions">
-            <button class="folder-node__action" title="New subfolder" @click="createHere">＋</button>
-            <button v-if="level>0" class="folder-node__action" title="Rename folder" @click="renameHere">✎</button>
-            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })">🗑</button>
-          </div>
-        </div>
-
-        <div v-show="open" class="folder-node__children">
-          <folder-node v-for="child in node.children"
-                       :key="child.id || child.name"
-                       :node="child"
-                       :level="level+1"
-                       :active-path="activePath"
-                       :active-id="activeId"
-                       @select="$emit('select', $event)"
-                       @create="$emit('create', $event)"
-                       @rename="$emit('rename', $event)"
-                       @delete="$emit('delete', $event)"
-                       @move="$emit('move', $event)"
-          />
-        </div>
-      </div>
-    `
-  }
+  import FolderNode from './FolderNode.vue'
 
   export default {
     name: 'A17Medialibrary',
@@ -470,7 +204,7 @@
       'a17-itemlist': a17ItemList,
       'a17-spinner': a17Spinner,
       'a17-checkbox': a17Checkbox,
-      'folder-node': FolderNode
+      FolderNode
     },
     props: {
       modalTitlePrefix: {
@@ -500,18 +234,8 @@
       initialPage: { type: Number, default: 1 },
       authorized: { type: Boolean, default: false },
       showInsert: { type: Boolean, default: true },
-      extraMetadatas: {
-        type: Array,
-        default() {
-          return []
-        }
-      },
-      translatableMetadatas: {
-        type: Array,
-        default() {
-          return []
-        }
-      }
+      extraMetadatas: { type: Array, default: () => [] },
+      translatableMetadatas: { type: Array, default: () => [] }
     },
     data() {
       return {
@@ -529,22 +253,7 @@
         currentFolderId: null,
         folderDeleteError: null,
         folderDeleteUsed: [],
-        folderTreeWidth: 260,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _resizingFolderTree: false,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _resizeMax: 560,
-        // Bound listener refs for add/removeEventListener
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onMove: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onUp: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onPMove: null,
-        // eslint-disable-next-line vue/no-reserved-keys
-        _onPUp: null
       }
-
     },
     computed: {
       currentFolderFullPath() {
@@ -553,7 +262,7 @@
       currentFolderLabel() {
         return this.currentFolderPath.length
           ? this.currentFolderPath[this.currentFolderPath.length - 1]
-          : 'All'
+          : 'Home'
       },
       renderedMediaItems() {
         return this.mediaItems.map(item => {
@@ -581,16 +290,10 @@
         return this.modalTitlePrefix
       },
       btnLabel() {
-        let type = this.$trans(
-          'media-library.types.single.' + this.type,
-          this.type
-        )
+        let type = this.$trans('media-library.types.single.' + this.type, this.type)
         if (this.indexToReplace > -1) return this.btnLabelUpdate + ' ' + type
         if (this.selectedMedias.length > 1)
-          type = this.$trans(
-            'media-library.types.multiple.' + this.type,
-            this.type
-          )
+          type = this.$trans('media-library.types.multiple.' + this.type, this.type)
         return this.btnLabelSingle + ' ' + type
       },
       usedMedias() {
@@ -603,11 +306,6 @@
         return !this.selectedMedias.some(
           sMedia => !!this.usedMedias.find(uMedia => uMedia.id === sMedia.id)
         )
-      },
-      gridInlineStyle() {
-        return {
-          gridTemplateColumns: `${this.folderTreeWidth}px 1fr ${this._sidebarWidth}px`
-        }
       },
       ...mapState({
         connector: state => state.mediaLibrary.connector,
@@ -636,19 +334,11 @@
       storageKey() {
         return `twill:ml:lastFolder:${this.endpoint}:${this.type}`
       },
-      storageWidthKey() {
-        return `twill:ml:folderTreeWidth:${this.endpoint}:${this.type}`
-      },
       saveLastFolder() {
         try {
           localStorage.setItem(this.storageKey(), this.currentFolderFullPath)
-          localStorage.setItem(
-            this.storageKey() + ':id',
-            this.currentFolderId ?? ''
-          )
-        } catch (e) {
-
-        }
+          localStorage.setItem(this.storageKey() + ':id', this.currentFolderId ?? '')
+        } catch (e) {}
       },
       readCookie(name) {
         const cookies = document.cookie ? document.cookie.split('; ') : []
@@ -662,126 +352,21 @@
       getSavedFolderPath() {
         const key = this.storageKey()
         let raw = null
-        try {
-          raw = window.localStorage.getItem(key)
-        } catch (e) {
-          raw = this.readCookie(key)
-        }
+        try { raw = window.localStorage.getItem(key) } catch (e) { raw = this.readCookie(key) }
         if (raw === null) return null
         const path = raw.split('/').filter(Boolean)
         return path.length ? path : []
       },
-
-      loadFolderTreeWidth() {
-        try {
-          const v = localStorage.getItem(this.storageWidthKey())
-          const n = parseInt(v, 10)
-          if (!isNaN(n) && n >= this._resizeMin && n <= this._resizeMax) {
-            this.folderTreeWidth = n
-          }
-        } catch (e) {}
-      },
-      saveFolderTreeWidth() {
-        try {
-          localStorage.setItem(this.storageWidthKey(), String(this.folderTreeWidth))
-        } catch (e) {}
-      },
       /* ---------- /persistence helpers ---------- */
-      onFolderTreeResizeStart(e) {
-        this._resizingFolderTree = true
-        document.body.classList.add('is-resizing-col')
-
-        this._onMove = this.onFolderTreeResizing.bind(this)
-        this._onUp = this.onFolderTreeResizeEnd.bind(this)
-
-        window.addEventListener('mousemove', this._onMove, { passive: false, capture: true })
-        window.addEventListener('mouseup', this._onUp, { passive: true, capture: true })
-
-        e.preventDefault()
-      },
-      onFolderTreePointerDown(e) {
-        if (!e.pointerId) return // older browsers: mousedown fallback will handle
-        this._resizingFolderTree = true
-        document.body.classList.add('is-resizing-col')
-        try { e.target.setPointerCapture(e.pointerId) } catch (_) {}
-
-        this._onPMove = this.onFolderTreePointerMove.bind(this)
-        this._onPUp = this.onFolderTreePointerUp.bind(this)
-
-        window.addEventListener('pointermove', this._onPMove, { passive: false, capture: true })
-        window.addEventListener('pointerup', this._onPUp, { passive: true, capture: true })
-
-        e.preventDefault()
-      },
-      onFolderTreePointerMove(e) {
-        if (!this._resizingFolderTree) return
-        const grid = this.$el.querySelector('.medialibrary__grid')
-        if (!grid) return
-        const gridRect = grid.getBoundingClientRect()
-        let w = Math.round(e.clientX - gridRect.left)
-        w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
-        this.folderTreeWidth = w
-        e.preventDefault()
-      },
-      onFolderTreePointerUp(e) {
-        if (!this._resizingFolderTree) return
-        this._resizingFolderTree = false
-        document.body.classList.remove('is-resizing-col')
-        try { if (e.target && e.pointerId) e.target.releasePointerCapture(e.pointerId) } catch (_) {}
-
-        if (this._onPMove) window.removeEventListener('pointermove', this._onPMove, true)
-        if (this._onPUp) window.removeEventListener('pointerup', this._onPUp, true)
-        this._onPMove = null
-        this._onPUp = null
-
-        this.saveFolderTreeWidth()
-      },
-      onFolderTreeResizing(e) {
-        if (!this._resizingFolderTree) return
-        const grid = this.$el.querySelector('.medialibrary__grid')
-        if (!grid) return
-        const gridRect = grid.getBoundingClientRect()
-        let w = Math.round(e.clientX - gridRect.left)
-        w = Math.max(this._resizeMin, Math.min(this._resizeMax, w))
-        this.folderTreeWidth = w
-        e.preventDefault()
-      },
-      onFolderTreeResizeEnd() {
-        if (!this._resizingFolderTree) return
-        this._resizingFolderTree = false
-        document.body.classList.remove('is-resizing-col')
-
-        if (this._onMove) window.removeEventListener('mousemove', this._onMove, true)
-        if (this._onUp) window.removeEventListener('mouseup', this._onUp, true)
-        this._onMove = null
-        this._onUp = null
-
-        this.saveFolderTreeWidth()
-      },
-      measureSidebarWidth() {
-        this.$nextTick(() => {
-          const el = this.$el && this.$el.querySelector('.medialibrary__sidebar')
-          if (!el) return
-          const w = Math.round(el.getBoundingClientRect().width)
-          if (w && w !== this._sidebarWidth) this._sidebarWidth = w
-        })
-      },
-
 
       replaceMedia({ id }) {
         this.$refs.uploader.replaceMedia(id)
       },
-      open() {
-        this.$refs.modal.open()
-      },
-      close() {
-        this.$refs.modal.hide()
-      },
+      open() { this.$refs.modal.open() },
+      close() { this.$refs.modal.hide() },
       opened() {
         const saved = this.getSavedFolderPath()
         if (saved !== null) this.currentFolderPath = saved
-        this.loadFolderTreeWidth()
-        this.measureSidebarWidth()
 
         if (!this.gridLoaded) this.reloadGrid()
         if (!this.folderTree) this.loadFolderTree()
@@ -790,12 +375,9 @@
         this.selectedMedias = []
 
         if (this.connector && this.indexToReplace > -1) {
-          const mediaInitSelect = this.selected[this.connector][
-            this.indexToReplace
-          ]
+          const mediaInitSelect = this.selected[this.connector][this.indexToReplace]
           if (mediaInitSelect) this.selectedMedias.push(mediaInitSelect)
         }
-        window.addEventListener('resize', this.measureSidebarWidth, { passive: true })
       },
       updateType(newType) {
         if (this.loading || this.strict || this.type === newType) return
@@ -811,37 +393,19 @@
                 const crops = []
                 for (const crop in mediaCrop.crops) {
                   crops[crop] = {
-                    height:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.crops[crop].height
-                        : media.height,
+                    height: media.height === mediaCrop.height ? mediaCrop.crops[crop].height : media.height,
                     name: crop,
-                    width:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.crops[crop].width
-                        : media.width,
-                    x:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.crops[crop].x
-                        : 0,
-                    y:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.crops[crop].y
-                        : 0
+                    width: media.width === mediaCrop.width ? mediaCrop.crops[crop].width : media.width,
+                    x: media.width === mediaCrop.width ? mediaCrop.crops[crop].x : 0,
+                    y: media.height === mediaCrop.height ? mediaCrop.crops[crop].y : 0
                   }
                 }
                 this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIAS, {
                   index,
                   media: {
                     ...media,
-                    width:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.width
-                        : media.width,
-                    height:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.height
-                        : media.height,
+                    width: media.width === mediaCrop.width ? mediaCrop.width : media.width,
+                    height: media.height === mediaCrop.height ? mediaCrop.height : media.height,
                     crops
                   },
                   mediaRole
@@ -853,67 +417,55 @@
           this.selectedMedias.unshift(media)
         } else {
           this.mediaItems.unshift(media)
-          this.$store.commit(
-            MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL,
-            this.type
-          )
+          this.$store.commit(MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL, this.type)
           this.updateSelectedMedias(media.id)
         }
       },
       updateSelectedMedias(item, shift = false) {
         const id = item.id
-        const alreadySelectedMedia = this.selectedMedias.filter(
-          media => media.id === id
-        )
+        const alreadySelectedMedia = this.selectedMedias.filter(media => media.id === id)
         if (alreadySelectedMedia.length === 0) {
           if (this.max === 1) this.clearSelectedMedias()
           if (this.selectedMedias.length >= this.max && this.max > 0) return
 
           if (shift && this.selectedMedias.length > 0) {
-            const lastSelectedMedia = this.selectedMedias[
-              this.selectedMedias.length - 1
-            ]
-            const lastSelectedMediaIndex = this.mediaItems.findIndex(
-              media => media.id === lastSelectedMedia.id
-            )
-            const selectedMediaIndex = this.mediaItems.findIndex(
-              media => media.id === id
-            )
-            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1)
-              return
+            const lastSelectedMedia = this.selectedMedias[this.selectedMedias.length - 1]
+            const lastSelectedMediaIndex = this.mediaItems.findIndex(media => media.id === lastSelectedMedia.id)
+            const selectedMediaIndex = this.mediaItems.findIndex(media => media.id === id)
+            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1) return
 
             let start = null
             let end = null
             if (lastSelectedMediaIndex < selectedMediaIndex) {
               start = lastSelectedMediaIndex + 1
-              end = selectedMediaIndex + 1
+              end = selectedMediaIndex
             } else {
               start = selectedMediaIndex
-              end = lastSelectedMediaIndex
+              end = lastSelectedMediaIndex - 1
             }
-
-            const selectedMedias = this.mediaItems.slice(start, end)
-            selectedMedias.forEach(media => {
-              if (this.selectedMedias.length >= this.max && this.max > 0) return
-              const index = this.selectedMedias.findIndex(
-                m => m.id === media.id
-              )
-              if (index === -1) this.selectedMedias.push(media)
-            })
+            for (let i = start; i <= end; i++) {
+              if (this.selectedMedias.length >= this.max && this.max > 0) break
+              const media = this.mediaItems[i]
+              if (!this.selectedMedias.find(sMedia => sMedia.id === media.id)) {
+                this.selectedMedias.push(media)
+              }
+            }
           } else {
-            const mediaToSelect = this.mediaItems.filter(
-              media => media.id === id
-            )
-            if (mediaToSelect.length) this.selectedMedias.push(mediaToSelect[0])
+            this.selectedMedias.push(item)
           }
-        } else {
-          this.selectedMedias = this.selectedMedias.filter(
-            media => media.id !== id
-          )
+        } else if (!shift) {
+          if (this.max !== 1) {
+            this.selectedMedias = this.selectedMedias.filter(media => media.id !== id)
+          } else {
+            this.selectedMedias = [item]
+          }
         }
       },
       updateSelectedMediasSingle(item) {
-        // Clear then reuse existing add logic
+        if (this.selectedMedias.length === 1 && this.selectedMedias[0].id === item.id) {
+          this.clearSelectedMedias()
+          return
+        }
         this.clearSelectedMedias()
         this.updateSelectedMedias(item, false)
       },
@@ -921,12 +473,9 @@
         const id = item.id
         const idx = this.selectedMedias.findIndex(m => m.id === id)
         if (idx >= 0) {
-          // remove
           this.selectedMedias.splice(idx, 1)
         } else {
-          // add (respect max if any)
           if (this.max === 1) {
-            // if max is 1, behave like single-select
             this.updateSelectedMediasSingle(item)
             return
           }
@@ -934,13 +483,17 @@
           this.selectedMedias.push(item)
         }
       },
+      onBlankClickClearSelection(e) {
+        const inSelectable = e.target.closest('[data-ml-selectable]')
+        if (!inSelectable) this.clearSelectedMedias()
+      },
+
       getFormData(form) {
         let data = FormDataAsObj(form)
         if (data) data.page = this.page
         else data = { page: this.page }
         data.type = this.type
-        if (Array.isArray(data.unused) && data.unused.length)
-          data.unused = data.unused[0]
+        if (Array.isArray(data.unused) && data.unused.length) data.unused = data.unused[0]
         data.folder_id = this.currentFolderId ?? '' // '' or null => root
         return data
       },
@@ -978,7 +531,6 @@
         if (this._hoverRaf) return
         this._hoverRaf = requestAnimationFrame(() => {
           this._hoverRaf = null
-          // Find the row under the pointer
           const el = document.elementFromPoint(e.clientX, e.clientY)
           const row = el && el.closest && el.closest('.folder-node__row')
           if (row && row.dataset && row.dataset.id) {
@@ -993,36 +545,58 @@
         this.saveLastFolder()
         this.submitFilter()
       },
-      goToRoot() {
-        this.selectFolderPath([])
-      },
-      goToIndex(i) {
-        this.selectFolderPath(this.currentFolderPath.slice(0, i + 1))
-      },
+      goToRoot() { this.selectFolderPath([]) },
+      goToIndex(i) { this.selectFolderPath(this.currentFolderPath.slice(0, i + 1)) },
       promptNewFolder() {
-        const name = window.prompt(
-          this.$trans('media-library.new-folder', 'New folder name')
-        )
+        const name = window.prompt(this.$trans('media-library.new-folder', 'New folder name'))
         if (!name) return
         this.createFolderAtPath(this.currentFolderPath, name)
       },
       createFolderAtPath(parentPath, forcedName = null) {
-        const name =
-          forcedName ||
-          window.prompt(
-            this.$trans('media-library.new-subfolder', 'New subfolder name')
-          )
+        const name = forcedName || window.prompt(this.$trans('media-library.new-subfolder', 'New subfolder name'))
         if (!name) return
         api.createFolder(
           this.endpoint,
           { type: this.type, parent: (parentPath || []).join('/'), name },
-          () => {
-            this.submitFilter()
-            this.loadFolderTree()
-          },
+          () => { this.submitFilter(); this.loadFolderTree() },
           error => {
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
               message: error.data?.message || 'Unable to create folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      onRenameFolder(payload) {
+        // payload: { id, path }
+        const currentName = payload.path.slice(-1)[0] || ''
+        const name = window.prompt(
+          this.$trans('media-library.rename-folder', 'Rename folder'),
+          currentName
+        )
+        if (!name) return
+
+        api.renameFolder(
+          this.endpoint,
+          payload.id,
+          { type: this.type, name },
+          resp => {
+            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
+            if (this.currentFolderId === payload.id) {
+              const newPath = (resp.data.folder.path || '')
+                .split('/')
+                .filter(Boolean)
+              this.currentFolderPath = newPath
+            }
+            this.loadFolderTree()
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.renamed', 'Folder renamed'),
+              variant: 'success'
+            })
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to rename folder',
               variant: 'error'
             })
           }
@@ -1078,100 +652,23 @@
         )
       },
       onMoveToFolder({ targetId, mediaIds, type }) {
-        // Build request to move to targetId (root may be null)
         const body = {
           type: type || this.type,
           targetId, // use id instead of path
           mediaIds
         }
-
         const refresh = () => {
           this.clearSelectedMedias()
           this.submitFilter()
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
-
-        api.moveToFolder(
-          this.endpoint,
-          body,
-          () => {
-            refresh()
-          },
-          () => {
-            // Refresh anyway to keep UI in sync with server
-            refresh()
-          }
-        )
+        api.moveToFolder(this.endpoint, body, () => refresh(), () => refresh())
       },
       onSelectFolder(payload) {
-        // payload: { id: number|null, path: string[] }
         this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
         this.saveLastFolder()
         this.submitFilter()
-      },
-
-      // Rename folder
-      onRenameFolder(payload) {
-        // payload: { id, path }
-        const currentName = payload.path.slice(-1)[0] || ''
-        const name = window.prompt(
-          this.$trans('media-library.rename-folder', 'Rename folder'),
-          currentName
-        )
-        if (!name) return
-
-        api.renameFolder(
-          this.endpoint,
-          payload.id,
-          { type: this.type, name },
-          resp => {
-            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
-            if (this.currentFolderId === payload.id) {
-              const newPath = (resp.data.folder.path || '')
-                .split('/')
-                .filter(Boolean)
-              this.currentFolderPath = newPath
-            }
-            this.loadFolderTree()
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.renamed', 'Folder renamed'),
-              variant: 'success'
-            })
-          },
-          error => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error.data?.message || 'Unable to rename folder',
-              variant: 'error'
-            })
-          }
-        )
-      },
-      moveSelectedToCurrentFolder() {
-        if (!this.selectedMedias.length) return
-        api.moveToFolder(
-          this.endpoint,
-          {
-            type: this.type,
-            targetId: this.currentFolderId,
-            mediaIds: this.selectedMedias.map(m => m.id)
-          },
-          () => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.moved', 'Moved to folder'),
-              variant: 'success'
-            })
-            this.page = 1
-            this.clearMediaItems()
-            this.reloadGrid()
-          },
-          error => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error.data?.message || 'Unable to move items',
-              variant: 'error'
-            })
-          }
-        )
       },
       // ------- /FOLDERS -------
 
@@ -1181,15 +678,10 @@
       deleteSelectedMedias(mediasIds) {
         let keepSelectedMedias = []
         if (mediasIds && mediasIds.length !== this.selectedMedias.length) {
-          keepSelectedMedias = this.selectedMedias.filter(
-            media => !media.deleteUrl
-          )
+          keepSelectedMedias = this.selectedMedias.filter(media => !media.deleteUrl)
         }
         mediasIds.forEach(() => {
-          this.$store.commit(
-            MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL,
-            this.type
-          )
+          this.$store.commit(MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL, this.type)
         })
         this.mediaItems = this.mediaItems.filter(
           media =>
@@ -1252,9 +744,7 @@
           el,
           offset: 0,
           easing: 'easeOut',
-          onComplete: function() {
-            self.reloadGrid()
-          }
+          onComplete: function() { self.reloadGrid() }
         })
       },
       listenScrollPosition() {
@@ -1287,30 +777,14 @@
       saveAndClose() {
         this.$store.commit(MEDIA_LIBRARY.SAVE_MEDIAS, this.selectedMedias)
         this.close()
-      },
-      beforeDestroy() {
-        if (this._onPMove) window.removeEventListener('pointermove', this._onPMove, true)
-        if (this._onPUp) window.removeEventListener('pointerup', this._onPUp, true)
-        if (this._onMove) window.removeEventListener('mousemove', this._onMove, true)
-        if (this._onUp) window.removeEventListener('mouseup', this._onUp, true)
       }
     }
   }
 </script>
 
 <style lang="scss">
-  .medialibrary,
-  .medialibrary__frame,
-  .medialibrary__inner,
-  .medialibrary__grid {
-    height: 100%;
-    min-height: 100%;
-  }
-
   .medialibrary__filter-item {
-    .vselect {
-      min-width: 200px;
-    }
+    .vselect { min-width: 200px; }
   }
   .medialibrary__filter-item.checkbox {
     margin-top: 8px;
@@ -1318,16 +792,9 @@
   }
   .medialibrary__header {
     @include breakpoint(small-) {
-      .filter__inner {
-        flex-direction: column;
-      }
-      .filter__search {
-        padding-top: 10px;
-        display: flex;
-      }
-      .filter__search input {
-        flex-grow: 1;
-      }
+      .filter__inner { flex-direction: column; }
+      .filter__search { padding-top: 10px; display: flex; }
+      .filter__search input { flex-grow: 1; }
     }
   }
   $width_sidebar: (
@@ -1337,236 +804,69 @@
   );
 
   .medialibrary {
-    display: block;
-    width: 100%;
-    min-height: 100%;
-    padding: 0;
-    position: relative;
+    display: block; width: 100%; min-height: 100%; padding: 0; position: relative;
   }
   .medialibrary__header {
     background: $color__border--light;
     border-bottom: 1px solid $color__border;
     padding: 0 20px;
   }
-
   .medialibrary__frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-flow: column nowrap;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-flow: column nowrap;
   }
-  .medialibrary__inner {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    flex-grow: 1;
-  }
-  .medialibrary__grid {
-    position: relative;
-  }
+  .medialibrary__inner { position: relative; width: 100%; overflow: hidden; flex-grow: 1; }
+  .medialibrary__grid { position: relative; height: 100%; }
 
   .medialibrary__foldertree {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    overflow: auto;
-    border-right: 1px solid rgba(0,0,0,0.06);
-    padding: 8px 0;
-    min-width: 160px;
-    max-width: 560px;
-    z-index: 80;
-
-    @media screen and (max-width: 700px) {
-      display: none;
-    }
+    position: absolute; top: 0; bottom: 0; left: 0; width: 220px;
+    max-height: calc(100vh - 220px); overflow: auto; border-right: 1px solid #eee; padding: 8px 0;
+    @media screen and (max-width: 700px) { display: none; }
   }
 
   .medialibrary__footer {
-    position: absolute;
-    right: 0;
-    z-index: 76;
-    bottom: 0;
+    position: absolute; right: 0; z-index: 76; bottom: 0;
     width: map-get($width_sidebar, default);
-    color: $color__text--light;
-    padding: 10px;
-    overflow: hidden;
-    background: $color__border--light;
-    border-top: 1px solid $color__border;
+    color: $color__text--light; padding: 10px; overflow: hidden;
+    background: $color__border--light; border-top: 1px solid $color__border;
 
-    > button {
-      display: block;
-      width: 100%;
-    }
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 550px) {
-      width: 100%;
-    }
+    > button { display: block; width: 100%; }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 550px) { width: 100%; }
   }
 
   .medialibrary__sidebar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: map-get($width_sidebar, default);
-    padding: 0 0 80px 0;
-    z-index: 75;
-    background: $color__border--light;
-    overflow: auto;
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: map-get($width_sidebar, default); padding: 0 0 80px 0; z-index: 75;
+    background: $color__border--light; overflow: auto;
 
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 550px) {
-      display: none;
-    }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 550px) { display: none; }
   }
 
-  /* The center list now shifts based on the live folderTreeWidth (inline style) */
   .medialibrary__list {
-    margin: 0;
-    position: absolute;
-    top: 0;
-    /* left set via :style to match folderTreeWidth */
-    right: map-get($width_sidebar, default);
-    bottom: 0;
-    overflow: auto;
-    padding: 10px;
-    @include breakpoint(small) {
-      right: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      right: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 700px) {
-      left: 0 !important; /* folder tree hidden */
-    }
-    @media screen and (max-width: 550px) {
-      right: 0;
-    }
+    margin: 0; position: absolute; top: 0; left: 220px;
+    right: map-get($width_sidebar, default); bottom: 0;
+    overflow: auto; padding: 10px;
+    @include breakpoint(small) { right: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { right: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 700px) { left: 0; }
+    @media screen and (max-width: 550px) { right: 0; }
   }
 
   .medialibrary__list-items {
-    position: relative;
-    display: block;
-    width: 100%;
-    min-height: 100%;
-  }
-
-  .folder-node__row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.8;
-    padding: 2px 6px;
-  }
-  .folder-node__toggle,
-  .folder-node__name,
-  .folder-node__create {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-  }
-  .folder-node__name.is-active {
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .folder-node__children {
-    margin-left: 0;
+    position: relative; display: block; width: 100%; min-height: 100%;
   }
 
   .medialibrary__folders-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
   }
-  .breadcrumbs a {
-    text-decoration: none;
-  }
-  .breadcrumbs .sep {
-    margin: 0 6px;
-    color: #999;
-  }
-  .breadcrumbs .is-active {
-    font-weight: 600;
-  }
-  .ml-2 {
-    margin-left: 8px;
-  }
-  .mt-2 {
-    margin-top: 8px;
-  }
-  .folder-node__action{
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-    color: #999;
-    &:hover {
-      color: #000;
-    }
-    &.is-active {
-      color: #000;
-    }
-  }
-  .folder-node__action.danger { color: #b00020; }
+  .breadcrumbs a { text-decoration: none; }
+  .breadcrumbs .sep { margin: 0 6px; color: #999; }
+  .breadcrumbs .is-active { font-weight: 600; }
 
-  .folder-node__row {
-    position: relative;
-    min-height: 32px;
-    padding: 6px 8px;
-  }
-
-  .medialibrary__foldertree-resizer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 10px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 5;
-  }
-  .medialibrary__foldertree-resizer:after {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: transparent;
-    transition: background 0.15s ease;
-  }
-  .medialibrary__foldertree-resizer:hover:after,
-  .is-resizing-col .medialibrary__foldertree-resizer:after {
-    background: rgba(0,0,0,0.15);
-  }
-
-  /* Optional: prevent selecting text while resizing */
-  .is-resizing-col {
-    user-select: none;
-  }
-
-  /* Existing hover highlight for folder rows remains */
-  .folder-node__row.is-dragover {
-    outline: 2px dashed rgba(0, 0, 0, 0.25);
-    outline-offset: -2px;
-    background: rgba(0, 0, 0, 0.04);
-  }
-  .folder-node__row.is-dragover * {
-    pointer-events: none !important;
-  }
+  .ml-2 { margin-left: 8px; }
+  .mt-2 { margin-top: 8px; }
 </style>
