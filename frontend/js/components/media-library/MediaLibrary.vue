@@ -1257,11 +1257,12 @@
     top: 0;
     bottom: 0;
     left: 0;
-    width: 220px;
+    width: var(--foldertree-width);
     max-height: calc(100vh - 220px);
     overflow: auto;
     border-right: 1px solid #eee;
     padding: 8px 0;
+
     @media screen and (max-width: 700px) {
       display: none;
     }
@@ -1272,7 +1273,7 @@
     right: 0;
     z-index: 76;
     bottom: 0;
-    width: map-get($width_sidebar, default);
+    width: var(--sidebar-width);
     color: $color__text--light;
     padding: 10px;
     overflow: hidden;
@@ -1320,17 +1321,12 @@
     margin: 0;
     position: absolute;
     top: 0;
-    left: 220px;
+    left: var(--foldertree-width);
     right: var(--sidebar-width);
     bottom: 0;
     overflow: auto;
     padding: 10px;
-    @include breakpoint(small) {
-      right: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      right: map-get($width_sidebar, xsmall);
-    }
+
     @media screen and (max-width: 700px) {
       left: 0;
     }
