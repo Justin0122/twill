@@ -1,6 +1,12 @@
 <template>
   <a17-modal :title="modalTitle" mode="wide" ref="modal" @open="opened">
-    <div class="medialibrary" :style="{ '--sidebar-width': sidebarWidth + 'px' }">
+    <div
+      class="medialibrary"
+      :style="{
+        '--sidebar-width': sidebarWidth + 'px',
+        '--foldertree-width': folderTreeWidth + 'px'
+      }"
+    >
       <div class="medialibrary__frame">
         <div class="medialibrary__header" ref="form">
           <a17-filter
@@ -134,10 +140,12 @@
         <div class="medialibrary__inner">
           <div class="medialibrary__grid">
             <!-- LEFT: folder tree -->
-            <aside class="medialibrary__foldertree"
-                   @dragover.prevent="onFolderTreeDragOver"
-                   @dragenter.prevent
-                   @drop.prevent="$root.$emit('ml:dnd:hover:clear')">
+            <aside
+              class="medialibrary__foldertree"
+              @dragover.prevent="onFolderTreeDragOver"
+              @dragenter.prevent
+              @drop.prevent="$root.$emit('ml:dnd:hover:clear')"
+            >
               <folder-node
                 v-if="folderTree"
                 :node="folderTree"
@@ -166,7 +174,12 @@
                 @triggerMediaReplace="replaceMedia"
                 :folder-error="folderDeleteError"
                 :folder-error-used="folderDeleteUsed"
-                @clearFolderError="() => { folderDeleteError = null; folderDeleteUsed = [] }"
+                @clearFolderError="
+                  () => {
+                    folderDeleteError = null
+                    folderDeleteUsed = []
+                  }
+                "
               />
             </aside>
 
@@ -197,8 +210,10 @@
                 :folder="currentFolderFullPath"
                 :folder-id="currentFolderId"
               />
-              <div class="medialibrary__list-items"
-                   @click.capture="onBlankClickClearSelection">
+              <div
+                class="medialibrary__list-items"
+                @click.capture="onBlankClickClearSelection"
+              >
                 <a17-itemlist
                   v-if="type === 'file'"
                   :items="renderedMediaItems"
@@ -217,7 +232,7 @@
                   @shiftChange="updateSelectedMedias"
                 />
                 <a17-spinner v-if="loading" class="medialibrary__spinner"
-                >Loading&hellip;</a17-spinner
+                  >Loading&hellip;</a17-spinner
                 >
               </div>
             </div>
@@ -273,15 +288,12 @@
       this._onGlobalDragEnd = () => this._onHoverClear()
       window.addEventListener('dragend', this._onGlobalDragEnd)
       window.addEventListener('drop', this._onGlobalDragEnd)
-      this.updateSidebarWidth()
-      window.addEventListener('resize', this.updateSidebarWidth)
     },
     beforeDestroy() {
       this.$root.$off('ml:dnd:hover', this._onHoverId)
       this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
       window.removeEventListener('dragend', this._onGlobalDragEnd)
       window.removeEventListener('drop', this._onGlobalDragEnd)
-      window.removeEventListener('resize', this.updateSidebarWidth)
     },
     computed: {
       isOnActivePath() {
@@ -305,17 +317,6 @@
       }
     },
     methods: {
-      updateSidebarWidth() {
-        if (window.innerWidth < 550) {
-          this.sidebarWidth = 0 // hide sidebar
-        } else if (window.innerWidth < 700) {
-          this.sidebarWidth = 200
-        } else if (window.innerWidth < 900) {
-          this.sidebarWidth = 250
-        } else {
-          this.sidebarWidth = 290
-        }
-      },
       pathHere() {
         const path = []
         let n = this
@@ -527,8 +528,16 @@
         currentFolderId: null,
         folderDeleteError: null,
         folderDeleteUsed: [],
-        sidebarWidth: 290
+        sidebarWidth: 290,
+        folderTreeWidth: 400
       }
+    },
+    mounted() {
+      this.updateDynamicWidths()
+      window.addEventListener('resize', this.updateDynamicWidths)
+    },
+    beforeDestroy() {
+      window.removeEventListener('resize', this.updateDynamicWidths)
     },
     computed: {
       currentFolderFullPath() {
@@ -622,9 +631,7 @@
             this.storageKey() + ':id',
             this.currentFolderId ?? ''
           )
-        } catch (e) {
-
-        }
+        } catch (e) {}
       },
       readCookie(name) {
         const cookies = document.cookie ? document.cookie.split('; ') : []
@@ -748,8 +755,9 @@
           if (this.selectedMedias.length >= this.max && this.max > 0) return
 
           if (shift && this.selectedMedias.length > 0) {
-            const lastSelectedMedia =
-              this.selectedMedias[this.selectedMedias.length - 1]
+            const lastSelectedMedia = this.selectedMedias[
+              this.selectedMedias.length - 1
+            ]
             const lastSelectedMediaIndex = this.mediaItems.findIndex(
               media => media.id === lastSelectedMedia.id
             )
@@ -817,7 +825,25 @@
         const inSelectable = e.target.closest('[data-ml-selectable]')
         if (!inSelectable) this.clearSelectedMedias()
       },
+      updateDynamicWidths() {
+        if (window.innerWidth < 700) {
+          this.folderTreeWidth = 0
+        } else if (window.innerWidth < 900) {
+          this.folderTreeWidth = 200
+        } else {
+          this.folderTreeWidth = 220
+        }
 
+        if (window.innerWidth < 550) {
+          this.sidebarWidth = 0
+        } else if (window.innerWidth < 700) {
+          this.sidebarWidth = 200
+        } else if (window.innerWidth < 900) {
+          this.sidebarWidth = 250
+        } else {
+          this.sidebarWidth = 290
+        }
+      },
       getFormData(form) {
         let data = FormDataAsObj(form)
         if (data) data.page = this.page
@@ -924,7 +950,7 @@
         api.deleteFolder(
           this.endpoint,
           payload.id,
-          (resp) => {
+          resp => {
             // clear any previous error
             this.folderDeleteError = null
             this.folderDeleteUsed = []
@@ -935,7 +961,10 @@
               this.saveLastFolder()
             }
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.folder-deleted', 'Folder deleted'),
+              message: this.$trans(
+                'media-library.folder-deleted',
+                'Folder deleted'
+              ),
               variant: 'success'
             })
             this.page = 1
@@ -943,14 +972,24 @@
             this.reloadGrid()
             this.loadFolderTree()
           },
-          (error) => {
+          error => {
             // Prefer the detailed 422 from your controller
             if (error?.status === 422 && error?.data) {
-              this.folderDeleteError = error.data.message || this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
-              this.folderDeleteUsed  = Array.isArray(error.data.used) ? error.data.used : []
+              this.folderDeleteError =
+                error.data.message ||
+                this.$trans(
+                  'media-library.folder-delete-failed',
+                  'Unable to delete folder'
+                )
+              this.folderDeleteUsed = Array.isArray(error.data.used)
+                ? error.data.used
+                : []
             } else {
-              this.folderDeleteError = this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
-              this.folderDeleteUsed  = []
+              this.folderDeleteError = this.$trans(
+                'media-library.folder-delete-failed',
+                'Unable to delete folder'
+              )
+              this.folderDeleteUsed = []
             }
 
             // Optional toast too:
@@ -1352,7 +1391,7 @@
   .mt-2 {
     margin-top: 8px;
   }
-  .folder-node__action{
+  .folder-node__action {
     background: transparent;
     border: 0;
     cursor: pointer;
@@ -1365,7 +1404,9 @@
       color: #000;
     }
   }
-  .folder-node__action.danger { color: #b00020; }
+  .folder-node__action.danger {
+    color: #b00020;
+  }
 
   .folder-node__row {
     position: relative;
