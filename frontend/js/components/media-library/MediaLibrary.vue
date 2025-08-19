@@ -350,6 +350,24 @@
       }
     },
     methods: {
+      onReparentFolder({ sourceId, targetId }) {
+        if (sourceId === targetId) return
+        api.reparentFolder(
+          this.endpoint,
+          { sourceId, targetId }, // null targetId = move to root
+          () => {
+            // try to keep the moved node in view
+            this.loadFolderTree()
+            this.submitFilter()
+          },
+          (error) => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error?.data?.message || 'Unable to move folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
       startInlineCreate() {
         this.closeContextMenu()
         this.open = true // ensure children are visible
@@ -920,24 +938,6 @@
         } catch (e) {
           /* ignore */
         }
-      },
-      onReparentFolder({ sourceId, targetId }) {
-        if (sourceId === targetId) return
-        api.reparentFolder(
-          this.endpoint,
-          { sourceId, targetId }, // null targetId = move to root
-          () => {
-            // try to keep the moved node in view
-            this.loadFolderTree()
-            this.submitFilter()
-          },
-          (error) => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error?.data?.message || 'Unable to move folder',
-              variant: 'error'
-            })
-          }
-        )
       },
       // your existing responsive logic, now respectful of user's choice
       updateDynamicWidths() {
