@@ -423,27 +423,28 @@
         <div class="folder-node__row"
              :data-id="(node.id ?? 'root') + ''"
              :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
-             :style="{ paddingLeft: (level * 18) + 'px' }"
              @dragenter.stop.prevent="onDragEnter"
              @dragover.stop.prevent="onDragOver"
              @dragleave.stop="onDragLeave"
              @drop.stop.prevent="onDrop">
 
-          <!-- Toggle caret -->
-          <button
-            class="folder-node__toggle"
-            :class="{ 'is-hidden': !(node.children && node.children.length) }"
-            @click="toggleOpen"
-            :aria-expanded="(node.children && node.children.length ? open : false).toString()"
-            :aria-label="open ? 'Collapse folder' : 'Expand folder'">
-            <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24" aria-hidden="true">
-              <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <!-- INDENT WRAPPER (moves caret/icon/name together) -->
+          <div class="folder-node__indent" :style="{ marginLeft: (level * 18) + 'px' }">
+            <!-- Toggle caret -->
+            <button
+              class="folder-node__toggle"
+              :class="{ 'is-hidden': !(node.children && node.children.length) }"
+              @click="toggleOpen"
+              :aria-expanded="(node.children && node.children.length ? open : false).toString()"
+              :aria-label="open ? 'Collapse folder' : 'Expand folder'">
+              <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24" aria-hidden="true">
+                <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
 
-          <!-- Folder icon -->
-          <span class="folder-node__icon" aria-hidden="true">
+            <!-- Folder icon -->
+            <span class="folder-node__icon" aria-hidden="true">
           <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
             <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15"/>
             <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -459,15 +460,16 @@
           </svg>
         </span>
 
-          <!-- Name -->
-          <button
-            class="folder-node__name"
-            :class="{ 'is-active': isActiveHere }"
-            :aria-selected="isActiveHere.toString()"
-            @click="selectSelf">
-            <span v-if="level===0">All</span>
-            <span v-else>{{ node.name }}</span>
-          </button>
+            <!-- Name -->
+            <button
+              class="folder-node__name"
+              :class="{ 'is-active': isActiveHere }"
+              :aria-selected="isActiveHere.toString()"
+              @click="selectSelf">
+              <span v-if="level===0">All</span>
+              <span v-else>{{ node.name }}</span>
+            </button>
+          </div>
 
           <!-- Actions -->
           <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
@@ -1312,12 +1314,8 @@
       }
     }
   }
-  $width_sidebar: (
-    default: 290px,
-    small: 250px,
-    xsmall: 200px
-  );
 
+  // ---- Layout base ----
   .medialibrary {
     display: block;
     width: 100%;
@@ -1330,13 +1328,9 @@
     border-bottom: 1px solid $color__border;
     padding: 0 20px;
   }
-
   .medialibrary__frame {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     display: flex;
     flex-flow: column nowrap;
   }
@@ -1351,6 +1345,7 @@
     height: 100%;
   }
 
+  // ---- Left folder tree (dynamic width) ----
   .medialibrary__foldertree {
     position: absolute;
     top: 0;
@@ -1367,6 +1362,40 @@
     }
   }
 
+  // ---- Resize handle for folder tree ----
+  .medialibrary__foldertree-resizer {
+    position: absolute;
+    top: 0;
+    left: var(--foldertree-width);
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // ---- Right sidebar (dynamic width) ----
+  .medialibrary__sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    padding: 0 0 80px 0;
+    z-index: 75;
+    background: $color__border--light;
+    overflow: auto;
+
+    @media screen and (max-width: 550px) {
+      display: none;
+    }
+  }
+
+  // ---- Footer (aligns with sidebar) ----
   .medialibrary__footer {
     position: absolute;
     right: 0;
@@ -1383,39 +1412,12 @@
       display: block;
       width: 100%;
     }
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
     @media screen and (max-width: 550px) {
       width: 100%;
     }
   }
 
-  .medialibrary__sidebar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: var(--sidebar-width);
-    padding: 0 0 80px 0;
-    z-index: 75;
-    background: $color__border--light;
-    overflow: auto;
-
-    @include breakpoint(small) {
-      width: var(--sidebar-width);
-    }
-    @include breakpoint(xsmall) {
-      width: var(--sidebar-width);
-    }
-    @media screen and (max-width: 550px) {
-      display: none;
-    }
-  }
-
+  // ---- Center list (auto-fits between left & right) ----
   .medialibrary__list {
     margin: 0;
     position: absolute;
@@ -1433,7 +1435,6 @@
       right: 0;
     }
   }
-
   .medialibrary__list-items {
     position: relative;
     display: block;
@@ -1441,29 +1442,7 @@
     min-height: 100%;
   }
 
-  .folder-node__row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.8;
-    padding: 2px 6px;
-  }
-  .folder-node__toggle,
-  .folder-node__name,
-  .folder-node__create {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-  }
-  .folder-node__name.is-active {
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .folder-node__children {
-    margin-left: 0;
-  }
-
+  // ---- Breadcrumbs / nav ----
   .medialibrary__folders-nav {
     display: flex;
     align-items: center;
@@ -1480,13 +1459,12 @@
   .breadcrumbs .is-active {
     font-weight: 600;
   }
-  .ml-2 {
-    margin-left: 8px;
-  }
-  .mt-2 {
-    margin-top: 8px;
-  }
-  /* Explorer-like tree styles */
+  .ml-2 { margin-left: 8px; }
+  .mt-2 { margin-top: 8px; }
+
+  // ===============================
+  // Folder tree: explorer-like UI
+  // ===============================
   .folder-node {
     --row-h: 32px;
     --pad-x: 6px;
@@ -1498,18 +1476,29 @@
     --active: #e5f2ff;
   }
 
+  // Each row spans full width; actions float to the right
   .folder-node__row {
     position: relative;
-    display: grid;
-    grid-template-columns: 22px 22px 1fr auto;
+    display: flex;
     align-items: center;
+    justify-content: space-between; // actions on the right
     gap: 6px;
     min-height: var(--row-h);
     padding: 2px var(--pad-x);
     border-radius: 4px;
     color: var(--text);
 
-    /* elbow connector to children */
+    &:hover { background: var(--hover); }
+    &.is-active { background: var(--active); }
+
+    &.is-dragover {
+      outline: 2px dashed #3b82f6;
+      outline-offset: -2px;
+      background: rgba(59, 130, 246, 0.06);
+    }
+    &.is-dragover * { pointer-events: none !important; }
+
+    // elbow connector for hierarchy
     &::before {
       content: '';
       position: absolute;
@@ -1522,45 +1511,21 @@
       opacity: 0.6;
       pointer-events: none;
     }
-
-    /* top-level has no elbow */
-    .is-root > &::before {
-      display: none;
-    }
-
-    &:hover {
-      background: var(--hover);
-    }
-
-    &.is-active {
-      background: var(--active);
-    }
-
-    &.is-dragover {
-      outline: 2px dashed #3b82f6;
-      outline-offset: -2px;
-    }
   }
 
-  /* vertical guides for nested levels */
-  .folder-node__children {
-    position: relative;
-    margin-left: 0;
+  // suppress elbow at top level (root node container)
+  .is-root > .folder-node__row::before { display: none; }
+
+  // The group that actually indents (caret + icon + name)
+  .folder-node__indent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0; // allow ellipsis
+    // NOTE: actual left offset is applied inline via :style="{ marginLeft: (level * 18) + 'px' }"
   }
 
-  .folder-node__children::before {
-    content: '';
-    position: absolute;
-    left: calc(8px + var(--indent));
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: var(--guide);
-    opacity: 0.4;
-    pointer-events: none;
-  }
-
-  /* toggle caret */
+  // Toggle caret
   .folder-node__toggle {
     width: 22px;
     height: 22px;
@@ -1571,18 +1536,23 @@
     border: 0;
     background: none;
     cursor: pointer;
-  }
-  .folder-node__toggle.is-hidden {
-    visibility: hidden; /* keeps alignment even when no children */
+    margin-right: 2px;
+
+    &.is-hidden {
+      visibility: hidden; // keep alignment even when no children
+      pointer-events: none;
+    }
   }
 
+  // Icons
   .folder-node__icon .icon {
     width: 18px;
     height: 18px;
-    color: #f59e0b; /* amber-ish folder */
+    color: #f59e0b; // default folder amber
   }
-  .folder-node__icon .icon--root { color: #6366f1; } /* root is purple */
+  .folder-node__icon .icon--root { color: #6366f1; } // root purple
 
+  // Name
   .folder-node__name {
     text-align: left;
     width: 100%;
@@ -1593,12 +1563,15 @@
     border-radius: 4px;
     color: inherit;
     font-size: 13px;
-  }
-  .folder-node__name.is-active {
-    font-weight: 600;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.is-active { font-weight: 600; }
   }
 
-  /* actions aligned right */
+  // Right-aligned actions
   .folder-node__actions {
     display: inline-flex;
     align-items: center;
@@ -1611,50 +1584,35 @@
     border-radius: 4px;
     cursor: pointer;
     color: var(--muted);
-  }
-  .folder-node__action:hover {
-    background: #edf2f7;
-    color: #111827;
-  }
-  .folder-node__action .icon {
-    width: 16px;
-    height: 16px;
-  }
-  .folder-node__action.danger:hover {
-    background: #fee2e2;
-    color: #b91c1c;
-  }
-
-  /* reduce icon jitter on hover */
-  .icon { display: block; line-height: 0; }
-
-  .folder-node__row {
-    position: relative;
-    min-height: 32px;
-    padding: 6px 8px;
-  }
-
-  .folder-node__row.is-dragover {
-    outline: 2px dashed rgba(0, 0, 0, 0.25);
-    outline-offset: -2px;
-    background: rgba(0, 0, 0, 0.04);
-  }
-
-  .folder-node__row.is-dragover * {
-    pointer-events: none !important;
-  }
-  .medialibrary__foldertree-resizer {
-    position: absolute;
-    top: 0;
-    left: var(--foldertree-width);
-    bottom: 0;
-    width: 4px;
-    cursor: col-resize;
-    background: transparent;
-    z-index: 10;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: #edf2f7;
+      color: #111827;
+    }
+
+    &.danger:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .icon { width: 16px; height: 16px; display: block; line-height: 0; }
+  }
+
+  // Vertical guide for nested children block
+  .folder-node__children {
+    position: relative;
+    margin-left: 0;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc(8px + var(--indent));
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--guide);
+      opacity: 0.4;
+      pointer-events: none;
     }
   }
 </style>
