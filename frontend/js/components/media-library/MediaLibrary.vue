@@ -211,9 +211,13 @@
                   :items="renderedMediaItems"
                   :selected-items="selectedMedias"
                   :used-items="usedMedias"
-                  @change="updateSelectedMedias"
+                  @change="updateSelectedMediasSingle"
+                  @ctrlChange="updateSelectedMediasCtrl"
                   @shiftChange="updateSelectedMedias"
                 />
+                <a17-spinner v-if="loading" class="medialibrary__spinner"
+                >Loading&hellip;</a17-spinner
+                >
                 <a17-spinner v-if="loading" class="medialibrary__spinner"
                   >Loading&hellip;</a17-spinner
                 >
@@ -777,6 +781,28 @@
           this.selectedMedias = this.selectedMedias.filter(
             media => media.id !== id
           )
+        }
+      },
+      updateSelectedMediasSingle(item) {
+        // Clear then reuse existing add logic
+        this.clearSelectedMedias()
+        this.updateSelectedMedias(item, false)
+      },
+      updateSelectedMediasCtrl(item) {
+        const id = item.id
+        const idx = this.selectedMedias.findIndex(m => m.id === id)
+        if (idx >= 0) {
+          // remove
+          this.selectedMedias.splice(idx, 1)
+        } else {
+          // add (respect max if any)
+          if (this.max === 1) {
+            // if max is 1, behave like single-select
+            this.updateSelectedMediasSingle(item)
+            return
+          }
+          if (this.selectedMedias.length >= this.max && this.max > 0) return
+          this.selectedMedias.push(item)
         }
       },
       getFormData(form) {

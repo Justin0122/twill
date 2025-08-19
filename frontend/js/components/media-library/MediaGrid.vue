@@ -31,6 +31,8 @@
         }"
         @click.exact="toggleSelection(item)"
         @click.shift.exact="shiftToggleSelection(item)"
+        @click.ctrl.exact="ctrlToggleSelection(item)"
+        @click.meta.exact="ctrlToggleSelection(item)"
         draggable="true"
         @dragstart="onDragStart(item, $event)"
         @dragend="onDragEnd(item, $event)"
@@ -64,6 +66,10 @@
             ? this.itemsLoading[index].progress + '%'
             : '0%'
         }
+      },
+      // Toggle for Ctrl/Cmd multi-select
+      ctrlToggleSelection(item) {
+        this.$emit('ctrlChange', item)
       },
       onDragStart(item, evt) {
         if (item.disabled) return
