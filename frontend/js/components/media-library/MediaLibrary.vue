@@ -453,7 +453,8 @@
       },
       onCtxDelete() {
         this.closeContextMenu()
-        this.$emit('delete', { id: this.node.id, path: this.pathHere() })
+        const { id, path } = this.contextMenu.meta
+        this.$emit('delete', { id, path: path || [] })
       },
       pathHere() {
         const path = []
@@ -1348,6 +1349,20 @@
           }
         )
       },
+      findFolderIdByPath(pathArr) {
+        if (!this.folderTree) return null
+        // root
+        if (!Array.isArray(pathArr) || pathArr.length === 0) {
+          return this.folderTree.id ?? null
+        }
+        let cur = this.folderTree
+        for (const seg of pathArr) {
+          const next = (cur.children || []).find(c => c && c.name === seg)
+          if (!next) return null
+          cur = next
+        }
+        return cur.id ?? null
+      },
       onDeleteFolder(payload) {
         const confirmed = window.confirm(
           this.$trans(
@@ -1357,24 +1372,29 @@
         )
         if (!confirmed) return
 
+        const resolvedId = payload?.id ?? this.findFolderIdByPath(payload?.path)
+        if (resolvedId == null) {
+          this.$store.commit(NOTIFICATION.SET_NOTIF, {
+            message: 'Unable to resolve folder id for deletion.',
+            variant: 'error'
+          })
+          return
+        }
+
         api.deleteFolder(
           this.endpoint,
-          payload.id,
+          resolvedId,
           resp => {
-            // clear any previous error
             this.folderDeleteError = null
             this.folderDeleteUsed = []
 
-            if (this.currentFolderId === payload.id) {
+            if (this.currentFolderId === resolvedId) {
               this.currentFolderId = null
               this.currentFolderPath = []
               this.saveLastFolder()
             }
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans(
-                'media-library.folder-deleted',
-                'Folder deleted'
-              ),
+              message: this.$trans('media-library.folder-deleted', 'Folder deleted'),
               variant: 'success'
             })
             this.page = 1
@@ -1386,13 +1406,8 @@
             if (error?.status === 422 && error?.data) {
               this.folderDeleteError =
                 error.data.message ||
-                this.$trans(
-                  'media-library.folder-delete-failed',
-                  'Unable to delete folder'
-                )
-              this.folderDeleteUsed = Array.isArray(error.data.used)
-                ? error.data.used
-                : []
+                this.$trans('media-library.folder-delete-failed', 'Unable to delete folder')
+              this.folderDeleteUsed = Array.isArray(error.data.used) ? error.data.used : []
             } else {
               this.folderDeleteError = this.$trans(
                 'media-library.folder-delete-failed',
@@ -1400,8 +1415,6 @@
               )
               this.folderDeleteUsed = []
             }
-
-            // Optional toast too:
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
               message: this.folderDeleteError,
               variant: 'error'
