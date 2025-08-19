@@ -1,6 +1,7 @@
 <?php
 
 use A17\Twill\Http\Controllers\Admin\AppSettingsController;
+use A17\Twill\Http\Controllers\Admin\MediaFolderController;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use A17\Twill\Facades\TwillRoutes;
@@ -26,14 +27,17 @@ if (config('twill.enabled.media-library')) {
         Route::resource('medias', 'MediaLibraryController', ['only' => ['index', 'store', 'destroy']]);
 
         // Folders (by ID)
-        Route::get('medias/folders',  [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'index']);
-        Route::post('medias/folders', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'store']);
-        Route::patch('medias/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'update']);
-        Route::put('medias/folders/{folder}',   [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'update']);
-        Route::post('medias/folders/move', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'move']);
+        Route::get('medias/folders',  [MediaFolderController::class, 'index']);
+        Route::post('medias/folders', [MediaFolderController::class, 'store']);
 
-        Route::delete('medias/folders/{folder}', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'destroy']);
-        Route::post('medias/folders/reparent', [\A17\Twill\Http\Controllers\Admin\MediaFolderController::class, 'reparent']);
+        Route::post('medias/folders/move',     [MediaFolderController::class, 'move']);
+        Route::post('medias/folders/reparent', [MediaFolderController::class, 'reparent']);
+
+        // constrain {folder} to numbers to prevent catching "reparent"
+        Route::patch('medias/folders/{folder}', [MediaFolderController::class, 'update'])->whereNumber('folder');
+        Route::put('medias/folders/{folder}',   [MediaFolderController::class, 'update'])->whereNumber('folder');
+        Route::delete('medias/folders/{folder}', [MediaFolderController::class, 'destroy'])->whereNumber('folder');
+
     });
 }
 

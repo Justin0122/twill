@@ -146,8 +146,9 @@ export default {
     )
   },
   reparentFolder(endpoint, body, callback, errorCallback) {
-    // body: { sourceId: number, targetId: number|null }
-    axios.post(`${endpoint}/folders/reparent`, body).then(
+    axios.post(`${endpoint}/folders/reparent`, body, {
+      headers: { Accept: 'application/json' }
+    }).then(
       resp => callback && callback(resp),
       resp => {
         const error = { message: 'Media library reparent folder error.', value: resp }
