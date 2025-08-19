@@ -15,8 +15,7 @@
                     href="#"
                     @click.prevent="goToRoot"
                     :class="{ 'is-active': currentFolderPath.length === 0 }"
-                  >All</a
-                  >
+                  >All</a>
                   <span
                     v-for="(seg, i) in currentFolderPath"
                     :key="currentFolderPath.slice(0, i + 1).join('/')"
@@ -25,47 +24,29 @@
                     <a
                       href="#"
                       @click.prevent="goToIndex(i)"
-                      :class="{
-                        'is-active': i === currentFolderPath.length - 1
-                      }"
-                    >{{ seg }}</a
-                    >
+                      :class="{ 'is-active': i === currentFolderPath.length - 1 }"
+                    >{{ seg }}</a>
                   </span>
                 </nav>
               </div>
 
               <!-- Type tabs -->
-              <ul
-                class="secondarynav secondarynav--desktop"
-                v-if="types.length"
-              >
+              <ul class="secondarynav secondarynav--desktop" v-if="types.length">
                 <li
                   class="secondarynav__item"
                   v-for="navType in types"
                   :key="navType.value"
-                  :class="{
-                    's--on': type === navType.value,
-                    's--disabled': type !== navType.value && strict
-                  }"
+                  :class="{ 's--on': type === navType.value, 's--disabled': type !== navType.value && strict }"
                 >
                   <a href="#" @click.prevent="updateType(navType.value)">
                     <span class="secondarynav__link">{{ navType.text }}</span>
-                    <span v-if="navType.total > 0" class="secondarynav__number">
-                      ({{ navType.total }})
-                    </span>
+                    <span v-if="navType.total > 0" class="secondarynav__number">({{ navType.total }})</span>
                   </a>
                 </li>
               </ul>
 
-              <div
-                class="secondarynav secondarynav--mobile secondarynav--dropdown"
-              >
-                <a17-dropdown
-                  ref="secondaryNavDropdown"
-                  position="bottom-left"
-                  width="full"
-                  :offset="0"
-                >
+              <div class="secondarynav secondarynav--mobile secondarynav--dropdown">
+                <a17-dropdown ref="secondaryNavDropdown" position="bottom-left" width="full" :offset="0">
                   <a17-button
                     class="secondarynav__button"
                     variant="dropdown-transparent"
@@ -73,27 +54,15 @@
                     @click="$refs.secondaryNavDropdown.toggle()"
                     v-if="selectedType"
                   >
-                    <span class="secondarynav__link">{{
-                        selectedType.text
-                      }}</span>
-                    <span class="secondarynav__number">{{
-                        selectedType.total
-                      }}</span>
+                    <span class="secondarynav__link">{{ selectedType.text }}</span>
+                    <span class="secondarynav__number">{{ selectedType.total }}</span>
                   </a17-button>
                   <div slot="dropdown__content">
                     <ul>
-                      <li
-                        v-for="navType in types"
-                        :key="navType.value"
-                        class="secondarynav__item"
-                      >
+                      <li v-for="navType in types" :key="navType.value" class="secondarynav__item">
                         <a href="#" @click.prevent="updateType(navType.value)">
-                          <span class="secondarynav__link">{{
-                              navType.text
-                            }}</span>
-                          <span class="secondarynav__number">{{
-                              navType.total
-                            }}</span>
+                          <span class="secondarynav__link">{{ navType.text }}</span>
+                          <span class="secondarynav__number">{{ navType.total }}</span>
                         </a>
                       </li>
                     </ul>
@@ -108,9 +77,7 @@
                 ref="filter"
                 name="tag"
                 :options="tags"
-                :placeholder="
-                  $trans('media-library.filter-select-label', 'Filter by tag')
-                "
+                :placeholder="$trans('media-library.filter-select-label', 'Filter by tag')"
                 :searchable="true"
                 maxHeight="175px"
               />
@@ -120,12 +87,7 @@
                 name="unused"
                 :initial-value="0"
                 :value="1"
-                :label="
-                  $trans(
-                    'media-library.unused-filter-label',
-                    'Show unused only'
-                  )
-                "
+                :label="$trans('media-library.unused-filter-label', 'Show unused only')"
               />
             </div>
           </a17-filter>
@@ -171,19 +133,9 @@
             </aside>
 
             <!-- FOOTER actions -->
-            <footer
-              class="medialibrary__footer"
-              v-if="selectedMedias.length && showInsert && connector"
-            >
-              <a17-button
-                v-if="canInsert"
-                variant="action"
-                @click="saveAndClose"
-              >{{ btnLabel }}</a17-button
-              >
-              <a17-button v-else variant="action" :disabled="true">{{
-                  btnLabel
-                }}</a17-button>
+            <footer class="medialibrary__footer" v-if="selectedMedias.length && showInsert && connector">
+              <a17-button v-if="canInsert" variant="action" @click="saveAndClose">{{ btnLabel }}</a17-button>
+              <a17-button v-else variant="action" :disabled="true">{{ btnLabel }}</a17-button>
             </footer>
 
             <!-- CENTER: media list + uploader -->
@@ -197,8 +149,7 @@
                 :folder="currentFolderFullPath"
                 :folder-id="currentFolderId"
               />
-              <div class="medialibrary__list-items"
-                   @click.capture="onBlankClickClearSelection">
+              <div class="medialibrary__list-items" @click.capture="onBlankClickClearSelection">
                 <a17-itemlist
                   v-if="type === 'file'"
                   :items="renderedMediaItems"
@@ -216,9 +167,7 @@
                   @ctrlChange="updateSelectedMediasCtrl"
                   @shiftChange="updateSelectedMedias"
                 />
-                <a17-spinner v-if="loading" class="medialibrary__spinner"
-                >Loading&hellip;</a17-spinner
-                >
+                <a17-spinner v-if="loading" class="medialibrary__spinner">Loading&hellip;</a17-spinner>
               </div>
             </div>
           </div>
@@ -255,7 +204,7 @@
       'a17-itemlist': a17ItemList,
       'a17-spinner': a17Spinner,
       'a17-checkbox': a17Checkbox,
-      'folder-node': FolderNode
+      FolderNode
     },
     props: {
       modalTitlePrefix: {
@@ -285,18 +234,8 @@
       initialPage: { type: Number, default: 1 },
       authorized: { type: Boolean, default: false },
       showInsert: { type: Boolean, default: true },
-      extraMetadatas: {
-        type: Array,
-        default() {
-          return []
-        }
-      },
-      translatableMetadatas: {
-        type: Array,
-        default() {
-          return []
-        }
-      }
+      extraMetadatas: { type: Array, default: () => [] },
+      translatableMetadatas: { type: Array, default: () => [] }
     },
     data() {
       return {
@@ -351,16 +290,10 @@
         return this.modalTitlePrefix
       },
       btnLabel() {
-        let type = this.$trans(
-          'media-library.types.single.' + this.type,
-          this.type
-        )
+        let type = this.$trans('media-library.types.single.' + this.type, this.type)
         if (this.indexToReplace > -1) return this.btnLabelUpdate + ' ' + type
         if (this.selectedMedias.length > 1)
-          type = this.$trans(
-            'media-library.types.multiple.' + this.type,
-            this.type
-          )
+          type = this.$trans('media-library.types.multiple.' + this.type, this.type)
         return this.btnLabelSingle + ' ' + type
       },
       usedMedias() {
@@ -404,13 +337,8 @@
       saveLastFolder() {
         try {
           localStorage.setItem(this.storageKey(), this.currentFolderFullPath)
-          localStorage.setItem(
-            this.storageKey() + ':id',
-            this.currentFolderId ?? ''
-          )
-        } catch (e) {
-
-        }
+          localStorage.setItem(this.storageKey() + ':id', this.currentFolderId ?? '')
+        } catch (e) {}
       },
       readCookie(name) {
         const cookies = document.cookie ? document.cookie.split('; ') : []
@@ -424,11 +352,7 @@
       getSavedFolderPath() {
         const key = this.storageKey()
         let raw = null
-        try {
-          raw = window.localStorage.getItem(key)
-        } catch (e) {
-          raw = this.readCookie(key)
-        }
+        try { raw = window.localStorage.getItem(key) } catch (e) { raw = this.readCookie(key) }
         if (raw === null) return null
         const path = raw.split('/').filter(Boolean)
         return path.length ? path : []
@@ -438,12 +362,8 @@
       replaceMedia({ id }) {
         this.$refs.uploader.replaceMedia(id)
       },
-      open() {
-        this.$refs.modal.open()
-      },
-      close() {
-        this.$refs.modal.hide()
-      },
+      open() { this.$refs.modal.open() },
+      close() { this.$refs.modal.hide() },
       opened() {
         const saved = this.getSavedFolderPath()
         if (saved !== null) this.currentFolderPath = saved
@@ -455,9 +375,7 @@
         this.selectedMedias = []
 
         if (this.connector && this.indexToReplace > -1) {
-          const mediaInitSelect = this.selected[this.connector][
-            this.indexToReplace
-            ]
+          const mediaInitSelect = this.selected[this.connector][this.indexToReplace]
           if (mediaInitSelect) this.selectedMedias.push(mediaInitSelect)
         }
       },
@@ -475,37 +393,19 @@
                 const crops = []
                 for (const crop in mediaCrop.crops) {
                   crops[crop] = {
-                    height:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.crops[crop].height
-                        : media.height,
+                    height: media.height === mediaCrop.height ? mediaCrop.crops[crop].height : media.height,
                     name: crop,
-                    width:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.crops[crop].width
-                        : media.width,
-                    x:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.crops[crop].x
-                        : 0,
-                    y:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.crops[crop].y
-                        : 0
+                    width: media.width === mediaCrop.width ? mediaCrop.crops[crop].width : media.width,
+                    x: media.width === mediaCrop.width ? mediaCrop.crops[crop].x : 0,
+                    y: media.height === mediaCrop.height ? mediaCrop.crops[crop].y : 0
                   }
                 }
                 this.$store.commit(MEDIA_LIBRARY.UPDATE_MEDIAS, {
                   index,
                   media: {
                     ...media,
-                    width:
-                      media.width === mediaCrop.width
-                        ? mediaCrop.width
-                        : media.width,
-                    height:
-                      media.height === mediaCrop.height
-                        ? mediaCrop.height
-                        : media.height,
+                    width: media.width === mediaCrop.width ? mediaCrop.width : media.width,
+                    height: media.height === mediaCrop.height ? mediaCrop.height : media.height,
                     crops
                   },
                   mediaRole
@@ -517,33 +417,22 @@
           this.selectedMedias.unshift(media)
         } else {
           this.mediaItems.unshift(media)
-          this.$store.commit(
-            MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL,
-            this.type
-          )
+          this.$store.commit(MEDIA_LIBRARY.INCREMENT_MEDIA_TYPE_TOTAL, this.type)
           this.updateSelectedMedias(media.id)
         }
       },
       updateSelectedMedias(item, shift = false) {
         const id = item.id
-        const alreadySelectedMedia = this.selectedMedias.filter(
-          media => media.id === id
-        )
+        const alreadySelectedMedia = this.selectedMedias.filter(media => media.id === id)
         if (alreadySelectedMedia.length === 0) {
           if (this.max === 1) this.clearSelectedMedias()
           if (this.selectedMedias.length >= this.max && this.max > 0) return
 
           if (shift && this.selectedMedias.length > 0) {
-            const lastSelectedMedia =
-              this.selectedMedias[this.selectedMedias.length - 1]
-            const lastSelectedMediaIndex = this.mediaItems.findIndex(
-              media => media.id === lastSelectedMedia.id
-            )
-            const selectedMediaIndex = this.mediaItems.findIndex(
-              media => media.id === id
-            )
-            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1)
-              return
+            const lastSelectedMedia = this.selectedMedias[this.selectedMedias.length - 1]
+            const lastSelectedMediaIndex = this.mediaItems.findIndex(media => media.id === lastSelectedMedia.id)
+            const selectedMediaIndex = this.mediaItems.findIndex(media => media.id === id)
+            if (selectedMediaIndex === -1 && lastSelectedMediaIndex === -1) return
 
             let start = null
             let end = null
@@ -566,19 +455,14 @@
           }
         } else if (!shift) {
           if (this.max !== 1) {
-            this.selectedMedias = this.selectedMedias.filter(
-              media => media.id !== id
-            )
+            this.selectedMedias = this.selectedMedias.filter(media => media.id !== id)
           } else {
             this.selectedMedias = [item]
           }
         }
       },
       updateSelectedMediasSingle(item) {
-        if (
-          this.selectedMedias.length === 1 &&
-          this.selectedMedias[0].id === item.id
-        ) {
+        if (this.selectedMedias.length === 1 && this.selectedMedias[0].id === item.id) {
           this.clearSelectedMedias()
           return
         }
@@ -609,8 +493,7 @@
         if (data) data.page = this.page
         else data = { page: this.page }
         data.type = this.type
-        if (Array.isArray(data.unused) && data.unused.length)
-          data.unused = data.unused[0]
+        if (Array.isArray(data.unused) && data.unused.length) data.unused = data.unused[0]
         data.folder_id = this.currentFolderId ?? '' // '' or null => root
         return data
       },
@@ -648,7 +531,6 @@
         if (this._hoverRaf) return
         this._hoverRaf = requestAnimationFrame(() => {
           this._hoverRaf = null
-          // Find the row under the pointer
           const el = document.elementFromPoint(e.clientX, e.clientY)
           const row = el && el.closest && el.closest('.folder-node__row')
           if (row && row.dataset && row.dataset.id) {
@@ -663,36 +545,58 @@
         this.saveLastFolder()
         this.submitFilter()
       },
-      goToRoot() {
-        this.selectFolderPath([])
-      },
-      goToIndex(i) {
-        this.selectFolderPath(this.currentFolderPath.slice(0, i + 1))
-      },
+      goToRoot() { this.selectFolderPath([]) },
+      goToIndex(i) { this.selectFolderPath(this.currentFolderPath.slice(0, i + 1)) },
       promptNewFolder() {
-        const name = window.prompt(
-          this.$trans('media-library.new-folder', 'New folder name')
-        )
+        const name = window.prompt(this.$trans('media-library.new-folder', 'New folder name'))
         if (!name) return
         this.createFolderAtPath(this.currentFolderPath, name)
       },
       createFolderAtPath(parentPath, forcedName = null) {
-        const name =
-          forcedName ||
-          window.prompt(
-            this.$trans('media-library.new-subfolder', 'New subfolder name')
-          )
+        const name = forcedName || window.prompt(this.$trans('media-library.new-subfolder', 'New subfolder name'))
         if (!name) return
         api.createFolder(
           this.endpoint,
           { type: this.type, parent: (parentPath || []).join('/'), name },
-          () => {
-            this.submitFilter()
-            this.loadFolderTree()
-          },
+          () => { this.submitFilter(); this.loadFolderTree() },
           error => {
             this.$store.commit(NOTIFICATION.SET_NOTIF, {
               message: error.data?.message || 'Unable to create folder',
+              variant: 'error'
+            })
+          }
+        )
+      },
+      onRenameFolder(payload) {
+        // payload: { id, path }
+        const currentName = payload.path.slice(-1)[0] || ''
+        const name = window.prompt(
+          this.$trans('media-library.rename-folder', 'Rename folder'),
+          currentName
+        )
+        if (!name) return
+
+        api.renameFolder(
+          this.endpoint,
+          payload.id,
+          { type: this.type, name },
+          resp => {
+            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
+            if (this.currentFolderId === payload.id) {
+              const newPath = (resp.data.folder.path || '')
+                .split('/')
+                .filter(Boolean)
+              this.currentFolderPath = newPath
+            }
+            this.loadFolderTree()
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: this.$trans('media-library.renamed', 'Folder renamed'),
+              variant: 'success'
+            })
+          },
+          error => {
+            this.$store.commit(NOTIFICATION.SET_NOTIF, {
+              message: error.data?.message || 'Unable to rename folder',
               variant: 'error'
             })
           }
@@ -748,74 +652,23 @@
         )
       },
       onMoveToFolder({ targetId, mediaIds, type }) {
-        // Build request to move to targetId (root may be null)
         const body = {
           type: type || this.type,
-          targetId: targetId, // use id instead of path
+          targetId, // use id instead of path
           mediaIds
         }
-
         const refresh = () => {
           this.clearSelectedMedias()
           this.submitFilter()
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
-
-        api.moveToFolder(
-          this.endpoint,
-          body,
-          () => {
-            refresh()
-          },
-          () => {
-            // Refresh anyway to keep UI in sync with server
-            refresh()
-          }
-        )
+        api.moveToFolder(this.endpoint, body, () => refresh(), () => refresh())
       },
       onSelectFolder(payload) {
-        // payload: { id: number|null, path: string[] }
         this.currentFolderId = payload.id ?? null
         this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
         this.saveLastFolder()
         this.submitFilter()
-      },
-
-      // Rename folder
-      onRenameFolder(payload) {
-        // payload: { id, path }
-        const currentName = payload.path.slice(-1)[0] || ''
-        const name = window.prompt(
-          this.$trans('media-library.rename-folder', 'Rename folder'),
-          currentName
-        )
-        if (!name) return
-
-        api.renameFolder(
-          this.endpoint,
-          payload.id,
-          { type: this.type, name },
-          resp => {
-            // If we renamed the current folder, update breadcrumbs path only (id stays the same)
-            if (this.currentFolderId === payload.id) {
-              const newPath = (resp.data.folder.path || '')
-                .split('/')
-                .filter(Boolean)
-              this.currentFolderPath = newPath
-            }
-            this.loadFolderTree()
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: this.$trans('media-library.renamed', 'Folder renamed'),
-              variant: 'success'
-            })
-          },
-          error => {
-            this.$store.commit(NOTIFICATION.SET_NOTIF, {
-              message: error.data?.message || 'Unable to rename folder',
-              variant: 'error'
-            })
-          }
-        )
       },
       // ------- /FOLDERS -------
 
@@ -825,15 +678,10 @@
       deleteSelectedMedias(mediasIds) {
         let keepSelectedMedias = []
         if (mediasIds && mediasIds.length !== this.selectedMedias.length) {
-          keepSelectedMedias = this.selectedMedias.filter(
-            media => !media.deleteUrl
-          )
+          keepSelectedMedias = this.selectedMedias.filter(media => !media.deleteUrl)
         }
         mediasIds.forEach(() => {
-          this.$store.commit(
-            MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL,
-            this.type
-          )
+          this.$store.commit(MEDIA_LIBRARY.DECREMENT_MEDIA_TYPE_TOTAL, this.type)
         })
         this.mediaItems = this.mediaItems.filter(
           media =>
@@ -896,9 +744,7 @@
           el,
           offset: 0,
           easing: 'easeOut',
-          onComplete: function() {
-            self.reloadGrid()
-          }
+          onComplete: function() { self.reloadGrid() }
         })
       },
       listenScrollPosition() {
@@ -938,9 +784,7 @@
 
 <style lang="scss">
   .medialibrary__filter-item {
-    .vselect {
-      min-width: 200px;
-    }
+    .vselect { min-width: 200px; }
   }
   .medialibrary__filter-item.checkbox {
     margin-top: 8px;
@@ -948,16 +792,9 @@
   }
   .medialibrary__header {
     @include breakpoint(small-) {
-      .filter__inner {
-        flex-direction: column;
-      }
-      .filter__search {
-        padding-top: 10px;
-        display: flex;
-      }
-      .filter__search input {
-        flex-grow: 1;
-      }
+      .filter__inner { flex-direction: column; }
+      .filter__search { padding-top: 10px; display: flex; }
+      .filter__search input { flex-grow: 1; }
     }
   }
   $width_sidebar: (
@@ -967,205 +804,69 @@
   );
 
   .medialibrary {
-    display: block;
-    width: 100%;
-    min-height: 100%;
-    padding: 0;
-    position: relative;
+    display: block; width: 100%; min-height: 100%; padding: 0; position: relative;
   }
   .medialibrary__header {
     background: $color__border--light;
     border-bottom: 1px solid $color__border;
     padding: 0 20px;
   }
-
   .medialibrary__frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-flow: column nowrap;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-flow: column nowrap;
   }
-  .medialibrary__inner {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    flex-grow: 1;
-  }
-  .medialibrary__grid {
-    position: relative;
-    height: 100%;
-  }
+  .medialibrary__inner { position: relative; width: 100%; overflow: hidden; flex-grow: 1; }
+  .medialibrary__grid { position: relative; height: 100%; }
 
   .medialibrary__foldertree {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 220px;
-    max-height: calc(100vh - 220px);
-    overflow: auto;
-    border-right: 1px solid #eee;
-    padding: 8px 0;
-    @media screen and (max-width: 700px) {
-      display: none;
-    }
+    position: absolute; top: 0; bottom: 0; left: 0; width: 220px;
+    max-height: calc(100vh - 220px); overflow: auto; border-right: 1px solid #eee; padding: 8px 0;
+    @media screen and (max-width: 700px) { display: none; }
   }
 
   .medialibrary__footer {
-    position: absolute;
-    right: 0;
-    z-index: 76;
-    bottom: 0;
+    position: absolute; right: 0; z-index: 76; bottom: 0;
     width: map-get($width_sidebar, default);
-    color: $color__text--light;
-    padding: 10px;
-    overflow: hidden;
-    background: $color__border--light;
-    border-top: 1px solid $color__border;
+    color: $color__text--light; padding: 10px; overflow: hidden;
+    background: $color__border--light; border-top: 1px solid $color__border;
 
-    > button {
-      display: block;
-      width: 100%;
-    }
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 550px) {
-      width: 100%;
-    }
+    > button { display: block; width: 100%; }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 550px) { width: 100%; }
   }
 
   .medialibrary__sidebar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: map-get($width_sidebar, default);
-    padding: 0 0 80px 0;
-    z-index: 75;
-    background: $color__border--light;
-    overflow: auto;
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: map-get($width_sidebar, default); padding: 0 0 80px 0; z-index: 75;
+    background: $color__border--light; overflow: auto;
 
-    @include breakpoint(small) {
-      width: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      width: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 550px) {
-      display: none;
-    }
+    @include breakpoint(small) { width: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { width: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 550px) { display: none; }
   }
 
   .medialibrary__list {
-    margin: 0;
-    position: absolute;
-    top: 0;
-    left: 220px;
-    right: map-get($width_sidebar, default);
-    bottom: 0;
-    overflow: auto;
-    padding: 10px;
-    @include breakpoint(small) {
-      right: map-get($width_sidebar, small);
-    }
-    @include breakpoint(xsmall) {
-      right: map-get($width_sidebar, xsmall);
-    }
-    @media screen and (max-width: 700px) {
-      left: 0;
-    }
-    @media screen and (max-width: 550px) {
-      right: 0;
-    }
+    margin: 0; position: absolute; top: 0; left: 220px;
+    right: map-get($width_sidebar, default); bottom: 0;
+    overflow: auto; padding: 10px;
+    @include breakpoint(small) { right: map-get($width_sidebar, small); }
+    @include breakpoint(xsmall) { right: map-get($width_sidebar, xsmall); }
+    @media screen and (max-width: 700px) { left: 0; }
+    @media screen and (max-width: 550px) { right: 0; }
   }
 
   .medialibrary__list-items {
-    position: relative;
-    display: block;
-    width: 100%;
-    min-height: 100%;
-  }
-
-  .folder-node__row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.8;
-    padding: 2px 6px;
-  }
-  .folder-node__toggle,
-  .folder-node__name,
-  .folder-node__create {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-  }
-  .folder-node__name.is-active {
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .folder-node__children {
-    margin-left: 0;
+    position: relative; display: block; width: 100%; min-height: 100%;
   }
 
   .medialibrary__folders-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
   }
-  .breadcrumbs a {
-    text-decoration: none;
-  }
-  .breadcrumbs .sep {
-    margin: 0 6px;
-    color: #999;
-  }
-  .breadcrumbs .is-active {
-    font-weight: 600;
-  }
-  .ml-2 {
-    margin-left: 8px;
-  }
-  .mt-2 {
-    margin-top: 8px;
-  }
-  .folder-node__action{
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-    color: #999;
-    &:hover {
-      color: #000;
-    }
-    &.is-active {
-      color: #000;
-    }
-  }
-  .folder-node__action.danger { color: #b00020; }
+  .breadcrumbs a { text-decoration: none; }
+  .breadcrumbs .sep { margin: 0 6px; color: #999; }
+  .breadcrumbs .is-active { font-weight: 600; }
 
-  .folder-node__row {
-    position: relative;
-    min-height: 32px;
-    padding: 6px 8px;
-  }
-
-  .folder-node__row.is-dragover {
-    outline: 2px dashed rgba(0, 0, 0, 0.25);
-    outline-offset: -2px;
-    background: rgba(0, 0, 0, 0.04);
-  }
-
-  .folder-node__row.is-dragover * {
-    pointer-events: none !important;
-  }
+  .ml-2 { margin-left: 8px; }
+  .mt-2 { margin-top: 8px; }
 </style>
