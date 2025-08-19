@@ -273,7 +273,13 @@
       activeId: { type: [Number, String, null], default: null }
     },
     data() {
-      return { open: false, draggingOver: false, _dragDepth: 0 }
+      return {
+        open: false,
+        draggingOver: false,
+        _dragDepth: 0,
+        isRenaming: false,
+        renameValue: ''
+      }
     },
     created() {
       // Single-active: listen for broadcasted hover changes
