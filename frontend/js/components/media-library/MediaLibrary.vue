@@ -532,10 +532,13 @@
         folderDeleteError: null,
         folderDeleteUsed: [],
         sidebarWidth: 290,
-        folderTreeWidth: 400
+        folderTreeWidth: 400,
+        userResizedFolderTree: false,
+        folderTreeWidthKey: 'twill:ml:folderTreeWidth'
       }
     },
     mounted() {
+      this.restoreFolderTreeWidth()
       this.updateDynamicWidths()
       window.addEventListener('resize', this.updateDynamicWidths)
     },
@@ -623,19 +626,68 @@
       }
     },
     methods: {
+      saveFolderTreeWidth() {
+        try {
+          localStorage.setItem(this.folderTreeWidthKey, String(this.folderTreeWidth))
+        } catch (e) {
+          /* ignore */
+        }
+      },
+      // restore width
+      restoreFolderTreeWidth() {
+        try {
+          const raw = localStorage.getItem(this.folderTreeWidthKey)
+          if (raw != null) {
+            const val = parseInt(raw, 10)
+            if (!Number.isNaN(val) && val >= 0) {
+              this.folderTreeWidth = val
+              this.userResizedFolderTree = true // lock in user's preference
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      },
+
+      // your existing responsive logic, now respectful of user's choice
+      updateDynamicWidths() {
+        // LEFT folder tree: only set if user hasn't resized
+        if (!this.userResizedFolderTree) {
+          if (window.innerWidth < 700) {
+            this.folderTreeWidth = 0
+          } else if (window.innerWidth < 900) {
+            this.folderTreeWidth = 200
+          } else {
+            this.folderTreeWidth = 220
+          }
+        }
+
+        // RIGHT sidebar remains responsive
+        if (window.innerWidth < 550) {
+          this.sidebarWidth = 0
+        } else if (window.innerWidth < 700) {
+          this.sidebarWidth = 200
+        } else if (window.innerWidth < 900) {
+          this.sidebarWidth = 250
+        } else {
+          this.sidebarWidth = 290
+        }
+      },
       startResizingFolderTree(e) {
         e.preventDefault()
         const startX = e.clientX
         const startWidth = this.folderTreeWidth
 
         const doDrag = (moveEvent) => {
-          const newWidth = Math.max(150, startWidth + (moveEvent.clientX - startX)) // min 150px
+          const newWidth = Math.max(150, startWidth + (moveEvent.clientX - startX))
           this.folderTreeWidth = newWidth
+          this.userResizedFolderTree = true
         }
 
         const stopDrag = () => {
           document.removeEventListener('mousemove', doDrag)
           document.removeEventListener('mouseup', stopDrag)
+          this.saveFolderTreeWidth() // persist on mouseup
         }
 
         document.addEventListener('mousemove', doDrag)
@@ -845,25 +897,6 @@
       onBlankClickClearSelection(e) {
         const inSelectable = e.target.closest('[data-ml-selectable]')
         if (!inSelectable) this.clearSelectedMedias()
-      },
-      updateDynamicWidths() {
-        if (window.innerWidth < 700) {
-          this.folderTreeWidth = 0
-        } else if (window.innerWidth < 900) {
-          this.folderTreeWidth = 200
-        } else {
-          this.folderTreeWidth = 220
-        }
-
-        if (window.innerWidth < 550) {
-          this.sidebarWidth = 0
-        } else if (window.innerWidth < 700) {
-          this.sidebarWidth = 200
-        } else if (window.innerWidth < 900) {
-          this.sidebarWidth = 250
-        } else {
-          this.sidebarWidth = 290
-        }
       },
       getFormData(form) {
         let data = FormDataAsObj(form)
