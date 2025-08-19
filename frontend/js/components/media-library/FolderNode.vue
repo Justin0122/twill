@@ -52,7 +52,6 @@
       activeId: { type: [Number, String, null], default: null }
     },
     data() {
-      // eslint-disable-next-line vue/no-reserved-keys
       return { open: false, draggingOver: false, _dragDepth: 0 }
     },
     created() {
