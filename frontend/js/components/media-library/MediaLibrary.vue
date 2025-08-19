@@ -248,7 +248,7 @@
       activeId: { type: [Number, String, null], default: null }
     },
     data() {
-      return { open: false, draggingOver: false }
+      return { open: false, draggingOver: false, _dragDepth: 0 }
     },
     computed: {
       isOnActivePath() {
@@ -310,25 +310,33 @@
       },
       // --- Drag-and-drop targets (accept moving medias) ---
       onDragEnter(evt) {
-        // accept only our custom payload
-        if (this.hasMediaPayload(evt)) {
-          this.draggingOver = true
-          evt.preventDefault()
-        }
+        if (!this.hasMediaPayload(evt)) return
+        this._dragDepth += 1
+        this.draggingOver = true
+        evt.preventDefault()
+        evt.stopPropagation()
       },
       onDragOver(evt) {
-        if (this.hasMediaPayload(evt)) {
-          evt.dataTransfer.dropEffect = 'move'
-          evt.preventDefault()
-        }
+        if (!this.hasMediaPayload(evt)) return
+        evt.dataTransfer.dropEffect = 'move'
+        evt.preventDefault()
+        evt.stopPropagation()
       },
       onDragLeave(evt) {
-        this.draggingOver = false
+        // Only clear when we've fully left the row (not just a child)
+        if (this._dragDepth > 0) this._dragDepth -= 1
+        if (this._dragDepth === 0) this.draggingOver = false
+        evt.stopPropagation()
       },
       onDrop(evt) {
-        this.draggingOver = false
         const payload = this.readMediaPayload(evt)
-        if (!payload || !payload.ids || !payload.ids.length) return
+        this._dragDepth = 0
+        this.draggingOver = false
+        if (!payload || !payload.ids || !payload.ids.length) {
+          evt.preventDefault()
+          evt.stopPropagation()
+          return
+        }
         const targetPath = this.level === 0 ? [] : this.pathHere()
         const targetId = this.node.id ?? null
         this.$emit('move', {
@@ -338,41 +346,41 @@
           type: payload.type || null
         })
         evt.preventDefault()
+        evt.stopPropagation()
       },
       hasMediaPayload(evt) {
         try {
+          const types = Array.from(evt?.dataTransfer?.types || [])
           return (
-            (evt.dataTransfer &&
-              Array.from(evt.dataTransfer.types || []).includes(
-                'application/x-media-ids'
-              )) ||
-            Array.from(evt.dataTransfer.types || []).includes('text/plain')
+            types.includes('application/x-media-ids') ||
+            types.includes('text/plain')
           )
         } catch (e) {
           return false
         }
       },
       readMediaPayload(evt) {
-        let data = null
         try {
           const raw =
             evt.dataTransfer.getData('application/x-media-ids') ||
             evt.dataTransfer.getData('text/plain')
-          data = JSON.parse(raw)
+          return JSON.parse(raw)
         } catch (e) {
-          data = null
+          return null
         }
-        return data
       }
       // ---------------------------------------------------
     },
+
     template: `
       <div class="folder-node" :class="{ 'is-root': level === 0 }" role="treeitem" :aria-level="level + 1">
-        <div class="folder-node__row" :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }" :style="{ paddingLeft: (level * 14) + 'px' }"
-             @dragenter="onDragEnter"
-             @dragover="onDragOver"
-             @dragleave="onDragLeave"
-             @drop="onDrop">
+        <div class="folder-node__row"
+             :class="{ 'is-active': isActiveHere, 'is-dragover': draggingOver }"
+             :style="{ paddingLeft: (level * 14) + 'px' }"
+             @dragenter.stop.prevent="onDragEnter"
+             @dragover.stop.prevent="onDragOver"
+             @dragleave.stop="onDragLeave"
+             @drop.stop.prevent="onDrop">
           <button class="folder-node__toggle" v-if="node.children && node.children.length"
                   @click="toggleOpen" :aria-expanded="open.toString()">
             <span v-if="open">▾</span><span v-else>▸</span>
@@ -406,6 +414,7 @@
       </div>
     `
   }
+
 
   export default {
     name: 'A17Medialibrary',
@@ -1298,10 +1307,20 @@
   }
   .folder-node__action.danger { color: #b00020; }
 
+  .folder-node__row {
+    position: relative;
+    min-height: 32px;
+    padding: 6px 8px;
+  }
+
   .folder-node__row.is-dragover {
-    outline: 2px dashed rgba(0, 0, 0, 0.2);
+    outline: 2px dashed rgba(0, 0, 0, 0.25);
     outline-offset: -2px;
-    background: rgba(0, 0, 0, 0.03);
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .folder-node__row.is-dragover * {
+    pointer-events: none !important;
   }
 
 </style>
