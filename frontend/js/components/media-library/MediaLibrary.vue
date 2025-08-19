@@ -1592,8 +1592,8 @@
     &::before {
       content: '';
       position: absolute;
-      left: calc(8px + var(--indent));
-      top: calc(var(--row-h) / 2);
+      left: calc(-2px + var(--indent));
+      top: calc(var(--row-h)/);
       width: 10px;
       height: calc(var(--row-h) / 2);
       border-left: 1px solid var(--guide);
