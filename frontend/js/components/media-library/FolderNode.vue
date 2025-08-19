@@ -41,7 +41,6 @@
   </div>
 </template>
 <script>
-
   export default {
     name: 'folder-node',
     props: {
