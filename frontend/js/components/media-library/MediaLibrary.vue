@@ -624,20 +624,6 @@
               </button>
             </template>
           </div>
-
-          <!-- Row actions -->
-          <div class="folder-node__actions" role="toolbar" aria-label="Folder actions">
-            <button class="folder-node__action" title="New subfolder" @click="startInlineCreate" aria-label="New subfolder">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <button v-if="level>0" class="folder-node__action danger" title="Delete folder" @click="$emit('delete', { id: node.id, path: pathHere() })" aria-label="Delete folder">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
         </div>
 
         <!-- Children list -->
@@ -664,12 +650,6 @@
                   @blur="commitInlineCreate"
                   @click.stop
                 />
-              </div>
-              <div class="folder-node__actions">
-                <!-- optional confirm/cancel buttons; keyboard already handles it
-                <button class="folder-node__action" @click="commitInlineCreate">✔</button>
-                <button class="folder-node__action danger" @click="cancelInlineCreate">✖</button>
-                -->
               </div>
             </div>
           </div>
