@@ -12,7 +12,6 @@
               @click="toggleOpen" :aria-expanded="open.toString()">
         <span v-if="open">▾</span><span v-else>▸</span>
       </button>
-
       <button class="folder-node__name" :class="{ 'is-active': isActiveHere }" @click="selectSelf">
         <span v-if="level===0">All</span>
         <span v-else>{{ node.name }}</span>
@@ -41,10 +40,10 @@
     </div>
   </div>
 </template>
-
 <script>
+
   export default {
-    name: 'FolderNode',
+    name: 'folder-node',
     props: {
       node: { type: Object, required: true }, // { id, name, path, children: [] }, root: { id:null, name:'', path:'' }
       level: { type: Number, default: 0 },
@@ -52,7 +51,6 @@
       activeId: { type: [Number, String, null], default: null }
     },
     data() {
-      // eslint-disable-next-line vue/no-reserved-keys
       return { open: false, draggingOver: false, _dragDepth: 0 }
     },
     created() {
@@ -102,13 +100,19 @@
       }
     },
     methods: {
+      onSelectFolder(payload) {
+        this.currentFolderId = payload.id ?? null
+        this.currentFolderPath = Array.isArray(payload.path) ? payload.path : []
+        this.saveLastFolder()
+        this.submitFilter()
+      },
       pathHere() {
         const path = []
         let n = this
         while (n && n.node) {
           if (n.level > 0 || n.node.name) path.unshift(n.node.name)
           n = n.$parent
-          if (!n || n.$options.name !== 'FolderNode') break
+          if (!n || n.$options.name !== 'folder-node') break
         }
         return path
       },
@@ -132,11 +136,11 @@
         }
         this.open = !this.open
       },
-
       // --- Drag-and-drop targets (accept moving medias) ---
       onDragEnter(evt) {
         if (!this.hasMediaPayload(evt)) return
         this._dragDepth += 1
+        // Announce I am the active hover target (single-active)
         this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
         this.draggingOver = true
         evt.preventDefault()
@@ -150,13 +154,16 @@
       },
       onDragLeave(evt) {
         if (this._dragDepth > 0) this._dragDepth -= 1
-        if (this._dragDepth === 0) this.draggingOver = false
+        if (this._dragDepth === 0) {
+          this.draggingOver = false
+        }
         evt.stopPropagation()
       },
       onDrop(evt) {
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
+        // Clear any other hovered rows
         this.$root.$emit('ml:dnd:hover:clear')
         if (!payload || !payload.ids || !payload.ids.length) {
           evt.preventDefault()
@@ -196,48 +203,6 @@
         }
       }
       // ---------------------------------------------------
-    }
+    },
   }
 </script>
-
-<style lang="scss" scoped>
-  .folder-node__row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.8;
-    min-height: 32px;
-    padding: 6px 8px;
-  }
-  .folder-node__toggle,
-  .folder-node__name {
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-  }
-  .folder-node__name.is-active {
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .folder-node__children { margin-left: 0; }
-  .folder-node__actions { display: flex; gap: 4px; }
-  .folder-node__action{
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 2px 4px;
-    color: #999;
-    &:hover { color: #000; }
-    &.is-active { color: #000; }
-  }
-  .folder-node__action.danger { color: #b00020; }
-  .folder-node__row.is-dragover {
-    outline: 2px dashed rgba(0, 0, 0, 0.25);
-    outline-offset: -2px;
-    background: rgba(0, 0, 0, 0.04);
-  }
-  .folder-node__row.is-dragover * {
-    pointer-events: none !important;
-  }
-</style>
