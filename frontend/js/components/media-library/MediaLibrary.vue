@@ -1461,7 +1461,7 @@
           // Moving to Trash means soft delete
           api.bulkDelete(
             `${this.endpoint}/bulk-delete`,
-            { ids: mediaIds },
+            { ids: Array.isArray(mediaIds) ? mediaIds.join(',') : String(mediaIds) },
             () => refresh(),
             () => refresh() // refresh anyway on error
           )
