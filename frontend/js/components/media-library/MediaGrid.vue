@@ -104,19 +104,32 @@
       },
       onDragStart(item, evt) {
         if (item.disabled) return
+
         const selectedIds = (this.selectedItems || []).map(m => m.id)
         const ids =
           this.isSelected(item) && selectedIds.length ? selectedIds : [item.id]
+
+        const sourceId = item.folder_id;
+        const payload = {
+          ids,
+          type: this.type || null,
+          sourceId,
+        }
+
         try {
           evt.dataTransfer.setData(
             'application/x-media-ids',
-            JSON.stringify({ ids, type: this.type || null })
+            JSON.stringify(payload)
           )
         } catch (e) {
-          evt.dataTransfer.setData('text/plain', JSON.stringify({ ids }))
+          evt.dataTransfer.setData('text/plain', JSON.stringify(payload))
         }
+
+        evt.dataTransfer.setData('sourceId', sourceId || '')
+
         evt.dataTransfer.effectAllowed = 'move'
       },
+
       onDragEnd() {
         this.$root.$emit('ml:dnd:hover:clear')
       }
