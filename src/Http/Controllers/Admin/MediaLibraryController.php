@@ -110,10 +110,23 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             BasicFilter::make()
                 ->queryString('folder_id')
                 ->apply(function (Builder $builder, $value) {
-                    if ($value === null || $value === '' || $value === 'null') {
+                    // When folder_id is not provided or is an empty string, do not filter by folder.
+                    if ($value === null || $value === '') {
+                        return $builder;
+                    }
+
+                    // Explicit "null" string means filter for items without a folder.
+                    if ($value === 'null') {
                         return $builder->whereNull('folder_id');
                     }
-                    return $builder->where('folder_id', (int) $value);
+
+                    // Numeric value means filter by that specific folder.
+                    if (is_numeric($value)) {
+                        return $builder->where('folder_id', (int)$value);
+                    }
+
+                    // Fallback: no folder filtering.
+                    return $builder;
                 }),
         ]);
     }
