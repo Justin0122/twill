@@ -685,33 +685,54 @@
               @click="toggleOpen"
               :aria-expanded="(node.children && node.children.length ? open : false).toString()"
               :aria-label="open ? 'Collapse folder' : 'Expand folder'">
-              <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24" aria-hidden="true">
-                <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg v-if="node.children && node.children.length" class="icon icon--chev" viewBox="0 0 24 24"
+                   aria-hidden="true">
+                <path v-if="open" d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                <path v-else d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
               </svg>
             </button>
 
             <span class="folder-node__icon" aria-hidden="true">
               <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
                 <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15" />
-                <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z" fill="none" stroke="currentColor"
-                      stroke-width="1.5" />
+                <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z"
+                      fill="none" stroke="currentColor" stroke-width="1.5" />
               </svg>
+
+              <!-- Active trash -->
+              <svg v-else-if="node.id==='trash' && isActiveHere" class="icon icon--trash-active" viewBox="0 0 24 24">
+                  <g transform="rotate(10 12 3)">
+                      <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
+                            fill="currentColor" opacity="0.15" />
+                  <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
+                        fill="none" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M8 5.2v-2h8v2" fill="none" stroke="currentColor" stroke-width="1.5" />
+                  </g>
+              </svg>
+
+              <!-- Default trash -->
+              <svg v-else-if="node.id==='trash'" class="icon icon--trash" viewBox="0 0 24 24">
+                <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
+                      fill="none" stroke="currentColor" stroke-width="1.5" />
+              </svg>
+
+              <!-- Normal folders -->
               <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
                 <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5" />
                 <path
                   d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z"
                   fill="currentColor" opacity="0.15" />
-                <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none"
-                      stroke="currentColor" stroke-width="1.5" />
+                <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z"
+                      fill="none" stroke="currentColor" stroke-width="1.5" />
               </svg>
-              <svg v-else-if="node.id === 'trash'" class="icon icon--trash" viewBox="0 0 24 24">
-                <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              </svg>
+
               <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
-                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
-                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor"
-                      stroke-width="1.5" />
+                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                      fill="currentColor" opacity="0.15" />
+                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z"
+                      fill="none" stroke="currentColor" stroke-width="1.5" />
               </svg>
             </span>
 
@@ -753,8 +774,9 @@
             <span class="folder-node__icon" aria-hidden="true">
               <!-- a plain folder icon (optional) -->
               <svg class="icon icon--folder" viewBox="0 0 24 24">
-                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15"/>
-                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
+                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none"
+                      stroke="currentColor" stroke-width="1.5" />
               </svg>
             </span>
                 <input
@@ -796,7 +818,8 @@
              role="menu"
              @click.stop>
           <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">➕ New subfolder</button>
-          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">✏️ Rename</button>
+          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">✏️ Rename
+          </button>
           <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">🗑 Delete</button>
         </div>
       </div>
@@ -1427,20 +1450,31 @@
           }
         )
       },
-      onMoveToFolder({ targetId, mediaIds, type }) {
+      onMoveToFolder({ targetId, mediaIds, type, sourceId }) {
         const refresh = () => {
           this.clearSelectedMedias()
           this.submitFilter()
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
 
+        // Move INTO trash → soft delete
         if (targetId === 'trash') {
-          // Moving to Trash means soft delete
           api.bulkDelete(
             `${this.endpoint}/bulk-delete`,
             { ids: mediaIds },
             () => refresh(),
-            () => refresh() // refresh anyway on error
+            () => refresh()
+          )
+          return
+        }
+
+        // Move OUT of trash → restore
+        if (sourceId === 'trash') {
+          api.restoreFromTrash(
+            `${this.endpoint}/restore`,
+            { ids: mediaIds, folder_id: targetId || null },
+            () => refresh(),
+            () => refresh()
           )
           return
         }

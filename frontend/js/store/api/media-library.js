@@ -157,4 +157,10 @@ export default {
       }
     )
   },
+  // Restore media items from trash
+  restoreFromTrash(endpoint, body, onSuccess, onError) {
+    axios.post(`${endpoint}/restore`, body)
+      .then(res => onSuccess && onSuccess(res))
+      .catch(err => onError && onError(err))
+  }
 }

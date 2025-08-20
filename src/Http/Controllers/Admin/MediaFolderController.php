@@ -1,11 +1,13 @@
 <?php
+
 namespace A17\Twill\Http\Controllers\Admin;
 
+use A17\Twill\Models\Block;
 use A17\Twill\Models\LibraryFolder;
+use A17\Twill\Models\Media;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use A17\Twill\Models\Media;
-use A17\Twill\Models\Block;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -30,16 +32,37 @@ class MediaFolderController extends Controller
         return response()->json(['tree' => $tree]);
     }
 
+    public function restoreFromTrash(Request $request): JsonResponse
+    {
+        $ids = (array)$request->input('ids', []);
+        $folderId = $request->input('folder_id');
+
+        foreach ($ids as $id) {
+            $media = Media::withTrashed()->find($id);
+
+            if ($media) {
+                $media->restore(); // clear deleted_at
+
+                if ($folderId !== 'trash') {
+                    $media->folder_id = $folderId ?: null;
+                    $media->save();
+                }
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
-            'type'   => 'required|in:image,video,file,media',
+            'type' => 'required|in:image,video,file,media',
             'parent' => 'nullable|string',
-            'name'   => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
-        $parentPath = trim((string) ($data['parent'] ?? ''), '/');
-        $name       = trim($data['name'], '/');
+        $parentPath = trim((string)($data['parent'] ?? ''), '/');
+        $name = trim($data['name'], '/');
 
         $parent = $parentPath === ''
             ? null
@@ -50,7 +73,7 @@ class MediaFolderController extends Controller
         $folder = LibraryFolder::firstOrCreate(
             ['library' => 'media', 'path' => $path],
             [
-                'name'      => $name,
+                'name' => $name,
                 'parent_id' => $parent?->id,
             ]
         );
@@ -88,10 +111,10 @@ class MediaFolderController extends Controller
             foreach ($descendants as $child) {
                 $child->update([
                     'path' => preg_replace(
-                        '#^'.preg_quote($oldPath, '#').'#',
+                        '#^' . preg_quote($oldPath, '#') . '#',
                         $newPath,
                         $child->path
-                    )
+                    ),
                 ]);
             }
         });
@@ -103,10 +126,10 @@ class MediaFolderController extends Controller
     public function move(Request $request)
     {
         $data = $request->validate([
-            'type'      => 'required|string',
-            'targetId'  => 'nullable|integer',
-            'mediaIds'  => 'required|array|min:1',
-            'mediaIds.*'=> 'integer',
+            'type' => 'required|string',
+            'targetId' => 'nullable|integer',
+            'mediaIds' => 'required|array|min:1',
+            'mediaIds.*' => 'integer',
         ]);
 
         $targetId = $data['targetId'] ?? null;
@@ -216,36 +239,37 @@ class MediaFolderController extends Controller
                                 $title = $model->title
                                     ?? $model->name
                                     ?? (method_exists($model, 'getTitle') ? $model->getTitle() : null)
-                                    ?? (method_exists($model, '__toString') ? (string) $model : null);
+                                    ?? (method_exists($model, '__toString') ? (string)$model : null);
                             }
-                        } catch (\Throwable $e) { /* ignore */ }
+                        } catch (\Throwable $e) { /* ignore */
+                        }
                     }
 
                     return [
-                        'type'      => $pageType ?: $row->mediable_type,
-                        'id'        => $pageId   ?: $row->mediable_id,
-                        'role'      => $row->role,
-                        'title'     => $title,
+                        'type' => $pageType ?: $row->mediable_type,
+                        'id' => $pageId ?: $row->mediable_id,
+                        'role' => $row->role,
+                        'title' => $title,
                         'admin_url' => $this->adminEditUrlFor($pageType, $pageId),
-                        'via'       => [
+                        'via' => [
                             'mediable_type' => $row->mediable_type,
-                            'mediable_id'   => $row->mediable_id,
+                            'mediable_id' => $row->mediable_id,
                         ],
                     ];
                 })
-                    ->unique(fn($p) => ($p['type'] ?? '').'#'.($p['id'] ?? '').'|'.($p['role'] ?? ''))
+                    ->unique(fn($p) => ($p['type'] ?? '') . '#' . ($p['id'] ?? '') . '|' . ($p['role'] ?? ''))
                     ->values();
 
                 return [
-                    'media_id' => (int) $mediaId,
-                    'filename' => (string) ($mediaMeta[$mediaId] ?? ''),
-                    'places'   => $places,
+                    'media_id' => (int)$mediaId,
+                    'filename' => (string)($mediaMeta[$mediaId] ?? ''),
+                    'places' => $places,
                 ];
             })->values();
 
             return response()->json([
-                'message' => "This folder (or its subfolders) contains used media. Remove usages first.",
-                'used'    => $usedReport,
+                'message' => 'This folder (or its subfolders) contains used media. Remove usages first.',
+                'used' => $usedReport,
             ], 422);
         }
 
@@ -258,7 +282,7 @@ class MediaFolderController extends Controller
         return response()->json([
             'ok' => true,
             'deleted' => [
-                'media'   => $mediaIds->count(),
+                'media' => $mediaIds->count(),
                 'folders' => $ids->count(),
             ],
         ]);
@@ -289,14 +313,16 @@ class MediaFolderController extends Controller
                 $block = Block::query()->find($currentId);
                 if (!$block) {
                     $block = DB::table('twill_blocks')->where('id', $currentId)->first();
-                    if (!$block) break;
+                    if (!$block) {
+                        break;
+                    }
                     $blockableType = $block->blockable_type;
-                    $blockableId   = (int)$block->blockable_id;
-                    $parentId      = $block->parent_id ?? null;
+                    $blockableId = (int)$block->blockable_id;
+                    $parentId = $block->parent_id ?? null;
                 } else {
                     $blockableType = $block->blockable_type;
-                    $blockableId   = (int)$block->blockable_id;
-                    $parentId      = $block->parent_id;
+                    $blockableId = (int)$block->blockable_id;
+                    $parentId = $block->parent_id;
                 }
 
                 // nested block? keep climbing
@@ -316,6 +342,7 @@ class MediaFolderController extends Controller
         // direct usage on a model (e.g., App\Models\Page)
         return [$mediableType, $mediableId];
     }
+
     public function reparent(Request $request)
     {
         $data = $request->validate([
@@ -324,12 +351,16 @@ class MediaFolderController extends Controller
         ]);
 
         $source = LibraryFolder::where('library', 'media')->find($data['sourceId']);
-        if (!$source) return response()->json(['message' => 'Source folder not found'], 404);
+        if (!$source) {
+            return response()->json(['message' => 'Source folder not found'], 404);
+        }
 
         $target = null;
         if (!empty($data['targetId'])) {
             $target = LibraryFolder::where('library', 'media')->find($data['targetId']);
-            if (!$target) return response()->json(['message' => 'Target folder not found'], 422);
+            if (!$target) {
+                return response()->json(['message' => 'Target folder not found'], 422);
+            }
         }
 
         // Prevent moving into self/descendant
@@ -357,7 +388,7 @@ class MediaFolderController extends Controller
             // Move source
             $source->update([
                 'parent_id' => $target?->id,
-                'path'      => $newPath,
+                'path' => $newPath,
             ]);
 
             // Cascade descendants
@@ -368,22 +399,23 @@ class MediaFolderController extends Controller
 
             foreach ($descendants as $child) {
                 $child->update([
-                    'path' => preg_replace('#^'.preg_quote($oldPath, '#').'#', $newPath, $child->path)
+                    'path' => preg_replace('#^' . preg_quote($oldPath, '#') . '#', $newPath, $child->path),
                 ]);
             }
         });
 
         return response()->json(['ok' => true, 'folder' => $source->fresh()]);
     }
+
     private function buildTreeFromRows($rows): array
     {
         // Index by id
         $nodes = [];
         foreach ($rows as $r) {
             $nodes[$r->id] = [
-                'id'       => $r->id,
-                'name'     => $r->name,
-                'path'     => $r->path,
+                'id' => $r->id,
+                'name' => $r->name,
+                'path' => $r->path,
                 'children' => [],
             ];
         }
