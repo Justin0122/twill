@@ -1877,8 +1877,8 @@
   }
 
   .folder-node__toggle {
-    flex: 0 0 2.5rem;
-    width: 2.5rem;
+    flex: 0 0 1.5rem;
+    width: 1.5rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
