@@ -488,7 +488,13 @@
           evt.preventDefault()
           return
         }
-        const payload = { folderId: this.node.id, path: this.pathHere() }
+
+        const payload = {
+          folderId: this.node.id,
+          path: this.pathHere(),
+          sourceId: this.node.id ?? 'root',
+        }
+
         try {
           evt.dataTransfer.setData(
             'application/x-folder',
@@ -500,7 +506,11 @@
             JSON.stringify({ __folder__: payload })
           )
         }
+
         evt.dataTransfer.effectAllowed = 'move'
+
+        evt.dataTransfer.setData('sourceId', this.node.id ?? 'root')
+
         // clear any previous hover states
         this.$root.$emit('ml:dnd:hover:clear')
       },
@@ -567,7 +577,6 @@
             // cannot move into its own descendant
             this.$root.$emit('ml:dnd:hover:clear')
             this.draggingOver = false
-            // optional: toast
             this.$emit('toast', {
               variant: 'error',
               message: 'Cannot move a folder into itself or its descendant.'
@@ -582,7 +591,7 @@
           return
         }
 
-        // fallback: existing media-move flow
+        // --- MEDIA PAYLOAD ---
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
@@ -593,13 +602,21 @@
           evt.stopPropagation()
           return
         }
+
         const targetId = this.node.id ?? null
+        const sourceId =
+          evt.dataTransfer.getData('sourceId') ||
+          payload.sourceId ||
+          null
+
         this.$emit('move', {
           targetPath: this.level === 0 ? [] : this.pathHere(),
           targetId,
+          sourceId,
           mediaIds: payload.ids,
-          type: payload.type || null
+          type: payload.type || null,
         })
+
         evt.preventDefault()
         evt.stopPropagation()
       },
