@@ -26,8 +26,6 @@ if (config('twill.enabled.media-library')) {
         Route::get('medias/tags', ['as' => 'medias.tags', 'uses' => 'MediaLibraryController@tags']);
         Route::resource('medias', 'MediaLibraryController', ['only' => ['index', 'store', 'destroy']]);
 
-        Route::post('medias/restore', [MediaFolderController::class, 'restoreFromTrash']);
-
         // Folders (by ID)
         Route::get('medias/folders', [MediaFolderController::class, 'index']);
         Route::post('medias/folders', [MediaFolderController::class, 'store']);

@@ -488,13 +488,7 @@
           evt.preventDefault()
           return
         }
-
-        const payload = {
-          folderId: this.node.id,
-          path: this.pathHere(),
-          sourceId: this.node.id ?? 'root',
-        }
-
+        const payload = { folderId: this.node.id, path: this.pathHere() }
         try {
           evt.dataTransfer.setData(
             'application/x-folder',
@@ -506,11 +500,7 @@
             JSON.stringify({ __folder__: payload })
           )
         }
-
         evt.dataTransfer.effectAllowed = 'move'
-
-        evt.dataTransfer.setData('sourceId', this.node.id ?? 'root')
-
         // clear any previous hover states
         this.$root.$emit('ml:dnd:hover:clear')
       },
@@ -577,6 +567,7 @@
             // cannot move into its own descendant
             this.$root.$emit('ml:dnd:hover:clear')
             this.draggingOver = false
+            // optional: toast
             this.$emit('toast', {
               variant: 'error',
               message: 'Cannot move a folder into itself or its descendant.'
@@ -591,7 +582,7 @@
           return
         }
 
-        // --- MEDIA PAYLOAD ---
+        // fallback: existing media-move flow
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
@@ -602,21 +593,13 @@
           evt.stopPropagation()
           return
         }
-
         const targetId = this.node.id ?? null
-        const sourceId =
-          evt.dataTransfer.getData('sourceId') ||
-          payload.sourceId ||
-          null
-
         this.$emit('move', {
           targetPath: this.level === 0 ? [] : this.pathHere(),
           targetId,
-          sourceId,
           mediaIds: payload.ids,
-          type: payload.type || null,
+          type: payload.type || null
         })
-
         evt.preventDefault()
         evt.stopPropagation()
       },
@@ -1467,31 +1450,20 @@
           }
         )
       },
-      onMoveToFolder({ targetId, mediaIds, type, sourceId }) {
+      onMoveToFolder({ targetId, mediaIds, type }) {
         const refresh = () => {
           this.clearSelectedMedias()
           this.submitFilter()
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
 
-        // Move INTO trash → soft delete
         if (targetId === 'trash') {
+          // Moving to Trash means soft delete
           api.bulkDelete(
             `${this.endpoint}/bulk-delete`,
             { ids: mediaIds },
             () => refresh(),
-            () => refresh()
-          )
-          return
-        }
-
-        // Move OUT of trash → restore
-        if (sourceId === 'trash') {
-          api.restoreFromTrash(
-            `${this.endpoint}/restore`,
-            { ids: mediaIds, folder_id: targetId || null },
-            () => refresh(),
-            () => refresh()
+            () => refresh() // refresh anyway on error
           )
           return
         }

@@ -140,8 +140,11 @@ class MediaFolderController extends Controller
             }
         }
 
-        DB::table('twill_medias')->whereIn('id', $data['mediaIds'])
-            ->update(['folder_id' => $targetId]); // null => root
+        DB::transaction(function () use ($data, $targetId) {
+            Media::withTrashed()->whereIn('id', $data['mediaIds'])->restore();
+
+            Media::whereIn('id', $data['mediaIds'])->update(['folder_id' => $targetId]);
+        });
 
         return response()->json(['ok' => true]);
     }
