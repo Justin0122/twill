@@ -1890,6 +1890,7 @@
 
     &.is-hidden {
       visibility: hidden;
+      margin-right: -2px;
       pointer-events: none;
     }
   }
