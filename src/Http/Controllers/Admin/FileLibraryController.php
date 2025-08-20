@@ -120,12 +120,14 @@ class FileLibraryController extends ModuleController implements SignUploadListen
                         $builder->where('tag_id', $value);
                     });
                 }
+
                 return $builder;
             }),
             BasicFilter::make()->queryString('unused')->apply(function (Builder $builder, ?bool $value) {
                 if ($value) {
                     return $builder->unused();
                 }
+
                 return $builder;
             }),
             BasicFilter::make()
@@ -197,7 +199,7 @@ class FileLibraryController extends ModuleController implements SignUploadListen
             $requestFilters['tag'] = $this->request->get('tag');
         }
 
-        if ($this->request->has('unused') && (int)$this->request->unused === 1) {
+        if ($this->request->has('unused') && (int) $this->request->unused === 1) {
             $requestFilters['unused'] = $this->request->get('unused');
         }
 
@@ -235,7 +237,7 @@ class FileLibraryController extends ModuleController implements SignUploadListen
     {
         $filename = $request->input('qqfilename');
 
-        $cleanFilename = preg_replace("/\s+/i", "-", $filename);
+        $cleanFilename = preg_replace("/\s+/i", '-', $filename);
 
         $fileDirectory = $request->input('unique_folder_name');
 
@@ -268,6 +270,7 @@ class FileLibraryController extends ModuleController implements SignUploadListen
             $file = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($file);
             $file->update($fields);
+
             return $file->fresh();
         }
 
@@ -296,6 +299,7 @@ class FileLibraryController extends ModuleController implements SignUploadListen
             $file = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($file);
             $file->update($fields);
+
             return $file->fresh();
         }
 
@@ -358,7 +362,7 @@ class FileLibraryController extends ModuleController implements SignUploadListen
 
     public function uploadIsNotValid()
     {
-        return $this->responseFactory->json(["invalid" => true], 500);
+        return $this->responseFactory->json(['invalid' => true], 500);
     }
 
     private function shouldReplaceFile($id)

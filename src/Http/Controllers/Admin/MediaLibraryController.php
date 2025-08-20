@@ -21,19 +21,46 @@ use A17\Twill\Models\LibraryFolder;
 
 class MediaLibraryController extends ModuleController implements SignUploadListener
 {
+    /**
+     * @var string
+     */
     protected $moduleName = 'medias';
+
+    /**
+     * @var string
+     */
     protected $namespace = 'A17\Twill';
 
-    protected $defaultOrders = ['id' => 'desc'];
+    /**
+     * @var array
+     */
+    protected $defaultOrders = [
+        'id' => 'desc',
+    ];
+
+    /**
+     * @var int
+     */
     protected $perPage = 40;
 
+    /**
+     * @var string
+     */
     protected $endpointType;
+
+    /**
+     * @var array
+     */
     protected $customFields = [];
 
-    /** @var \Illuminate\Routing\ResponseFactory */
+    /**
+     * @var Illuminate\Routing\ResponseFactory
+     */
     protected $responseFactory;
 
-    /** @var \Illuminate\Config\Repository */
+    /**
+     * @var Illuminate\Config\Repository
+     */
     protected $config;
 
     public function __construct(
@@ -47,10 +74,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         $this->config = $config;
 
         $this->middleware('can:access-media-library', ['only' => ['index']]);
-        $this->middleware('can:edit-media-library', ['only' => [
-            'signS3Upload', 'signAzureUpload', 'tags', 'store', 'singleUpdate', 'bulkUpdate',
-        ]]);
-
+        $this->middleware(
+            'can:edit-media-library',
+            ['only' => ['signS3Upload', 'signAzureUpload', 'tags', 'store', 'singleUpdate', 'bulkUpdate']]
+        );
         $this->endpointType = $this->config->get('twill.media_library.endpoint_type');
         $this->customFields = $this->config->get('twill.media_library.extra_metadatas_fields');
     }
@@ -112,6 +139,9 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         ];
     }
 
+    /**
+     * @return array
+     */
     protected function getRequestFilters(): array
     {
         if ($this->request->has('search')) {
@@ -131,6 +161,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         return $requestFilters ?? [];
     }
 
+    /**
+     * @param int|null $parentModuleId
+     * @return
+     */
     public function store($parentModuleId = null)
     {
         $request = $this->app->make(MediaRequest::class);
@@ -142,8 +176,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
     }
 
     /**
-     * Local uploads
-     *
+     * @param Request $request
      * @return Media
      */
     public function storeFile($request)
@@ -198,13 +231,12 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
     }
 
     /**
-     * Remote (S3/Azure) references
-     *
+     * @param Request $request
      * @return Media
      */
     public function storeReference($request)
     {
-        $folderId   = $request->input('folder_id'); // NEW
+        $folderId   = $request->input('folder_id');
         if ($folderId !== null && !LibraryFolder::whereKey($folderId)->exists()) {
             $folderId = null;
         }
@@ -227,7 +259,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         return $this->repository->create($fields);
     }
 
-    public function singleUpdate(): JsonResponse
+    /**
+     * @return JsonResponse
+     */
+    public function singleUpdate()
     {
         $id = $this->request->input('id');
 
@@ -248,7 +283,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         ], 200);
     }
 
-    public function bulkUpdate(): JsonResponse
+    /**
+     * @return JsonResponse
+     */
+    public function bulkUpdate()
     {
         $ids = explode(',', $this->request->input('ids'));
 
@@ -284,16 +322,27 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         ], 200);
     }
 
+    /**
+     * @return mixed
+     */
     public function signS3Upload(Request $request, SignS3Upload $signS3Upload)
     {
         return $signS3Upload->fromPolicy($request->getContent(), $this, $this->config->get('twill.media_library.disk'));
     }
 
+    /**
+     * @return mixed
+     */
     public function signAzureUpload(Request $request, SignAzureUpload $signAzureUpload)
     {
         return $signAzureUpload->getSasUrl($request, $this, $this->config->get('twill.media_library.disk'));
     }
 
+    /**
+     * @param $signature
+     * @param bool $isJsonResponse
+     * @return mixed
+     */
     public function uploadIsSigned($signature, $isJsonResponse = true)
     {
         return $isJsonResponse
@@ -301,12 +350,18 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             : $this->responseFactory->make($signature, 200, ['Content-Type' => 'text/plain']);
     }
 
-    public function uploadIsNotValid(): JsonResponse
+    /**
+     * @return JsonResponse
+     */
+    public function uploadIsNotValid()
     {
         return $this->responseFactory->json(['invalid' => true], 500);
     }
 
-    private function getExtraMetadatas(): Collection
+    /**
+     * @return Collection
+     */
+    private function getExtraMetadatas()
     {
         return Collection::make($this->customFields)->mapWithKeys(function ($field) {
             $fieldInRequest = $this->request->get($field['name']);
@@ -319,7 +374,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
         });
     }
 
-    private function shouldReplaceMedia($id): bool
+    /**
+     * @return bool
+     */
+    private function shouldReplaceMedia($id)
     {
         return is_numeric($id) ? $this->repository->whereId($id)->exists() : false;
     }
