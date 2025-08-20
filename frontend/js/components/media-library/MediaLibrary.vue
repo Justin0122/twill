@@ -1877,6 +1877,7 @@
   }
 
   .folder-node__toggle {
+    flex: 0 0 2.5rem;
     width: 2.5rem;
     display: inline-flex;
     align-items: center;
@@ -1886,13 +1887,10 @@
     background: none;
     cursor: pointer;
     margin-right: 2px;
+
     &.is-hidden {
       visibility: hidden;
       pointer-events: none;
-      width: 0;
-      margin-right: 0;
-      padding: 0;
-      overflow: hidden;
     }
   }
 
