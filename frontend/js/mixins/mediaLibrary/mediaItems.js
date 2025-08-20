@@ -19,7 +19,7 @@ export default {
     ...mapState({
       itemsLoading: state => state.mediaLibrary.loading
     }),
-    replacingMediaIds: function() {
+    replacingMediaIds() {
       return this.itemsLoading.reduce((agg, curr) => {
         if (curr.isReplacement) {
           agg[curr.replacementId] = curr.id
@@ -33,10 +33,9 @@ export default {
     usedIdsSet() {
       return new Set((this.usedItems || []).map(i => i.id))
     }
-
   },
   methods: {
-    isSelected: function(item, keys = ['id']) {
+    isSelected(item, keys = ['id']) {
       if (keys.length === 1 && keys[0] === 'id') {
         return this.selectedIdsSet.has(item.id)
       }
@@ -46,23 +45,20 @@ export default {
         )
       )
     },
-
-    },
-    isUsed: function(item, keys = ['id']) {
+    isUsed(item, keys = ['id']) {
       if (keys.length === 1 && keys[0] === 'id') {
         return this.usedIdsSet.has(item.id)
       }
-
       return Boolean(
         this.usedItems.find(uItem =>
           keys.every(key => uItem[key] === item[key])
         )
       )
     },
-    toggleSelection: function(item) {
+    toggleSelection(item) {
       this.$emit('change', item)
     },
-    shiftToggleSelection: function(item) {
+    shiftToggleSelection(item) {
       this.$emit('shiftChange', item, true)
     }
   }
