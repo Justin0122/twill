@@ -115,6 +115,11 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
                         return $builder;
                     }
 
+                    // virtual "trash" folder -> list only soft-deleted items
+                    if ($value === 'trash') {
+                        return $builder->onlyTrashed();
+                    }
+
                     // Explicit "null" string means filter for items without a folder.
                     if ($value === 'null') {
                         return $builder->whereNull('folder_id');
@@ -122,7 +127,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
 
                     // Numeric value means filter by that specific folder.
                     if (is_numeric($value)) {
-                        return $builder->where('folder_id', (int)$value);
+                        return $builder->where('folder_id', (int) $value);
                     }
 
                     // Fallback: no folder filtering.
@@ -130,6 +135,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
                 }),
         ]);
     }
+
 
     public function index(?int $parentModuleId = null): array
     {

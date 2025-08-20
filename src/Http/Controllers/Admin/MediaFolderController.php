@@ -13,12 +13,21 @@ class MediaFolderController extends Controller
 {
     public function index(Request $request)
     {
-        // Build tree from library_folders (media)
         $rows = LibraryFolder::where('library', 'media')
             ->orderBy('path')
             ->get(['id', 'name', 'path', 'parent_id']);
 
-        return response()->json(['tree' => $this->buildTreeFromRows($rows)]);
+        $tree = $this->buildTreeFromRows($rows);
+
+        $trash = [
+            'id' => 'trash',
+            'name' => 'Trash',
+            'path' => '__trash__',
+            'children' => [],
+        ];
+        $tree['children'][] = $trash;
+
+        return response()->json(['tree' => $tree]);
     }
 
     public function store(Request $request)

@@ -448,10 +448,12 @@
         this.startInlineCreate()
       },
       onCtxRename() {
+        if (this.node.id === 'trash') return;
         this.closeContextMenu()
         this.startInlineRename()
       },
       onCtxDelete() {
+        if (this.node.id === 'trash') return;
         this.closeContextMenu()
         const { id, path } = this.contextMenu.meta
         this.$emit('delete', { id, path: path || [] })
@@ -703,6 +705,9 @@
                 <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z" fill="none"
                       stroke="currentColor" stroke-width="1.5" />
               </svg>
+              <svg v-else-if="node.id === 'trash'" class="icon icon--trash" viewBox="0 0 24 24">
+                <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
               <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
                 <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
                 <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none" stroke="currentColor"
@@ -727,12 +732,12 @@
             <template v-else>
               <button
                 class="folder-node__name"
-                :class="{ 'is-active': isActiveHere, 'is-locked': level===0 || node.id==null }"
+                :class="{ 'is-active': isActiveHere, 'is-locked': level===0 || node.id==null || node.id==='trash' }"
                 :aria-selected="isActiveHere.toString()"
                 @click="selectSelf"
-                @dblclick.stop.prevent="startInlineRename"
-                :title="(level===0 || node.id==null) ? '' : 'Double-click to rename'">
-                <span v-if="level===0">All</span>
+                :title="(node.id==='trash') ? '' : 'Double-click to rename'">
+                <span v-if="node.id==='trash'">Trash</span>
+                <span v-else-if="level===0">All</span>
                 <span v-else>{{ node.name }}</span>
               </button>
             </template>
@@ -1423,29 +1428,35 @@
         )
       },
       onMoveToFolder({ targetId, mediaIds, type }) {
-        // Build request to move to targetId (root may be null)
-        const body = {
-          type: type || this.type,
-          targetId, // use id instead of path
-          mediaIds
-        }
-
         const refresh = () => {
           this.clearSelectedMedias()
           this.submitFilter()
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
 
+        if (targetId === 'trash') {
+          // Moving to Trash means soft delete
+          api.bulkDelete(
+            `${this.endpoint}/bulk-delete`,
+            { ids: mediaIds },
+            () => refresh(),
+            () => refresh() // refresh anyway on error
+          )
+          return
+        }
+
+        // Normal folder move
+        const body = {
+          type: type || this.type,
+          targetId,
+          mediaIds,
+        }
+
         api.moveToFolder(
           this.endpoint,
           body,
-          () => {
-            refresh()
-          },
-          () => {
-            // Refresh anyway to keep UI in sync with server
-            refresh()
-          }
+          () => refresh(),
+          () => refresh()
         )
       },
       onReparentFolder({ sourceId, targetId }) {
