@@ -1827,7 +1827,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between; // actions on the right
+    justify-content: flex-start;
     gap: 6px;
     min-height: var(--row-h);
     padding: 2px var(--pad-x);
@@ -1836,10 +1836,8 @@
     &::before {
       content: '';
       position: absolute;
-      /* start at THIS level’s indent column */
       left: calc(var(--gutter) + var(--indent) * var(--level));
       top: calc(var(--row-h) / 2);
-      /* draw over to the NEXT level’s column */
       width: var(--indent);
       height: calc(var(--row-h) / 2);
       border-left: 1px solid var(--guide);
@@ -1853,7 +1851,6 @@
     &.is-active {
       background: var(--active);
     }
-
     &.is-dragover {
       outline: 2px dashed #3b82f6;
       outline-offset: -2px;
@@ -1875,6 +1872,7 @@
     align-items: center;
     gap: 6px;
     min-width: 0;
+    flex: 1 1 auto;
     margin-left: calc(var(--indent) * var(--level));
   }
 
@@ -1891,8 +1889,13 @@
     &.is-hidden {
       visibility: hidden;
       pointer-events: none;
+      width: 0;
+      margin-right: 0;
+      padding: 0;
+      overflow: hidden;
     }
   }
+
   .folder-node__icon .icon {
     width: 18px;
     height: 18px;
@@ -1903,7 +1906,8 @@
   }
   .folder-node__name {
     text-align: left;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     border: 0;
     background: none;
     cursor: pointer;
@@ -1923,6 +1927,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    margin-left: auto;
   }
   .folder-node__action {
     border: 0;
