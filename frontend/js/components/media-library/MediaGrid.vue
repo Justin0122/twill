@@ -25,8 +25,8 @@
       <span
         class="mediagrid__button"
         :class="{
-          's--picked': isSelected(item),
-          's--used': isUsed(item) || !!replacingMediaIds[item.id],
+          's--picked': selectedIdsSet.has(item.id),
+          's--used': usedIdsSet.has(item.id) || !!replacingMediaIds[item.id],
           's--disabled': item.disabled
         }"
         data-ml-selectable
@@ -38,7 +38,13 @@
         @dragstart="onDragStart(item, $event)"
         @dragend="onDragEnd(item, $event)"
       >
-        <img :src="item.thumbnail" class="mediagrid__img" />
+        <img
+          :src="item.thumbnail"
+          class="mediagrid__img"
+          loading="lazy"
+          decoding="async"
+          fetchpriority="low"
+        />
       </span>
       <p v-if="showFileName" :title="item.name" class="mediagrid__name">
         {{ item.name }}
@@ -46,7 +52,6 @@
     </div>
   </div>
 </template>
-
 
 <script>
   import { mapState } from 'vuex'
@@ -58,7 +63,13 @@
     computed: {
       ...mapState({
         showFileName: state => state.mediaLibrary.showFileName
-      })
+      }),
+      selectedIdsSet() {
+        return new Set((this.selectedItems || []).map(i => i.id))
+      },
+      usedIdsSet() {
+        return new Set((this.usedItems || []).map(i => i.id))
+      }
     },
     methods: {
       loadingProgress(index) {
@@ -70,6 +81,26 @@
       },
       ctrlToggleSelection(item) {
         this.$emit('ctrlChange', item)
+      },
+      isSelected(item, keys = ['id']) {
+        if (keys.length === 1 && keys[0] === 'id') {
+          return this.selectedIdsSet.has(item.id)
+        }
+        return Boolean(
+          (this.selectedItems || []).find(sItem =>
+            keys.every(key => sItem[key] === item[key])
+          )
+        )
+      },
+      isUsed(item, keys = ['id']) {
+        if (keys.length === 1 && keys[0] === 'id') {
+          return this.usedIdsSet.has(item.id)
+        }
+        return Boolean(
+          (this.usedItems || []).find(uItem =>
+            keys.every(key => uItem[key] === item[key])
+          )
+        )
       },
       onDragStart(item, evt) {
         if (item.disabled) return
@@ -93,7 +124,6 @@
   }
 </script>
 
-
 <style lang="scss" scoped>
   $height_text: 17px;
 
@@ -112,6 +142,7 @@
     padding-bottom: 16.66666665%;
     overflow: hidden;
     background: white;
+    contain: content;
 
     @media (max-width: 300px) {
       width: 100%;
@@ -227,7 +258,6 @@
     @include font-regular;
 
     user-select: none;
-    // background:$color__lighter;
 
     top: 10px;
     left: 10px;
