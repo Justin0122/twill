@@ -179,8 +179,8 @@
       onCtxTrash() {
         if (!this.contextMenu.open) return
         const anchorId = this.contextMenu.anchorId
-        const selectedIds = (this.selectedItems || []).map(m => m.id)
-        const mediaIds = selectedIds.length ? selectedIds : [anchorId]
+        const pickedIds = Array.from(this.selectedIdsSet)
+        const mediaIds = pickedIds.length ? pickedIds : [anchorId]
 
         this.$emit('move', {
           targetId: 'trash',
