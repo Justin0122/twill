@@ -155,9 +155,8 @@
         this.$root.$emit('ml:dnd:hover:clear')
       },
       openContextMenu(evt, item) {
-        // Compute menu position within component bounds
         const root = this.$el.getBoundingClientRect()
-        const x = Math.min(evt.clientX - root.left, root.width - 160) // keep menu in view
+        const x = Math.min(evt.clientX - root.left, root.width - 160)
         const y = Math.min(evt.clientY - root.top, root.height - 44)
 
         this.contextMenu = {
