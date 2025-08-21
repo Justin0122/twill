@@ -60,6 +60,8 @@
       :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
       role="menu"
       @click.stop
+      @click.capture.stop
+      @mousedown.capture.stop
     >
       <button
         class="ctx-item danger"
