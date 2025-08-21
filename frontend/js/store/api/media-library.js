@@ -58,20 +58,24 @@ export default {
   },
 
   bulkDelete(endpoint, params, callback, errorCallback) {
-    axios.put(endpoint, params).then(
-      function(resp) {
-        if (callback && typeof callback === 'function') callback(resp)
-      },
-      function(resp) {
-        const error = {
-          message: 'Media library bulk delete error.',
-          value: resp
+    axios
+      .put(endpoint, params, { headers: { Accept: 'application/json' } })
+      .then(
+        function(resp) {
+          if (callback && typeof callback === 'function') callback(resp)
+        },
+        function(err) {
+          const response = err?.response || err
+          if (response?.status !== 422) {
+            const error = {
+              message: 'Media library bulk delete error.',
+              value: response
+            }
+            globalError(component, error)
+          }
+          if (errorCallback && typeof errorCallback === 'function') errorCallback(response)
         }
-        globalError(component, error)
-        if (errorCallback && typeof errorCallback === 'function')
-          errorCallback(resp)
-      }
-    )
+      )
   },
 
   // -----------------------------

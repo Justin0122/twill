@@ -195,9 +195,6 @@
               ? snapshotSelected
               : (anchorId != null ? [anchorId] : [])
 
-        // eslint-disable-next-line no-console
-        console.log('Moving to trash:', mediaIds, currentSelected, new Set(snapshotSelected))
-
         if (!mediaIds.length) {
           this.contextMenu.open = false
           return

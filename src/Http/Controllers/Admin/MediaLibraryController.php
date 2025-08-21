@@ -2,7 +2,9 @@
 
 namespace A17\Twill\Http\Controllers\Admin;
 
+use A17\Twill\Http\Controllers\Traits\ResolvesMediaUsage;
 use A17\Twill\Http\Requests\Admin\MediaRequest;
+use A17\Twill\Models\LibraryFolder;
 use A17\Twill\Models\Media;
 use A17\Twill\Services\Listings\Filters\BasicFilter;
 use A17\Twill\Services\Listings\Filters\TableFilters;
@@ -17,10 +19,11 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\ResponseFactory;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use A17\Twill\Models\LibraryFolder;
 
 class MediaLibraryController extends ModuleController implements SignUploadListener
 {
+    use ResolvesMediaUsage;
+
     /**
      * @var string
      */
@@ -98,6 +101,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
                             $builder->where('tag_id', $value);
                         });
                     }
+
                     return $builder;
                 }),
 
@@ -135,7 +139,6 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
                 }),
         ]);
     }
-
 
     public function index(?int $parentModuleId = null): array
     {
@@ -175,7 +178,9 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $requestFilters['unused'] = $this->request->get('unused');
         }
 
-        if ($this->request->has('folder_id')) $requestFilters['folder_id'] = $this->request->get('folder_id');
+        if ($this->request->has('folder_id')) {
+            $requestFilters['folder_id'] = $this->request->get('folder_id');
+        }
 
         return $requestFilters ?? [];
     }
@@ -223,10 +228,10 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
 
         $uploadedFile->storeAs($fileDirectory, $filename, $disk);
 
-        $folderId   = $request->input('folder_id');
+        $folderId = $request->input('folder_id');
         $folderPath = trim((string) $request->input('folder', ''), '/');
 
-        if ($folderId !== null && !LibraryFolder::whereKey($folderId)->exists()) {
+        if ($folderId !== null && ! LibraryFolder::whereKey($folderId)->exists()) {
             $folderId = null;
         }
 
@@ -243,6 +248,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
             $media->replace($fields);
+
             return $media->fresh();
         }
 
@@ -255,8 +261,8 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
      */
     public function storeReference($request)
     {
-        $folderId   = $request->input('folder_id');
-        if ($folderId !== null && !LibraryFolder::whereKey($folderId)->exists()) {
+        $folderId = $request->input('folder_id');
+        if ($folderId !== null && ! LibraryFolder::whereKey($folderId)->exists()) {
             $folderId = null;
         }
 
@@ -272,6 +278,7 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             $media = $this->repository->whereId($id)->first();
             $this->repository->afterDelete($media);
             $media->update($fields);
+
             return $media->fresh();
         }
 
@@ -339,6 +346,93 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
             'items' => $items->map(fn ($item) => $item->toCmsArray())->toArray(),
             'tags'  => $this->repository->getTagsList(),
         ], 200);
+    }
+
+    public function bulkDelete()
+    {
+        $idsParam = (string) $this->request->get('ids', '');
+        $ids = collect(explode(',', $idsParam))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return response()->json([
+                'message' => 'No media ids provided.',
+            ], 422);
+        }
+
+        // Check usages
+        $usages = DB::table('twill_mediables')
+            ->whereIn('media_id', $ids)
+            ->select('media_id', 'mediable_type', 'mediable_id', 'role')
+            ->orderBy('media_id')
+            ->get();
+
+        if ($usages->count() > 0) {
+            $mediaMeta = DB::table('twill_medias')
+                ->whereIn('id', $ids)
+                ->pluck('filename', 'id');
+
+            $usedReport = $usages->groupBy('media_id')->map(function ($rows, $mediaId) use ($mediaMeta) {
+                $places = $rows->map(function ($row) {
+                    [$pageType, $pageId] = $this->resolveUsageToPage($row->mediable_type, (int) $row->mediable_id);
+
+                    $title = null;
+                    if ($pageType && class_exists($pageType)) {
+                        try {
+                            $model = $pageType::find($pageId);
+                            if ($model) {
+                                $title = $model->title
+                                    ?? $model->name
+                                    ?? (method_exists($model, 'getTitle') ? $model->getTitle() : null)
+                                    ?? (method_exists($model, '__toString') ? (string) $model : null);
+                            }
+                        } catch (\Throwable $e) { /* ignore */
+                        }
+                    }
+
+                    return [
+                        'type' => $pageType ?: $row->mediable_type,
+                        'id' => $pageId ?: $row->mediable_id,
+                        'role' => $row->role,
+                        'title' => $title,
+                        'admin_url' => $this->adminEditUrlFor($pageType, $pageId),
+                        'via' => [
+                            'mediable_type' => $row->mediable_type,
+                            'mediable_id' => $row->mediable_id,
+                        ],
+                    ];
+                })
+                    ->unique(fn ($p) => ($p['type'] ?? '') . '#' . ($p['id'] ?? '') . '|' . ($p['role'] ?? ''))
+                    ->values();
+
+                return [
+                    'media_id' => (int) $mediaId,
+                    'filename' => (string) ($mediaMeta[$mediaId] ?? ''),
+                    'places' => $places,
+                ];
+            })->values();
+
+            return response()->json([
+                'message' => 'Some selected media are used. Remove usages first.',
+                'used' => $usedReport,
+            ], 422);
+        }
+
+        // No usages: proceed with deletion through the repository
+        if ($this->repository->bulkDelete($ids->all())) {
+            $this->fireEvent();
+
+            return $this->respondWithSuccess(
+                twillTrans('twill::lang.listing.bulk-delete.success', ['modelTitle' => $this->modelTitle])
+            );
+        }
+
+        return $this->respondWithError(
+            twillTrans('twill::lang.listing.bulk-delete.error', ['modelTitle' => $this->modelTitle])
+        );
     }
 
     /**
