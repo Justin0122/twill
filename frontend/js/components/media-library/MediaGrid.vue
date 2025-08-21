@@ -29,12 +29,13 @@
           's--used': usedIdsSet.has(item.id) || !!replacingMediaIds[item.id],
           's--disabled': item.disabled
         }"
+        :data-id="String(item.id)"
         data-ml-selectable
         @click.exact="toggleSelection(item)"
         @click.shift.exact="shiftToggleSelection(item)"
         @click.ctrl.exact="ctrlToggleSelection(item)"
         @click.meta.exact="ctrlToggleSelection(item)"
-        @contextmenu.prevent="openContextMenu($event, item)"
+        @contextmenu.stop.prevent="openContextMenu($event, item)"
         draggable="true"
         @dragstart="onDragStart(item, $event)"
         @dragend="onDragEnd(item, $event)"
@@ -166,7 +167,6 @@
           anchorId: item.id
         }
 
-        // Close on outside click or escape
         document.addEventListener('click', this.closeContextMenuOnce, { once: true })
         document.addEventListener('keydown', this.closeOnEsc, { once: true })
       },
@@ -179,7 +179,13 @@
       onCtxTrash() {
         if (!this.contextMenu.open) return
         const anchorId = this.contextMenu.anchorId
-        const pickedIds = Array.from(this.selectedIdsSet)
+        const pickedEls = Array.from(
+          this.$el.querySelectorAll('.mediagrid__button.s--picked')
+        )
+        const pickedIds = pickedEls
+          .map(el => Number(el.dataset.id))
+          .filter(id => Number.isFinite(id))
+
         const mediaIds = pickedIds.length ? pickedIds : [anchorId]
 
         this.$emit('move', {
