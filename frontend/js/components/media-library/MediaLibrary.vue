@@ -1473,13 +1473,44 @@
           if (typeof this.fetchFolders === 'function') this.fetchFolders()
         }
 
+        const handleError = (error, genericKey, genericFallback) => {
+          if (error?.status === 422 && error?.data) {
+            this.folderDeleteError =
+              error.data.message ||
+              this.$trans(genericKey, genericFallback)
+            this.folderDeleteUsed = Array.isArray(error.data.used) ? error.data.used : []
+          } else {
+            this.folderDeleteError = this.$trans(genericKey, genericFallback)
+            this.folderDeleteUsed = []
+          }
+          this.$store.commit(NOTIFICATION.SET_NOTIF, {
+            message: this.folderDeleteError,
+            variant: 'error'
+          })
+        }
+
+        const clearErrors = () => {
+          this.folderDeleteError = null
+          this.folderDeleteUsed = []
+        }
+
         if (targetId === 'trash') {
           // Moving to Trash means soft delete
           api.bulkDelete(
             `${this.endpoint}/bulk-delete`,
             { ids: Array.isArray(mediaIds) ? mediaIds.join(',') : String(mediaIds) },
-            () => refresh(),
-            () => refresh() // refresh anyway on error
+            () => {
+              clearErrors()
+              refresh()
+            },
+            (error) => {
+              handleError(
+                error,
+                'media-library.folder-delete-failed',
+                'Unable to delete media'
+              )
+              refresh()
+            }
           )
           return
         }
@@ -1494,8 +1525,18 @@
         api.moveToFolder(
           this.endpoint,
           body,
-          () => refresh(),
-          () => refresh()
+          () => {
+            clearErrors()
+            refresh()
+          },
+          (error) => {
+            handleError(
+              error,
+              'media-library.folder-move-failed',
+              'Unable to move media'
+            )
+            refresh()
+          }
         )
       },
       onReparentFolder({ sourceId, targetId }) {
