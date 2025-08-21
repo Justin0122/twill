@@ -185,7 +185,7 @@
             ? selectedIds
             : [anchorId]
 
-        this.$emit('moveToFolder', {
+        this.$emit('move', {
           targetId: 'trash',
           mediaIds,
           type: this.type || null
