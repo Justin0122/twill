@@ -817,10 +817,10 @@
              :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
              role="menu"
              @click.stop>
-          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">➕ New subfolder</button>
-          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">✏️ Rename
+          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder">➕</button>
+          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename">✏️
           </button>
-          <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">🗑 Delete</button>
+          <button v-if="level>0" class="ctx-item danger" role="menuitem" @click="onCtxDelete">🗑</button>
         </div>
       </div>
     `
@@ -2027,13 +2027,19 @@
     border-radius: 8px;
     padding: 6px;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
   }
 
   .folder-node__ctxmenu .ctx-item {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    width: 100%;
+    width: auto;
     padding: 8px 10px;
     font: inherit;
     color: #111827;
