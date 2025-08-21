@@ -111,7 +111,8 @@
           { name: 'Thumbnail', ratio: 1.5 },
           { name: 'Wide', ratio: 2 },
           { name: '3/4', ratio: 0.75 },
-          { name: '4/3', ratio: 1.333 }
+          { name: '4/3', ratio: 1.333 },
+          { name: '16/9', ratio: 1.777 },
         ],
         currentPreset: null
       }
