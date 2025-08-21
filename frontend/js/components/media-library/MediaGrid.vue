@@ -178,15 +178,12 @@
       },
       onCtxTrash() {
         if (!this.contextMenu.open) return
-        const anchorId = this.contextMenu.anchorId
-        const pickedEls = Array.from(
-          this.$el.querySelectorAll('.mediagrid__button.s--picked')
-        )
-        const pickedIds = pickedEls
-          .map(el => Number(el.dataset.id))
-          .filter(id => Number.isFinite(id))
 
-        const mediaIds = pickedIds.length ? pickedIds : [anchorId]
+        const mediaIds = Array.from(this.selectedIdsSet)
+        if (!mediaIds.length) {
+          this.contextMenu.open = false
+          return
+        }
 
         this.$emit('move', {
           targetId: 'trash',
