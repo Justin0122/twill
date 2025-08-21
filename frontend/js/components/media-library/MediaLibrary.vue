@@ -236,6 +236,7 @@
                   @change="updateSelectedMediasSingle"
                   @ctrlChange="updateSelectedMediasCtrl"
                   @shiftChange="updateSelectedMedias"
+                  @move="onMoveToFolder"
                 />
                 <a17-spinner v-if="loading" class="medialibrary__spinner"
                   >Loading&hellip;</a17-spinner
