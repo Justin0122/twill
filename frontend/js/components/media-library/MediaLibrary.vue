@@ -817,13 +817,13 @@
              :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
              role="menu"
              @click.stop>
-          <button class="ctx-item" role="menuitem" @click="onCtxNewFolder" aria-label="New folder" title="New folder">
+          <button class="ctx-item add" role="menuitem" @click="onCtxNewFolder" aria-label="New folder" title="New folder">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
           </button>
 
-          <button v-if="level>0 && node.id!=null" class="ctx-item" role="menuitem" @click="onCtxRename" aria-label="Rename" title="Rename">
+          <button v-if="level>0 && node.id!=null" class="ctx-item edit" role="menuitem" @click="onCtxRename" aria-label="Rename" title="Rename">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 20h4l10.5-10.5a1 1 0 0 0 0-1.4L16.9 6a1 1 0 0 0-1.4 0L5 16v4z" fill="currentColor" opacity="0.15"/>
               <path d="M4 20h4l10.5-10.5a1 1 0 0 0 0-1.4L16.9 6a1 1 0 0 0-1.4 0L5 16v4zM14.5 7.5l2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2061,6 +2061,8 @@
     &:hover { background: #f3f4f6; }
     &.danger { color: #b91c1c; }
     &.danger:hover { background: #fee2e2; }
+    &.edit { color: #3b82f6; }
+    &.edit:hover { background: #f3f4f6; }
   }
 
   .folder-node__ctxmenu .ctx-item .icon {
