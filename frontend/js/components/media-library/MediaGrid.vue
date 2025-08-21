@@ -34,6 +34,7 @@
         @click.shift.exact="shiftToggleSelection(item)"
         @click.ctrl.exact="ctrlToggleSelection(item)"
         @click.meta.exact="ctrlToggleSelection(item)"
+        @contextmenu.prevent="openContextMenu($event, item)"
         draggable="true"
         @dragstart="onDragStart(item, $event)"
         @dragend="onDragEnd(item, $event)"
@@ -50,6 +51,29 @@
         {{ item.name }}
       </p>
     </div>
+
+    <div
+      v-if="contextMenu.open"
+      ref="ctxmenu"
+      class="mediagrid__ctxmenu"
+      :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+      role="menu"
+      @click.stop
+    >
+      <button
+        class="ctx-item danger"
+        role="menuitem"
+        @click="onCtxTrash"
+        aria-label="Move to trash"
+        title="Move to trash"
+      >
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+          <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
+                fill="none" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        <span class="label">Trash</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -60,6 +84,16 @@
   export default {
     name: 'A17Mediagrid',
     mixins: [mediaItemsMixin],
+    data() {
+      return {
+        contextMenu: {
+          open: false,
+          x: 0,
+          y: 0,
+          anchorId: null,
+        }
+      }
+    },
     computed: {
       ...mapState({
         showFileName: state => state.mediaLibrary.showFileName
@@ -119,6 +153,46 @@
       },
       onDragEnd() {
         this.$root.$emit('ml:dnd:hover:clear')
+      },
+      openContextMenu(evt, item) {
+        // Compute menu position within component bounds
+        const root = this.$el.getBoundingClientRect()
+        const x = Math.min(evt.clientX - root.left, root.width - 160) // keep menu in view
+        const y = Math.min(evt.clientY - root.top, root.height - 44)
+
+        this.contextMenu = {
+          open: true,
+          x,
+          y,
+          anchorId: item.id
+        }
+
+        // Close on outside click or escape
+        document.addEventListener('click', this.closeContextMenuOnce, { once: true })
+        document.addEventListener('keydown', this.closeOnEsc, { once: true })
+      },
+      closeContextMenuOnce: function() {
+        this.contextMenu.open = false
+      },
+      closeOnEsc: function(e) {
+        if (e.key === 'Escape') this.contextMenu.open = false
+      },
+      onCtxTrash() {
+        if (!this.contextMenu.open) return
+        const anchorId = this.contextMenu.anchorId
+        const selectedIds = (this.selectedItems || []).map(m => m.id)
+        const mediaIds =
+          this.selectedIdsSet.has(anchorId) && selectedIds.length
+            ? selectedIds
+            : [anchorId]
+
+        this.$emit('moveToFolder', {
+          targetId: 'trash',
+          mediaIds,
+          type: this.type || null
+        })
+
+        this.contextMenu.open = false
       }
     }
   }
@@ -133,6 +207,46 @@
     height: 100%;
     font-size: 0;
     line-height: 1em;
+  }
+
+  .mediagrid__ctxmenu {
+    position: absolute;
+    z-index: 1000;
+    min-width: 140px;
+    background: #fff;
+    border: 1px solid $color__border--light;
+    border-radius: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    padding: 4px;
+  }
+  .mediagrid__ctxmenu .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: inherit;
+    text-align: left;
+
+    &:hover {
+      background: $color__f--bg;
+    }
+  }
+  .mediagrid__ctxmenu .ctx-item.danger {
+    color: $color__error;
+  }
+
+  .mediagrid__ctxmenu .ctx-item .icon {
+    flex: 0 0 auto;
+    display: inline-block;
+  }
+
+  .mediagrid__ctxmenu .ctx-item .label {
+    font-size: 12px;
+    line-height: 16px;
   }
 
   .mediagrid__item {
