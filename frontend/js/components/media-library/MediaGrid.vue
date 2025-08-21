@@ -182,6 +182,8 @@
         if (!this.contextMenu.open) return
 
         const mediaIds = Array.from(this.selectedIdsSet)
+        // eslint-disable-next-line no-console
+        console.log('Moving to trash:', mediaIds)
         if (!mediaIds.length) {
           this.contextMenu.open = false
           return
