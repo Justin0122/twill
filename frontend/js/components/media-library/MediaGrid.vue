@@ -164,7 +164,8 @@
           open: true,
           x,
           y,
-          anchorId: item.id
+          anchorId: item.id,
+          selectedIdsAtOpen: Array.from(this.selectedIdsSet)
         }
 
         document.addEventListener('click', this.closeContextMenuOnce, { once: true })
@@ -176,12 +177,27 @@
       closeOnEsc: function(e) {
         if (e.key === 'Escape') this.contextMenu.open = false
       },
-      onCtxTrash() {
+      onCtxTrash(evt) {
+        if (evt) evt.stopPropagation()
         if (!this.contextMenu.open) return
 
-        const mediaIds = Array.from(this.selectedIdsSet)
+        const currentSelected = Array.from(this.selectedIdsSet)
+        const snapshotSelected = this.contextMenu.selectedIdsAtOpen || []
+        const anchorId = this.contextMenu.anchorId
+
+        const anchorInCurrent = anchorId != null && currentSelected.includes(anchorId)
+        const anchorInSnapshot = anchorId != null && snapshotSelected.includes(anchorId)
+
+        const mediaIds =
+          (currentSelected.length && (anchorId == null || anchorInCurrent))
+            ? currentSelected
+            : (snapshotSelected.length && (anchorId == null || anchorInSnapshot))
+              ? snapshotSelected
+              : (anchorId != null ? [anchorId] : [])
+
         // eslint-disable-next-line no-console
-        console.log('Moving to trash:', mediaIds, this.selectedItems, this.selectedIdsSet)
+        console.log('Moving to trash:', mediaIds, currentSelected, new Set(snapshotSelected))
+
         if (!mediaIds.length) {
           this.contextMenu.open = false
           return
