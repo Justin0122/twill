@@ -180,10 +180,7 @@
         if (!this.contextMenu.open) return
         const anchorId = this.contextMenu.anchorId
         const selectedIds = (this.selectedItems || []).map(m => m.id)
-        const mediaIds =
-          this.selectedIdsSet.has(anchorId) && selectedIds.length
-            ? selectedIds
-            : [anchorId]
+        const mediaIds = selectedIds.length ? selectedIds : [anchorId]
 
         this.$emit('move', {
           targetId: 'trash',
