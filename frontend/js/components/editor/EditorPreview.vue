@@ -23,9 +23,13 @@
         ref="previewContent"
         :value="blocks"
         group="editorBlocks"
-        :handle="handle"
+        :sort="false"
+        :draggable="'.__no_items__'"
+        :force-fallback="true"
+        :fallback-on-body="true"
         @add="onAdd(add, edit, $event)"
-        @update="onUpdate"
+        @update="() => {}"
+        :tag="'div'"
       >
         <grid-layout
           :layout="gridLayout"
