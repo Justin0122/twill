@@ -1,5 +1,10 @@
 <template>
   <div class="editorSidebar">
+    <input
+      type="hidden"
+      :name="`blocks_layout[${editorName}]`"
+      ref="layoutInput"
+    />
     <div v-show="hasBlockActive">
       <a17-blocks-list :editor-name="editorName" v-slot="{ allSavedBlocks }">
         <div class="editorSidebar__edit-list">
@@ -112,12 +117,22 @@
           return false
         }
       },
+      buildLayoutPayload() {
+        const blocks = this.$store.getters.blocks(this.editorName) || []
+        return blocks.map(b => ({
+          id: b.id,
+          grid: {
+            x: b.grid && Number.isFinite(b.grid.x) ? b.grid.x : 0,
+            y: b.grid && Number.isFinite(b.grid.y) ? b.grid.y : 0,
+            w: b.grid && Number.isFinite(b.grid.w) ? b.grid.w : 12,
+            h: b.grid && Number.isFinite(b.grid.h) ? b.grid.h : 3
+          }
+        }))
+      },
       async saveForm(buttonName) {
-        try {
-          await this.$store.dispatch(ACTIONS.SAVE_GRID_LAYOUT, {
-            editorName: this.editorName
-          })
-        } catch (e) {
+        if (this.$refs.layoutInput) {
+          const payload = this.buildLayoutPayload()
+          this.$refs.layoutInput.value = JSON.stringify(payload)
         }
         this.$store.commit(PUBLICATION.UPDATE_SAVE_TYPE, buttonName)
         if (this.$root.submitForm) this.$root.submitForm()
