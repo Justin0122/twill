@@ -233,18 +233,12 @@
             w: this.gridCols,
             h: this.defaultBlockH
           },
-          cg,
-          bg
+          bg,  // block.grid first…
+          cg   // …then content.grid overrides it
         )
         const x = Math.max(0, this._toNum(raw.x, 0))
-        const y = Math.max(
-          0,
-          this._toNum(raw.y, Math.floor(idx * this.defaultBlockH))
-        )
-        const w = Math.min(
-          this.gridCols,
-          Math.max(1, this._toNum(raw.w, this.gridCols))
-        )
+        const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
+        const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw.w, this.gridCols)))
         const h = Math.max(1, this._toNum(raw.h, this.defaultBlockH))
         return { x, y, w, h }
       },
