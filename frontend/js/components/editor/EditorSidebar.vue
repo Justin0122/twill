@@ -101,43 +101,68 @@
         return btn.hasOwnProperty('disabled') ? btn.disabled === true : false
       },
 
-      mergeGridIntoBlockContent() {
-        const current = this.$store.getters.blocks(this.editorName) || []
-
-        const updated = current.map(b => {
-          const grid = {
+      buildLayoutArray() {
+        const blocks = this.$store.getters.blocks(this.editorName) || []
+        return blocks.map(b => ({
+          id: b.id,
+          grid: {
             x: b.grid && Number.isFinite(b.grid.x) ? b.grid.x : 0,
             y: b.grid && Number.isFinite(b.grid.y) ? b.grid.y : 0,
             w: b.grid && Number.isFinite(b.grid.w) ? b.grid.w : 12,
             h: b.grid && Number.isFinite(b.grid.h) ? b.grid.h : 3
           }
-          const content = { ...(b.content || {}), grid }
-          return { ...b, content }
-        })
+        }))
+      },
 
+      injectGridFieldsIntoFormState() {
+        const formFields = (this.$store.state.form && this.$store.state.form.fields) || []
+        const layout = this.buildLayoutArray()
+
+        const ids = new Set(layout.map(l => String(l.id)))
+        const isGridFieldForCurrent = f => {
+          if (!f || !f.name) return false
+          const m = f.name.match(/^blocks\[(\d+)\]\[grid\]$/)
+          return m && ids.has(m[1])
+        }
+        const filtered = formFields.filter(f => !isGridFieldForCurrent(f))
+
+        const gridFields = layout.map(l => ({
+          name: `blocks[${l.id}][grid]`,
+          value: l.grid
+        }))
+
+        const nextFields = filtered.concat(gridFields)
+
+        // Safely replace form.fields (avoid Vuex strict warnings if enabled)
+        if (typeof this.$store._withCommit === 'function') {
+          this.$store._withCommit(() => {
+            this.$store.state.form.fields = nextFields
+          })
+        } else {
+          // fallback (most setups won't be strict in prod)
+          this.$store.state.form.fields = nextFields
+        }
+
+        const currentBlocks = this.$store.getters.blocks(this.editorName) || []
+        const byId = new Map(layout.map(l => [String(l.id), l.grid]))
+        const updatedBlocks = currentBlocks.map(b => {
+          const g = byId.get(String(b.id))
+          return g ? { ...b, content: { ...(b.content || {}), grid: g } } : b
+        })
         this.$store.commit(BLOCKS.REORDER_BLOCKS, {
           editorName: this.editorName,
-          value: updated
+          value: updatedBlocks
         })
       },
 
       setDebugHiddenField() {
         if (!this.$refs.layoutInput) return
-        const blocks = this.$store.getters.blocks(this.editorName) || []
-        const payload = blocks.map(b => ({
-          id: b.id,
-          grid:
-            (b.content && b.content.grid) ||
-            (b.grid
-              ? { x: b.grid.x || 0, y: b.grid.y || 0, w: b.grid.w || 12, h: b.grid.h || 3 }
-              : { x: 0, y: 0, w: 12, h: 3 })
-        }))
-        this.$refs.layoutInput.value = JSON.stringify(payload)
+        this.$refs.layoutInput.value = JSON.stringify(this.buildLayoutArray())
       },
 
       async saveForm(buttonName) {
-        // 1) Ensure grid is part of each block's content so Twill persists it
-        this.mergeGridIntoBlockContent()
+        // 1) Put grid into Vuex form fields so getFormData() will include it in each block.content
+        this.injectGridFieldsIntoFormState()
 
         // 2) Hidden field for inspecting
         this.setDebugHiddenField()
