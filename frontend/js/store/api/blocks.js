@@ -18,5 +18,11 @@ export default {
           errorCallback(resp)
       }
     )
+  },
+
+  saveGrid(url, payload, onSuccess, onError) {
+    axios.post(url, payload)
+      .then(res => onSuccess && onSuccess(res.data))
+      .catch(err => onError && onError(err))
   }
 }

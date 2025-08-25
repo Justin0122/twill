@@ -3,6 +3,7 @@
 /* Blocks */
 export const MOVE_BLOCK_TO_EDITOR = 'moveBlockToEditor'
 export const DUPLICATE_BLOCK = 'duplicateBlock'
+export const SAVE_GRID_LAYOUT = 'saveGridLayout'
 
 /* Repeaters */
 export const DUPLICATE_REPEATER = 'duplicateRepeater'
@@ -74,5 +75,6 @@ export default {
   GET_CURRENT,
   MOVE_BLOCK_TO_EDITOR,
   DUPLICATE_BLOCK,
-  DUPLICATE_REPEATER
+  DUPLICATE_REPEATER,
+  SAVE_GRID_LAYOUT,
 }

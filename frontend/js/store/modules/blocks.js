@@ -164,6 +164,31 @@ const getBlockPreview = (block, commit, rootState, callback) => {
 }
 
 const actions = {
+  async [ACTIONS.SAVE_GRID_LAYOUT]({ state, rootState }, { editorName }) {
+    const url =
+      (rootState.form && rootState.form.blockLayoutSaveUrl) ||
+      '/blocks/layout'
+
+    const blocks = state.blocks[editorName] || []
+    const layout = blocks.map(b => ({
+      id: b.id,
+      grid: {
+        x: b.grid && Number.isFinite(b.grid.x) ? b.grid.x : 0,
+        y: b.grid && Number.isFinite(b.grid.y) ? b.grid.y : 0,
+        w: b.grid && Number.isFinite(b.grid.w) ? b.grid.w : 12,
+        h: b.grid && Number.isFinite(b.grid.h) ? b.grid.h : 3
+      }
+    }))
+
+    return new Promise((resolve, reject) => {
+      api.saveGrid(
+        url,
+        { editorName, layout },
+        () => resolve(true),
+        err => reject(err)
+      )
+    })
+  },
   [ACTIONS.GET_PREVIEW](
     { commit, state, rootState },
     { editorName, index = -1 }

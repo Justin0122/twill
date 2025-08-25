@@ -70,6 +70,7 @@
   import A17EditorSidebarBlockList from '@/components/editor/EditorSidebarBlockList'
   import { BlockEditorMixin } from '@/mixins'
   import { PUBLICATION } from '@/store/mutations'
+  import ACTIONS from '@/store/actions'
 
   export default {
     name: 'A17editorSidebar',
@@ -111,7 +112,13 @@
           return false
         }
       },
-      saveForm(buttonName) {
+      async saveForm(buttonName) {
+        try {
+          await this.$store.dispatch(ACTIONS.SAVE_GRID_LAYOUT, {
+            editorName: this.editorName
+          })
+        } catch (e) {
+        }
         this.$store.commit(PUBLICATION.UPDATE_SAVE_TYPE, buttonName)
         if (this.$root.submitForm) this.$root.submitForm()
       }
