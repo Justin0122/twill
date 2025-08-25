@@ -52,9 +52,9 @@
               v-for="savedBlock in blocks"
               :key="savedBlock.id"
               :i="String(savedBlock.id)"
-              :x="(savedBlock.grid && savedBlock.grid.x) || 0"
-              :y="(savedBlock.grid && savedBlock.grid.y) || 0"
-              :w="(savedBlock.grid && savedBlock.grid.w) || gridCols"
+              :x="_gridOf(savedBlock).x"
+              :y="_gridOf(savedBlock).y"
+              :w="_gridOf(savedBlock).w"
               :h="getItemH(savedBlock)"
               :min-w="2"
               :min-h="1"
@@ -206,35 +206,69 @@
         return { 'background-color': this.bgColor }
       },
       gridLayout() {
-        // Build layout; let autoHeights override saved sizes
+        // Build layout; let autoHeights override saved sizes; use content.grid as fallback
         return this.blocks.map((b, idx) => {
-          const g = b.grid || {}
+          const g = this._gridOf(b, idx)
           const autoH = this.autoHeights[b.id]
           return {
             i: String(b.id),
-            x: Number.isFinite(g.x) ? g.x : 0,
-            y: Number.isFinite(g.y) ? g.y : idx * this.defaultBlockH,
-            w: Number.isFinite(g.w) ? g.w : this.gridCols,
-            h: Number.isFinite(autoH) ? autoH
-              : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
+            x: g.x,
+            y: g.y,
+            w: g.w,
+            h: Number.isFinite(autoH) ? autoH : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
           }
         })
       }
     },
     methods: {
+      // Read grid preferring block.grid, falling back to block.content.grid, else sensible defaults
+      _gridOf(block, idx = 0) {
+        const cg = (block.content && block.content.grid) || {}
+        const bg = block.grid || {}
+        const g = Object.assign(
+          {
+            x: 0,
+            y: Math.floor(idx * this.defaultBlockH),
+            w: this.gridCols,
+            h: this.defaultBlockH
+          },
+          cg,
+          bg // block.grid wins over content.grid
+        )
+        // Coerce numbers & clamp
+        const safe = prop => (Number.isFinite(g[prop]) ? g[prop] : (prop === 'w' ? this.gridCols : (prop === 'h' ? this.defaultBlockH : 0)))
+        const x = Math.max(0, safe('x'))
+        const y = Math.max(0, safe('y'))
+        const w = Math.min(this.gridCols, Math.max(1, safe('w')))
+        const h = Math.max(1, safe('h'))
+        return { x, y, w, h }
+      },
+
+      // On first load, hydrate block.grid from content.grid so UI has it at top-level too
+      _hydrateGridFromContent() {
+        if (!this.blocks || !this.blocks.length) return
+        const updated = this.blocks.map((b, idx) => {
+          if (b.grid && typeof b.grid === 'object') return b
+          const cg = (b.content && b.content.grid) || null
+          if (!cg) return b
+          const g = this._gridOf({ ...b, grid: cg }, idx)
+          return { ...b, grid: g }
+        })
+        this.$store.commit(BLOCKS.REORDER_BLOCKS, {
+          editorName: this.editorName,
+          value: updated
+        })
+      },
+
       getItemH(block) {
-        const g = block.grid || {}
+        const g = this._gridOf(block)
         const autoH = this.autoHeights[block.id]
-        return Number.isFinite(autoH)
-          ? autoH
-          : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
+        return Number.isFinite(autoH) ? autoH : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
       },
 
       onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
         if (!Number.isFinite(contentPx)) return
-
-        // Convert content height to grid rows, clamp, and ignore tiny changes
         const rows = Math.max(1, Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight)))
         if (this.autoHeights[id] !== rows) {
           this.$set(this.autoHeights, id, rows)
@@ -244,12 +278,13 @@
       // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
+        const initialGrid = { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
         const block = {
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
-          // default to full width; height auto-adjusts shortly after mount
-          grid: { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
+          grid: initialGrid,
+          content: { ...(this.content || {}), grid: initialGrid } // keep content.grid in sync from the start
         }
 
         const index = Math.max(0, evt.newIndex)
@@ -266,13 +301,18 @@
           .map(b => {
             const g = idToGrid.get(String(b.id))
             const autoH = this.autoHeights[b.id]
-            return g
-              ? { ...b, grid: { ...g, h: Number.isFinite(autoH) ? autoH : g.h } }
-              : b
+            const finalG = g
+              ? { ...g, h: Number.isFinite(autoH) ? autoH : g.h }
+              : this._gridOf(b)
+            return {
+              ...b,
+              grid: finalG,
+              content: { ...(b.content || {}), grid: finalG } // keep content.grid synced too
+            }
           })
           .sort((a, b) => {
-            const ga = a.grid || { x: 0, y: 0 }
-            const gb = b.grid || { x: 0, y: 0 }
+            const ga = this._gridOf(a)
+            const gb = this._gridOf(b)
             return ga.y !== gb.y ? ga.y - gb.y : ga.x - gb.x
           })
 
@@ -357,6 +397,7 @@
       }
     },
     mounted() {
+      this._hydrateGridFromContent()
       this.init()
       this.$nextTick(this.getAllPreviews)
     },
@@ -366,6 +407,7 @@
     watch: {
       editorName() {
         this.unSubscribe()
+        this._hydrateGridFromContent()
         this.getAllPreviews()
       },
       hasBlockActive(active) {
