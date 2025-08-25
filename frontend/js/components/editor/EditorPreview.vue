@@ -25,8 +25,7 @@
         group="editorBlocks"
         :handle="handle"
         @add="onAdd(add, edit, $event)"
-        @update="() => {}"
-        :tag="'div'"
+        @update="onUpdate"
       >
         <grid-layout
           :layout="gridLayout"
@@ -99,6 +98,7 @@
   import debounce from 'lodash/debounce'
   import tinyColor from 'tinycolor2'
   import { GridLayout, GridItem } from 'vue-grid-layout'
+  import draggable from 'vuedraggable'
   import A17BlockEditorModel from '@/components/blocks/BlockEditorModel'
   import A17EditorBlockPreview from '@/components/editor/EditorPreviewBlockItem'
   import A17Spinner from '@/components/Spinner.vue'
@@ -106,23 +106,17 @@
   import ACTIONS from '@/store/actions/index'
   import { BLOCKS, PREVIEW } from '@/store/mutations/index'
 
-
   export default {
     name: 'A17editorPreview',
     props: {
-      bgColor: {
-        type: String,
-        default: '#FFFFFF'
-      },
-      hasBlockActive: {
-        type: Boolean,
-        default: false
-      }
+      bgColor: { type: String, default: '#FFFFFF' },
+      hasBlockActive: { type: Boolean, default: false }
     },
     mixins: [BlockEditorMixin],
     components: {
       GridLayout,
       GridItem,
+      draggable,
       'a17-editor-block-preview': A17EditorBlockPreview,
       'a17-blockeditor-model': A17BlockEditorModel,
       'a17-spinner': A17Spinner
@@ -304,7 +298,10 @@
 
   .editorPreview__content {
     position: absolute;
-    top: 0; bottom: 0; right: 0; left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
     padding: 20px;
     overflow-y: auto;
     background-color: inherit;
@@ -312,7 +309,10 @@
 
   .editorPreview__empty {
     position: absolute;
-    top: 0; bottom: 0; right: 0; left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -323,7 +323,10 @@
       display: block;
       content: '';
       position: absolute;
-      top: 20px; bottom: 20px; right: 20px; left: 20px;
+      top: 20px;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
       border: 1px dashed $color__fborder;
     }
 
@@ -342,9 +345,12 @@
 
   .editorPreview__handle {
     position: absolute;
-    height: 10px; width: 40px;
-    left: 50%; top: 50%;
-    margin-left: -20px; margin-top: -5px;
+    height: 10px;
+    width: 40px;
+    left: 50%;
+    top: 50%;
+    margin-left: -20px;
+    margin-top: -5px;
     @include dragGrid($color__drag, $color__block-bg);
   }
 
