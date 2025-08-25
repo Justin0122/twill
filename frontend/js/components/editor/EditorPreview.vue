@@ -89,14 +89,15 @@
 <script>
   import debounce from 'lodash/debounce'
   import tinyColor from 'tinycolor2'
-  import { GridLayout, GridItem } from 'vue-grid-layout'
-
+  import VueGridLayout from 'vue-grid-layout'
   import A17BlockEditorModel from '@/components/blocks/BlockEditorModel'
   import A17EditorBlockPreview from '@/components/editor/EditorPreviewBlockItem'
   import A17Spinner from '@/components/Spinner.vue'
   import { BlockEditorMixin } from '@/mixins'
   import ACTIONS from '@/store/actions/index'
   import { BLOCKS, PREVIEW } from '@/store/mutations/index'
+
+  const { GridLayout, GridItem } = VueGridLayout;
 
   export default {
     name: 'A17editorPreview',
