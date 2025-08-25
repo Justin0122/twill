@@ -19,6 +19,7 @@
       </div>
 
       <div class="editorPreview__content" ref="previewContent">
+        <!-- vuedraggable only as DROP TARGET; no internal sorting -->
         <draggable
           class="editorPreview__dropzone"
           :value="blocks"
@@ -42,6 +43,10 @@
             :draggable-handle="handle"
             :draggable-cancel="'.editorPreview__header, .dropdown, [data-action]'"
             @layout-updated="onLayoutUpdated"
+            @dragstart="suppressAutoHeight = true"
+            @dragend="suppressAutoHeight = false"
+            @resizestart="suppressAutoHeight = true"
+            @resizeend="suppressAutoHeight = false"
           >
             <grid-item
               v-for="savedBlock in blocks"
@@ -54,8 +59,10 @@
               :min-w="2"
               :min-h="1"
             >
+              <!-- Drag handle used by :draggable-handle -->
               <span class="editorPreview__handle" />
 
+              <!-- Wrap content so we can observe its INTRINSIC height (not 100%) -->
               <div class="editorPreview__blockWrap" v-autoheight="{ id: savedBlock.id }">
                 <a17-blockeditor-model
                   :block="savedBlock"
@@ -128,17 +135,24 @@
       'a17-spinner': A17Spinner
     },
     directives: {
-      // Observe content size and notify the component with the block id
+      // Observe content size and notify with the block id
       autoheight: {
         inserted(el, binding, vnode) {
           const ctx = vnode.context
           const id = binding && binding.value && binding.value.id
           if (!ctx || !id) return
 
-          const handler = entries => {
-            const entry = entries[0]
-            const px = entry && entry.contentRect ? entry.contentRect.height : el.offsetHeight
+          const measure = () => {
+            const px = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 0)
             ctx.onBlockContentResize(id, px)
+          }
+
+          // Initial measure after render
+          ctx.$nextTick(() => requestAnimationFrame(measure))
+
+          const handler = () => {
+            // Batch via rAF to avoid double layouts
+            requestAnimationFrame(measure)
           }
 
           if (typeof ResizeObserver !== 'undefined') {
@@ -146,11 +160,9 @@
             ro.observe(el)
             el.__ro = ro
           } else {
-            // Fallback: listen to window resize (coarser)
-            el.__resizeHandler = () => handler([{ contentRect: el.getBoundingClientRect() }])
-            window.addEventListener('resize', el.__resizeHandler)
-            // initial
-            el.__resizeHandler()
+            el.__resizeHandler = handler
+            window.addEventListener('resize', handler)
+            handler()
           }
         },
         unbind(el) {
@@ -175,8 +187,11 @@
         gridRowHeight: 80,
         gridMargin: [12, 12],
         defaultBlockH: 3,
+        maxAutoRows: 200, // safety clamp against runaway sizes
         // auto heights in grid rows, keyed by block id
-        autoHeights: {}
+        autoHeights: {},
+        // pause autoheight while dragging/resizing
+        suppressAutoHeight: false
       }
     },
     computed: {
@@ -191,6 +206,7 @@
         return { 'background-color': this.bgColor }
       },
       gridLayout() {
+        // Build layout; let autoHeights override saved sizes
         return this.blocks.map((b, idx) => {
           const g = b.grid || {}
           const autoH = this.autoHeights[b.id]
@@ -215,7 +231,11 @@
       },
 
       onBlockContentResize(id, contentPx) {
-        const rows = Math.max(1, Math.ceil(contentPx / this.gridRowHeight))
+        if (this.suppressAutoHeight) return
+        if (!Number.isFinite(contentPx)) return
+
+        // Convert content height to grid rows, clamp, and ignore tiny changes
+        const rows = Math.max(1, Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight)))
         if (this.autoHeights[id] !== rows) {
           this.$set(this.autoHeights, id, rows)
         }
@@ -228,7 +248,7 @@
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
-          // default to full width; height autocomputed by ResizeObserver shortly after mount
+          // default to full width; height auto-adjusts shortly after mount
           grid: { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
         }
 
@@ -245,7 +265,6 @@
         const updated = this.blocks
           .map(b => {
             const g = idToGrid.get(String(b.id))
-            // use current auto height if present (so order commit doesn't stomp it)
             const autoH = this.autoHeights[b.id]
             return g
               ? { ...b, grid: { ...g, h: Number.isFinite(autoH) ? autoH : g.h } }
@@ -421,17 +440,12 @@
 
   .editorPreview__blockWrap {
     display: block;
+    height: auto !important;
+    box-sizing: border-box;
   }
 
   ::v-deep(.vue-grid-item) {
     position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-
-  ::v-deep(.vue-grid-item > div) {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    display: block;
   }
 </style>
