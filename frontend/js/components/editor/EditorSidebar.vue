@@ -75,7 +75,6 @@
   import A17EditorSidebarBlockList from '@/components/editor/EditorSidebarBlockList'
   import { BlockEditorMixin } from '@/mixins'
   import { PUBLICATION } from '@/store/mutations'
-  import ACTIONS from '@/store/actions'
 
   export default {
     name: 'A17editorSidebar',
