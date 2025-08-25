@@ -49,8 +49,8 @@
               :i="String(savedBlock.id)"
               :x="(savedBlock.grid && savedBlock.grid.x) || 0"
               :y="(savedBlock.grid && savedBlock.grid.y) || 0"
-              :w="(savedBlock.grid && savedBlock.grid.w) || 4"
-              :h="(savedBlock.grid && savedBlock.grid.h) || 3"
+              :w="(savedBlock.grid && savedBlock.grid.w) || 12"
+              :h="(savedBlock.grid && savedBlock.grid.h) || 6"
               :min-w="2"
               :min-h="2"
             >
