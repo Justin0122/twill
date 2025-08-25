@@ -21,10 +21,10 @@
       <div class="editorPreview__content" ref="previewContent">
         <draggable
           class="editorPreview__dropzone"
-          :list="blocks"
+          :value="blocks"
+          group="editorBlocks"
           :sort="false"
           :draggable="'.__never__'"
-          :group="{ name: 'editorBlocks', put: true }"
           @add="onAdd(add, edit, $event)"
         >
           <grid-layout
@@ -47,6 +47,10 @@
               v-for="savedBlock in blocks"
               :key="savedBlock.id"
               :i="String(savedBlock.id)"
+              :x="(savedBlock.grid && savedBlock.grid.x) || 0"
+              :y="(savedBlock.grid && savedBlock.grid.y) || 0"
+              :w="(savedBlock.grid && savedBlock.grid.w) || 12"
+              :h="(savedBlock.grid && savedBlock.grid.h) || 6"
               :min-w="2"
               :min-h="2"
             >
@@ -129,7 +133,7 @@
         gridCols: 12,
         gridRowHeight: 80,
         gridMargin: [12, 12],
-        defaultBlockH: 6
+        defaultBlockH: 8
       }
     },
     computed: {
@@ -144,7 +148,6 @@
         return { 'background-color': this.bgColor }
       },
       gridLayout() {
-        // Default new/legacy blocks to full width, stacked vertically
         return this.blocks.map((b, idx) => {
           const g = b.grid || {}
           return {
@@ -165,7 +168,6 @@
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
-          // default to full width & standard height
           grid: { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
         }
 
