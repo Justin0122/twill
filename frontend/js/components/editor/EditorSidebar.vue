@@ -74,27 +74,15 @@
   import A17EditorSidebarBlockItem from '@/components/editor/EditorSidebarBlockItem'
   import A17EditorSidebarBlockList from '@/components/editor/EditorSidebarBlockList'
   import { BlockEditorMixin } from '@/mixins'
-  import { PUBLICATION } from '@/store/mutations'
+  import { PUBLICATION, BLOCKS } from '@/store/mutations'
 
   export default {
     name: 'A17editorSidebar',
     props: {
-      hasBlockActive: {
-        type: Boolean,
-        default: false
-      },
-      activeBlock: {
-        type: Object,
-        default: () => {}
-      },
-      editorName: {
-        type: String,
-        required: true
-      },
-      editorNames: {
-        type: Array,
-        default: () => []
-      }
+      hasBlockActive: { type: Boolean, default: false },
+      activeBlock: { type: Object, default: () => {} },
+      editorName: { type: String, required: true },
+      editorNames: { type: Array, default: () => [] }
     },
     components: {
       'a17-sidebar-block-item': A17EditorSidebarBlockItem,
@@ -113,46 +101,48 @@
         return btn.hasOwnProperty('disabled') ? btn.disabled === true : false
       },
 
-      buildLayoutPayload() {
-        const blocks = this.$store.getters.blocks(this.editorName) || []
-        return blocks.map(b => ({
-          id: b.id,
-          grid: {
+      mergeGridIntoBlockContent() {
+        const current = this.$store.getters.blocks(this.editorName) || []
+
+        const updated = current.map(b => {
+          const grid = {
             x: b.grid && Number.isFinite(b.grid.x) ? b.grid.x : 0,
             y: b.grid && Number.isFinite(b.grid.y) ? b.grid.y : 0,
             w: b.grid && Number.isFinite(b.grid.w) ? b.grid.w : 12,
             h: b.grid && Number.isFinite(b.grid.h) ? b.grid.h : 3
           }
-        }))
+          const content = { ...(b.content || {}), grid }
+          return { ...b, content }
+        })
+
+        this.$store.commit(BLOCKS.REORDER_BLOCKS, {
+          editorName: this.editorName,
+          value: updated
+        })
       },
 
-      attachLayoutFieldToForm() {
-        const formEl =
-          (this.$root.$refs &&
-            this.$root.$refs.form &&
-            (this.$root.$refs.form.$el || this.$root.$refs.form)) ||
-          document.querySelector('form[action]') ||
-          document.querySelector('form')
-
-        if (!formEl) return
-
-        const name = `blocks_layout[${this.editorName}]`
-        let input = formEl.querySelector(`input[name="${name}"]`)
-        if (!input) {
-          input = document.createElement('input')
-          input.type = 'hidden'
-          input.name = name
-          formEl.appendChild(input)
-        }
-        input.value = JSON.stringify(this.buildLayoutPayload())
+      setDebugHiddenField() {
+        if (!this.$refs.layoutInput) return
+        const blocks = this.$store.getters.blocks(this.editorName) || []
+        const payload = blocks.map(b => ({
+          id: b.id,
+          grid:
+            (b.content && b.content.grid) ||
+            (b.grid
+              ? { x: b.grid.x || 0, y: b.grid.y || 0, w: b.grid.w || 12, h: b.grid.h || 3 }
+              : { x: 0, y: 0, w: 12, h: 3 })
+        }))
+        this.$refs.layoutInput.value = JSON.stringify(payload)
       },
 
       async saveForm(buttonName) {
-        if (this.$refs.layoutInput) {
-          this.$refs.layoutInput.value = JSON.stringify(this.buildLayoutPayload())
-        }
-        this.attachLayoutFieldToForm()
+        // 1) Ensure grid is part of each block's content so Twill persists it
+        this.mergeGridIntoBlockContent()
 
+        // 2) Hidden field for inspecting
+        this.setDebugHiddenField()
+
+        // 3) Proceed with the normal Twill save
         this.$store.commit(PUBLICATION.UPDATE_SAVE_TYPE, buttonName)
         if (this.$root.submitForm) this.$root.submitForm()
       }
