@@ -54,14 +54,14 @@
           v-if="isSubmitDisabled(submitOptions[0])"
           variant="validate"
           :disabled="true"
-        >{{ submitOptions[0].text }}</a17-button
+          >{{ submitOptions[0].text }}</a17-button
         >
         <a17-button
           v-else
           @click="saveForm(submitOptions[0].name)"
           :name="submitOptions[0].name"
           variant="validate"
-        >{{ submitOptions[0].text }}</a17-button
+          >{{ submitOptions[0].text }}</a17-button
         >
       </div>
     </template>
@@ -75,6 +75,7 @@
   import A17EditorSidebarBlockList from '@/components/editor/EditorSidebarBlockList'
   import { BlockEditorMixin } from '@/mixins'
   import { PUBLICATION } from '@/store/mutations'
+  import ACTIONS from '@/store/actions'
 
   export default {
     name: 'A17editorSidebar',
@@ -109,10 +110,13 @@
       }
     },
     methods: {
-      isSubmitDisabled(btn) {
-        return btn.hasOwnProperty('disabled') ? btn.disabled === true : false
+      isSubmitDisabled: function(btn) {
+        if (btn.hasOwnProperty('disabled')) {
+          return btn.disabled === true
+        } else {
+          return false
+        }
       },
-
       buildLayoutPayload() {
         const blocks = this.$store.getters.blocks(this.editorName) || []
         return blocks.map(b => ({
@@ -125,36 +129,14 @@
           }
         }))
       },
-
-      attachLayoutFieldToForm() {
-        const formEl =
-          (this.$root.$refs &&
-            this.$root.$refs.form &&
-            (this.$root.$refs.form.$el || this.$root.$refs.form)) ||
-          document.querySelector('form[action]') ||
-          document.querySelector('form')
-
-        if (!formEl) return
-
-        const name = `blocks_layout[${this.editorName}]`
-        let input = formEl.querySelector(`input[name="${name}"]`)
-        if (!input) {
-          input = document.createElement('input')
-          input.type = 'hidden'
-          input.name = name
-          formEl.appendChild(input)
-        }
-        input.value = JSON.stringify(this.buildLayoutPayload())
-      },
-
       async saveForm(buttonName) {
-        if (this.$refs.layoutInput) {
-          this.$refs.layoutInput.value = JSON.stringify(this.buildLayoutPayload())
-        }
-        this.attachLayoutFieldToForm()
-
         this.$store.commit(PUBLICATION.UPDATE_SAVE_TYPE, buttonName)
         if (this.$root.submitForm) this.$root.submitForm()
+        try {
+          await this.$store.dispatch(ACTIONS.SAVE_GRID_LAYOUT, {
+            editorName: this.editorName
+          })
+        } catch (e) {}
       }
     }
   }
@@ -163,6 +145,7 @@
 <style lang="scss" scoped>
   .editorSidebar {
     margin: 20px 0 20px 0;
+    // height:100%;
     position: relative;
     overflow: hidden;
     height: calc(100% - 40px);
@@ -170,6 +153,8 @@
 
   .editorSidebar__list {
     overflow-y: auto;
+    /*height: calc(100% + 20px - 80px);*/
+    /*height: 100%;*/
     padding: 0 10px 0 20px;
     position: absolute;
     top: 0;
