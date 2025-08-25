@@ -60,10 +60,7 @@
             >
               <span class="editorPreview__handle" />
 
-              <div
-                class="editorPreview__blockWrap"
-                v-autoheight="{ id: item.iNum }"
-              >
+              <div class="editorPreview__blockWrap" v-autoheight="{ id: item.iNum }">
                 <a17-blockeditor-model
                   v-if="idToBlock[item.i]"
                   :block="idToBlock[item.i]"
@@ -214,25 +211,30 @@
       }
     },
     methods: {
-      // Prefer content.grid, then block.grid, else defaults
+      // coerce to Number; accept numeric strings too
+      _toNum(val, fallback) {
+        const n = Number(val)
+        return Number.isFinite(n) ? n : fallback
+      },
+
+      // Prefer content.grid, then block.grid, else defaults; coerce values
       _gridOf(block, idx = 0) {
         const cg = (block.content && block.content.grid) || {}
         const bg = block.grid || {}
-        const base = {
-          x: 0,
-          y: Math.floor(idx * this.defaultBlockH),
-          w: this.gridCols,
-          h: this.defaultBlockH
-        }
-        const raw = Object.assign({}, base, cg, bg)
-        const toNum = v => (Number.isFinite(v) ? v : 0)
-        const x = Math.max(0, toNum(raw.x))
-        const y = Math.max(0, toNum(raw.y))
-        const w = Math.min(
-          this.gridCols,
-          Math.max(1, Number.isFinite(raw.w) ? raw.w : this.gridCols)
+        const raw = Object.assign(
+          {
+            x: 0,
+            y: Math.floor(idx * this.defaultBlockH),
+            w: this.gridCols,
+            h: this.defaultBlockH
+          },
+          cg,
+          bg
         )
-        const h = Math.max(1, Number.isFinite(raw.h) ? raw.h : this.defaultBlockH)
+        const x = Math.max(0, this._toNum(raw.x, 0))
+        const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
+        const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw.w, this.gridCols)))
+        const h = Math.max(1, this._toNum(raw.h, this.defaultBlockH))
         return { x, y, w, h }
       },
 
@@ -249,9 +251,28 @@
             iNum: b.id // helper for the directive
           }
         })
-        // keep reading order stable
         items.sort((a, b) => (a.y !== b.y ? a.y - b.y : a.x - b.x))
         return items
+      },
+
+      _shouldAdoptFreshLayout(current, fresh) {
+        if (!fresh.length) return false
+        if (current.length !== fresh.length) return true
+
+        const looksDefault = current.every((it, idx) => {
+          const isFullWidth = it.w === this.gridCols
+          const isX0 = it.x === 0
+          const isStacked = it.y === idx * this.defaultBlockH
+          return isFullWidth && isX0 && isStacked
+        })
+
+        if (!looksDefault) return false
+
+        // any difference -> adopt
+        return fresh.some((f, idx) => {
+          const c = current[idx]
+          return f.x !== c.x || f.y !== c.y || f.w !== c.w || f.h !== c.h
+        })
       },
 
       // Update layout.h for a given block id when content height changes
@@ -265,7 +286,6 @@
         const iStr = String(id)
         const idx = this.layout.findIndex(li => li.i === iStr)
         if (idx !== -1 && this.layout[idx].h !== rows) {
-          // mutate in place so :layout.sync picks it up without re-allocating the array
           this.$set(this.layout[idx], 'h', rows)
         }
       },
@@ -273,8 +293,7 @@
       // Determine the y to append a new item at the bottom
       _appendY() {
         if (!this.layout.length) return 0
-        const bottom = this.layout.reduce((m, it) => Math.max(m, it.y + it.h), 0)
-        return bottom
+        return this.layout.reduce((m, it) => Math.max(m, it.y + it.h), 0)
       },
 
       // blocks management
@@ -282,7 +301,7 @@
         const { item } = evt
         const initGrid = {
           x: 0,
-          y: this._appendY(), // append at bottom
+          y: this._appendY(),
           w: this.gridCols,
           h: this.defaultBlockH
         }
@@ -310,10 +329,8 @@
       },
 
       onLayoutUpdated: debounce(function(newLayout) {
-        // Ensure our local layout mirrors the one from the grid
+        // Mirror the grid back to Vuex and keep content.grid in sync
         this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
-
-        // Sync back to store: update each block's grid + content.grid
         const idToGrid = new Map(
           this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
         )
@@ -327,7 +344,6 @@
               content: { ...(b.content || {}), grid: g }
             }
           })
-          // reorder blocks by layout reading order so index-based behavior remains sane
           .sort((a, b) => {
             const ga = idToGrid.get(String(a.id)) || this._gridOf(a)
             const gb = idToGrid.get(String(b.id)) || this._gridOf(b)
@@ -414,7 +430,6 @@
       }
     },
     mounted() {
-      // Hydrate layout from blocks (using content.grid or block.grid)
       this.layout = this.buildLayoutFromBlocks()
       this.init()
       this.$nextTick(this.getAllPreviews)
@@ -423,17 +438,19 @@
       this.dispose()
     },
     watch: {
-      // If the editor switches (or server rehydrates blocks), rebuild layout once
+      blocks: {
+        deep: true,
+        handler() {
+          const fresh = this.buildLayoutFromBlocks()
+          if (this._shouldAdoptFreshLayout(this.layout, fresh)) {
+            this.layout = fresh
+          }
+        }
+      },
       editorName() {
         this.unSubscribe()
         this.layout = this.buildLayoutFromBlocks()
         this.getAllPreviews()
-      },
-      // If blocks count changes (add/remove), regenerate layout to include new ids
-      blocks(newVal, oldVal) {
-        if ((oldVal && oldVal.length) !== (newVal && newVal.length)) {
-          this.layout = this.buildLayoutFromBlocks()
-        }
       },
       hasBlockActive(active) {
         if (active) return
