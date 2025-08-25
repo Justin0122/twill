@@ -397,8 +397,12 @@
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-          // eslint-disable-next-line vue/valid-next-tick
-          .then(() => this.$nextTick(() => (this.loading = false)))
+          .then(() => {
+            this.$nextTick(() => {
+              this.layout = this.buildLayoutFromBlocks()
+              this.loading = false
+            })
+          })
       },
       getPreview(index = -1) {
         this.loading = true
