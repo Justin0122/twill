@@ -18,78 +18,77 @@
           }}</b>
       </div>
 
-      <draggable
-        class="editorPreview__content"
-        ref="previewContent"
-        :value="blocks"
-        group="editorBlocks"
-        :sort="false"
-        :draggable="'.__no_items__'"
-        :force-fallback="true"
-        :fallback-on-body="true"
-        @add="onAdd(add, edit, $event)"
-        @update="() => {}"
-        :tag="'div'"
-      >
-        <grid-layout
-          :layout="gridLayout"
-          :col-num="gridCols"
-          :row-height="gridRowHeight"
-          :is-draggable="true"
-          :is-resizable="true"
-          :vertical-compact="true"
-          :margin="gridMargin"
-          :use-css-transforms="true"
-          :auto-size="true"
-          :is-mirrored="false"
-          :prevent-collision="false"
-          :drag-allow-from="handle"
-          :drag-ignore-from="'.editorPreview__header, .dropdown, [data-action]'"
-          @layout-updated="onLayoutUpdated"
+      <div class="editorPreview__content" ref="previewContent">
+        <draggable
+          class="editorPreview__dropzone"
+          :value="blocks"
+          group="editorBlocks"
+          :sort="false"
+          :draggable="'.__never__'"
+          @add="onAdd(add, edit, $event)"
         >
-          <grid-item
-            v-for="savedBlock in blocks"
-            :key="savedBlock.id"
-            :i="String(savedBlock.id)"
-            :x="(savedBlock.grid && savedBlock.grid.x) || 0"
-            :y="(savedBlock.grid && savedBlock.grid.y) || 0"
-            :w="(savedBlock.grid && savedBlock.grid.w) || 4"
-            :h="(savedBlock.grid && savedBlock.grid.h) || 3"
-            :min-w="2"
-            :min-h="2"
+          <grid-layout
+            :layout="gridLayout"
+            :col-num="gridCols"
+            :row-height="gridRowHeight"
+            :is-draggable="true"
+            :is-resizable="true"
+            :vertical-compact="true"
+            :margin="gridMargin"
+            :use-css-transforms="true"
+            :auto-size="true"
+            :is-mirrored="false"
+            :prevent-collision="false"
+            :draggable-handle="handle"
+            :draggable-cancel="'.editorPreview__header, .dropdown, [data-action]'"
+            @layout-updated="onLayoutUpdated"
           >
-            <a17-blockeditor-model
-              :block="savedBlock"
-              :editor-name="editorName"
-              v-slot="{
-                block,
-                isActive,
-                blockIndex,
-                move,
-                remove,
-                edit,
-                unEdit,
-                cloneBlock
-              }"
+            <grid-item
+              v-for="savedBlock in blocks"
+              :key="savedBlock.id"
+              :i="String(savedBlock.id)"
+              :x="(savedBlock.grid && savedBlock.grid.x) || 0"
+              :y="(savedBlock.grid && savedBlock.grid.y) || 0"
+              :w="(savedBlock.grid && savedBlock.grid.w) || 4"
+              :h="(savedBlock.grid && savedBlock.grid.h) || 3"
+              :min-w="2"
+              :min-h="2"
             >
-              <a17-editor-block-preview
-                :ref="block.id"
-                :block="block"
-                :blockIndex="blockIndex"
-                :blocksLength="blocks.length"
-                :isBlockActive="isActive"
-                :key="savedBlock.id"
-                @block:select="_selectBlock(edit, blockIndex)"
-                @block:unselect="_unselectBlock(unEdit, blockIndex)"
-                @block:move="move"
-                @block:clone="_cloneBlock(cloneBlock, blockIndex)"
-                @block:delete="_deleteBlock(remove)"
-                @scroll-to="scrollToActive"
-              />
-            </a17-blockeditor-model>
-          </grid-item>
-        </grid-layout>
-      </draggable>
+              <span class="editorPreview__handle" />
+
+              <a17-blockeditor-model
+                :block="savedBlock"
+                :editor-name="editorName"
+                v-slot="{
+                  block,
+                  isActive,
+                  blockIndex,
+                  move,
+                  remove,
+                  edit,
+                  unEdit,
+                  cloneBlock
+                }"
+              >
+                <a17-editor-block-preview
+                  :ref="block.id"
+                  :block="block"
+                  :blockIndex="blockIndex"
+                  :blocksLength="blocks.length"
+                  :isBlockActive="isActive"
+                  :key="savedBlock.id"
+                  @block:select="_selectBlock(edit, blockIndex)"
+                  @block:unselect="_unselectBlock(unEdit, blockIndex)"
+                  @block:move="move"
+                  @block:clone="_cloneBlock(cloneBlock, blockIndex)"
+                  @block:delete="_deleteBlock(remove)"
+                  @scroll-to="scrollToActive"
+                />
+              </a17-blockeditor-model>
+            </grid-item>
+          </grid-layout>
+        </draggable>
+      </div>
 
       <a17-spinner v-if="loading" :visible="true">
         {{ $trans('fields.block-editor.loading', 'Loading') }}&hellip;
@@ -118,8 +117,8 @@
     },
     mixins: [BlockEditorMixin],
     components: {
-      GridLayout,
-      GridItem,
+      'grid-layout': GridLayout,
+      'grid-item': GridItem,
       draggable,
       'a17-editor-block-preview': A17EditorBlockPreview,
       'a17-blockeditor-model': A17BlockEditorModel,
@@ -129,7 +128,7 @@
       return {
         loading: false,
         blockSelectIndex: -1,
-        handle: '.editorPreview__dragger',
+        handle: '.editorPreview__handle',
         // Grid config
         gridCols: 12,
         gridRowHeight: 80,
@@ -255,7 +254,7 @@
       // UI Management
       scrollToActive(target) {
         if (!this.$refs.previewContent) return
-        this.$refs.previewContent.$el.scrollTop = Math.max(0, target - 20)
+        this.$refs.previewContent.scrollTop = Math.max(0, target - 20)
       },
       resizeAllIframes() {
         if (!this.$refs.blockPreview) return
@@ -302,21 +301,20 @@
 
   .editorPreview__content {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
+    top: 0; bottom: 0; right: 0; left: 0;
     padding: 20px;
     overflow-y: auto;
     background-color: inherit;
   }
 
+  .editorPreview__dropzone {
+    min-height: 100%;
+    display: block;
+  }
+
   .editorPreview__empty {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
+    top: 0; bottom: 0; right: 0; left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -327,10 +325,7 @@
       display: block;
       content: '';
       position: absolute;
-      top: 20px;
-      bottom: 20px;
-      right: 20px;
-      left: 20px;
+      top: 20px; bottom: 20px; right: 20px; left: 20px;
       border: 1px dashed $color__fborder;
     }
 
@@ -355,11 +350,12 @@
     top: 50%;
     margin-left: -20px;
     margin-top: -5px;
+    cursor: move;
     @include dragGrid($color__drag, $color__block-bg);
   }
 
-  /* Make grid items fill & let the preview component stretch */
   ::v-deep(.vue-grid-item) {
+    position: relative;
     display: flex;
     flex-direction: column;
   }
