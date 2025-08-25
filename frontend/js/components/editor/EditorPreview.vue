@@ -1,9 +1,9 @@
 <template>
   <a17-blockeditor-model
     :editor-name="editorName"
-    v-slot="{ unEdit }"
+    v-slot="{ add, edit, unEdit }"
   >
-  <div
+    <div
       class="editorPreview"
       :class="previewClass"
       :style="previewStyle"
@@ -18,7 +18,16 @@
           }}</b>
       </div>
 
-      <div class="editorPreview__content" ref="previewContent">
+      <draggable
+        class="editorPreview__content"
+        ref="previewContent"
+        :value="blocks"
+        group="editorBlocks"
+        :handle="handle"
+        @add="onAdd(add, edit, $event)"
+        @update="() => {}"
+        :tag="'div'"
+      >
         <grid-layout
           :layout="gridLayout"
           :col-num="gridCols"
@@ -31,8 +40,8 @@
           :auto-size="true"
           :is-mirrored="false"
           :prevent-collision="false"
-          :draggable-handle="handle"
-          :draggable-cancel="'.editorPreview__header, .dropdown, [data-action]'"
+          :drag-allow-from="handle"
+          :drag-ignore-from="'.editorPreview__header, .dropdown, [data-action]'"
           @layout-updated="onLayoutUpdated"
         >
           <grid-item
@@ -77,7 +86,7 @@
             </a17-blockeditor-model>
           </grid-item>
         </grid-layout>
-      </div>
+      </draggable>
 
       <a17-spinner v-if="loading" :visible="true">
         {{ $trans('fields.block-editor.loading', 'Loading') }}&hellip;
@@ -175,13 +184,11 @@
         const idToGrid = new Map(
           newLayout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
         )
-
         const updated = this.blocks
           .map(b => {
             const g = idToGrid.get(String(b.id))
             return g ? { ...b, grid: g } : b
           })
-          // reading-order sort keeps index-based behaviors sane
           .sort((a, b) => {
             const ga = a.grid || { x: 0, y: 0 }
             const gb = b.grid || { x: 0, y: 0 }
@@ -250,7 +257,7 @@
       // UI Management
       scrollToActive(target) {
         if (!this.$refs.previewContent) return
-        this.$refs.previewContent.scrollTop = Math.max(0, target - 20)
+        this.$refs.previewContent.$el.scrollTop = Math.max(0, target - 20)
       },
       resizeAllIframes() {
         if (!this.$refs.blockPreview) return
