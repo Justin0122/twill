@@ -5,6 +5,8 @@ import mapValues from 'lodash/mapValues'
 // Plugins
 import VueTimeago from 'vue-timeago'
 
+import VueGridLayout from 'vue-grid-layout';
+
 import a17Avatar from '@/components/Avatar.vue'
 import a17BrowserField from '@/components/BrowserField.vue'
 // Generic Components
@@ -137,6 +139,8 @@ const A17Config = {
       locale: window[process.env.VUE_APP_NAME].twillLocalization.locale,
       locales: mapValues(locales, 'date-fns')
     })
+
+    Vue.use(VueGridLayout.VueGridLayout)
 
     // Directives
     Vue.use(SvgSprite)

@@ -1,7 +1,7 @@
 <template>
   <a17-blockeditor-model
     :editor-name="editorName"
-    v-slot="{ add, edit, unEdit }"
+    v-slot="{ unEdit }"
   >
     <div
       class="editorPreview"
