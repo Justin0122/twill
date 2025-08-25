@@ -21,10 +21,10 @@
       <div class="editorPreview__content" ref="previewContent">
         <draggable
           class="editorPreview__dropzone"
-          :value="blocks"
-          group="editorBlocks"
+          :list="blocks"
           :sort="false"
           :draggable="'.__never__'"
+          :group="{ name: 'editorBlocks', put: true }"
           @add="onAdd(add, edit, $event)"
         >
           <grid-layout
@@ -47,10 +47,6 @@
               v-for="savedBlock in blocks"
               :key="savedBlock.id"
               :i="String(savedBlock.id)"
-              :x="(savedBlock.grid && savedBlock.grid.x) || 0"
-              :y="(savedBlock.grid && savedBlock.grid.y) || 0"
-              :w="(savedBlock.grid && savedBlock.grid.w) || 12"
-              :h="(savedBlock.grid && savedBlock.grid.h) || 6"
               :min-w="2"
               :min-h="2"
             >
@@ -132,7 +128,8 @@
         // Grid config
         gridCols: 12,
         gridRowHeight: 80,
-        gridMargin: [12, 12]
+        gridMargin: [12, 12],
+        defaultBlockH: 6
       }
     },
     computed: {
@@ -147,16 +144,15 @@
         return { 'background-color': this.bgColor }
       },
       gridLayout() {
+        // Default new/legacy blocks to full width, stacked vertically
         return this.blocks.map((b, idx) => {
           const g = b.grid || {}
           return {
             i: String(b.id),
-            x: Number.isFinite(g.x) ? g.x : (idx * 4) % this.gridCols,
-            y: Number.isFinite(g.y)
-              ? g.y
-              : Math.floor((idx * 4) / this.gridCols) * 3,
-            w: Number.isFinite(g.w) ? g.w : 4,
-            h: Number.isFinite(g.h) ? g.h : 3
+            x: Number.isFinite(g.x) ? g.x : 0,
+            y: Number.isFinite(g.y) ? g.y : idx * this.defaultBlockH,
+            w: Number.isFinite(g.w) ? g.w : this.gridCols,
+            h: Number.isFinite(g.h) ? g.h : this.defaultBlockH
           }
         })
       }
@@ -169,7 +165,8 @@
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
-          grid: { x: 0, y: 0, w: 4, h: 3 }
+          // default to full width & standard height
+          grid: { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
         }
 
         const index = Math.max(0, evt.newIndex)
