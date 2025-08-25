@@ -222,20 +222,22 @@
         return Number.isFinite(n) ? n : fallback
       },
 
-      // Prefer content.grid, then block.grid, else defaults; coerce values
       _gridOf(block, idx = 0) {
-        const cg = (block.content && block.content.grid) || {}
         const bg = block.grid || {}
-        const raw = Object.assign(
-          {
-            x: 0,
-            y: Math.floor(idx * this.defaultBlockH),
-            w: this.gridCols,
-            h: this.defaultBlockH
-          },
-          bg,  // block.grid first…
-          cg   // …then content.grid overrides it
-        )
+
+        const cg =
+          (block.content && block.content.grid) ||
+          (block.preview && block.preview.content && block.preview.content.grid) ||
+          (block._preview && block._preview.content && block._preview.content.grid) ||
+          {}
+
+        const raw = Object.assign({
+          x: 0,
+          y: Math.floor(idx * this.defaultBlockH),
+          w: this.gridCols,
+          h: this.defaultBlockH
+        }, bg, cg)
+
         const x = Math.max(0, this._toNum(raw.x, 0))
         const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
         const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw.w, this.gridCols)))
@@ -402,9 +404,32 @@
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-          .then(() => {
+          .then((previewsMaybe) => {
             this.$nextTick(() => {
-              this.layout = this.buildLayoutFromBlocks()
+              const previews =
+                previewsMaybe ||
+                this.$store.state.preview?.[this.editorName]?.items ||
+                this.$store.getters?.['preview/itemsByEditor']?.(this.editorName) ||
+                []
+
+              // Build a map id -> grid from preview payloads
+              const idToGrid = new Map()
+              previews.forEach(p => {
+                // Make this match your preview shape exactly
+                const id = String(p.id || p.blockId || p.block?.id)
+                const g = p.content?.grid
+                if (id && g && Number.isFinite(+g.w) && Number.isFinite(+g.h)) {
+                  idToGrid.set(id, { x:+g.x||0, y:+g.y||0, w:+g.w, h:+g.h })
+                }
+              })
+
+              // Prefer preview grid when present; otherwise fall back to _gridOf(block)
+              this.layout = this.blocks.map((b, idx) => {
+                const i = String(b.id)
+                const g = idToGrid.get(i) || this._gridOf(b, idx)
+                return { ...g, i, iNum: b.id }
+              }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
+
               this.loading = false
             })
           })
