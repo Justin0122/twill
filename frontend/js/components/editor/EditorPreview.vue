@@ -3,7 +3,7 @@
     :editor-name="editorName"
     v-slot="{ unEdit }"
   >
-    <div
+  <div
       class="editorPreview"
       :class="previewClass"
       :style="previewStyle"
@@ -89,7 +89,7 @@
 <script>
   import debounce from 'lodash/debounce'
   import tinyColor from 'tinycolor2'
-  import VueGridLayout from 'vue-grid-layout'
+  import { GridLayout, GridItem } from 'vue-grid-layout'
   import A17BlockEditorModel from '@/components/blocks/BlockEditorModel'
   import A17EditorBlockPreview from '@/components/editor/EditorPreviewBlockItem'
   import A17Spinner from '@/components/Spinner.vue'
@@ -97,7 +97,6 @@
   import ACTIONS from '@/store/actions/index'
   import { BLOCKS, PREVIEW } from '@/store/mutations/index'
 
-  const { GridLayout, GridItem } = VueGridLayout;
 
   export default {
     name: 'A17editorPreview',
@@ -113,8 +112,8 @@
     },
     mixins: [BlockEditorMixin],
     components: {
-      'grid-layout': GridLayout,
-      'grid-item': GridItem,
+      GridLayout,
+      GridItem,
       'a17-editor-block-preview': A17EditorBlockPreview,
       'a17-blockeditor-model': A17BlockEditorModel,
       'a17-spinner': A17Spinner
