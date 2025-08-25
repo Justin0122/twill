@@ -11,11 +11,11 @@
     >
       <div class="editorPreview__empty" v-if="!blocks.length">
         <b>{{
-            $trans(
-              'previewer.drag-and-drop',
-              'Drag and drop content from the left navigation'
-            )
-          }}</b>
+          $trans(
+            'previewer.drag-and-drop',
+            'Drag and drop content from the left navigation'
+          )
+        }}</b>
       </div>
 
       <div class="editorPreview__content" ref="previewContent">
@@ -40,7 +40,9 @@
             :is-mirrored="false"
             :prevent-collision="false"
             :draggable-handle="handle"
-            :draggable-cancel="'.editorPreview__header, .dropdown, [data-action]'"
+            :draggable-cancel="
+              '.editorPreview__header, .dropdown, [data-action]'
+            "
             @layout-updated="onLayoutUpdated"
             @dragstart="suppressAutoHeight = true"
             @dragend="suppressAutoHeight = false"
@@ -60,7 +62,10 @@
             >
               <span class="editorPreview__handle" />
 
-              <div class="editorPreview__blockWrap" v-autoheight="{ id: item.iNum }">
+              <div
+                class="editorPreview__blockWrap"
+                v-autoheight="{ id: item.iNum }"
+              >
                 <a17-blockeditor-model
                   v-if="idToBlock[item.i]"
                   :block="idToBlock[item.i]"
@@ -107,7 +112,7 @@
 <script>
   import debounce from 'lodash/debounce'
   import tinyColor from 'tinycolor2'
-  import { GridLayout, GridItem } from 'vue-grid-layout'
+  import { GridItem, GridLayout } from 'vue-grid-layout'
   import draggable from 'vuedraggable'
 
   import A17BlockEditorModel from '@/components/blocks/BlockEditorModel'
@@ -232,8 +237,14 @@
           bg
         )
         const x = Math.max(0, this._toNum(raw.x, 0))
-        const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
-        const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw.w, this.gridCols)))
+        const y = Math.max(
+          0,
+          this._toNum(raw.y, Math.floor(idx * this.defaultBlockH))
+        )
+        const w = Math.min(
+          this.gridCols,
+          Math.max(1, this._toNum(raw.w, this.gridCols))
+        )
         const h = Math.max(1, this._toNum(raw.h, this.defaultBlockH))
         return { x, y, w, h }
       },
@@ -445,10 +456,7 @@
       blocks: {
         deep: true,
         handler() {
-          const fresh = this.buildLayoutFromBlocks()
-          if (this._shouldAdoptFreshLayout(this.layout, fresh)) {
-            this.layout = fresh
-          }
+          this.layout = this.buildLayoutFromBlocks()
         }
       },
       editorName() {
@@ -473,7 +481,10 @@
 
   .editorPreview__content {
     position: absolute;
-    top: 0; bottom: 0; right: 0; left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
     padding: 20px;
     overflow-y: auto;
     background-color: inherit;
@@ -486,7 +497,10 @@
 
   .editorPreview__empty {
     position: absolute;
-    top: 0; bottom: 0; right: 0; left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -497,7 +511,10 @@
       display: block;
       content: '';
       position: absolute;
-      top: 20px; bottom: 20px; right: 20px; left: 20px;
+      top: 20px;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
       border: 1px dashed $color__fborder;
     }
 
