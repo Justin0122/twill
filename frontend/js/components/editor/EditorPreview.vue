@@ -49,42 +49,44 @@
               :i="String(savedBlock.id)"
               :x="(savedBlock.grid && savedBlock.grid.x) || 0"
               :y="(savedBlock.grid && savedBlock.grid.y) || 0"
-              :w="(savedBlock.grid && savedBlock.grid.w) || 12"
-              :h="(savedBlock.grid && savedBlock.grid.h) || 6"
+              :w="(savedBlock.grid && savedBlock.grid.w) || gridCols"
+              :h="getItemH(savedBlock)"
               :min-w="2"
-              :min-h="2"
+              :min-h="1"
             >
               <span class="editorPreview__handle" />
 
-              <a17-blockeditor-model
-                :block="savedBlock"
-                :editor-name="editorName"
-                v-slot="{
-                  block,
-                  isActive,
-                  blockIndex,
-                  move,
-                  remove,
-                  edit,
-                  unEdit,
-                  cloneBlock
-                }"
-              >
-                <a17-editor-block-preview
-                  :ref="block.id"
-                  :block="block"
-                  :blockIndex="blockIndex"
-                  :blocksLength="blocks.length"
-                  :isBlockActive="isActive"
-                  :key="savedBlock.id"
-                  @block:select="_selectBlock(edit, blockIndex)"
-                  @block:unselect="_unselectBlock(unEdit, blockIndex)"
-                  @block:move="move"
-                  @block:clone="_cloneBlock(cloneBlock, blockIndex)"
-                  @block:delete="_deleteBlock(remove)"
-                  @scroll-to="scrollToActive"
-                />
-              </a17-blockeditor-model>
+              <div class="editorPreview__blockWrap" v-autoheight="{ id: savedBlock.id }">
+                <a17-blockeditor-model
+                  :block="savedBlock"
+                  :editor-name="editorName"
+                  v-slot="{
+                    block,
+                    isActive,
+                    blockIndex,
+                    move,
+                    remove,
+                    edit,
+                    unEdit,
+                    cloneBlock
+                  }"
+                >
+                  <a17-editor-block-preview
+                    :ref="block.id"
+                    :block="block"
+                    :blockIndex="blockIndex"
+                    :blocksLength="blocks.length"
+                    :isBlockActive="isActive"
+                    :key="savedBlock.id"
+                    @block:select="_selectBlock(edit, blockIndex)"
+                    @block:unselect="_unselectBlock(unEdit, blockIndex)"
+                    @block:move="move"
+                    @block:clone="_cloneBlock(cloneBlock, blockIndex)"
+                    @block:delete="_deleteBlock(remove)"
+                    @scroll-to="scrollToActive"
+                  />
+                </a17-blockeditor-model>
+              </div>
             </grid-item>
           </grid-layout>
         </draggable>
@@ -102,6 +104,7 @@
   import tinyColor from 'tinycolor2'
   import { GridLayout, GridItem } from 'vue-grid-layout'
   import draggable from 'vuedraggable'
+
   import A17BlockEditorModel from '@/components/blocks/BlockEditorModel'
   import A17EditorBlockPreview from '@/components/editor/EditorPreviewBlockItem'
   import A17Spinner from '@/components/Spinner.vue'
@@ -124,6 +127,44 @@
       'a17-blockeditor-model': A17BlockEditorModel,
       'a17-spinner': A17Spinner
     },
+    directives: {
+      // Observe content size and notify the component with the block id
+      autoheight: {
+        inserted(el, binding, vnode) {
+          const ctx = vnode.context
+          const id = binding && binding.value && binding.value.id
+          if (!ctx || !id) return
+
+          const handler = entries => {
+            const entry = entries[0]
+            const px = entry && entry.contentRect ? entry.contentRect.height : el.offsetHeight
+            ctx.onBlockContentResize(id, px)
+          }
+
+          if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(handler)
+            ro.observe(el)
+            el.__ro = ro
+          } else {
+            // Fallback: listen to window resize (coarser)
+            el.__resizeHandler = () => handler([{ contentRect: el.getBoundingClientRect() }])
+            window.addEventListener('resize', el.__resizeHandler)
+            // initial
+            el.__resizeHandler()
+          }
+        },
+        unbind(el) {
+          if (el.__ro) {
+            el.__ro.disconnect()
+            delete el.__ro
+          }
+          if (el.__resizeHandler) {
+            window.removeEventListener('resize', el.__resizeHandler)
+            delete el.__resizeHandler
+          }
+        }
+      }
+    },
     data() {
       return {
         loading: false,
@@ -133,7 +174,9 @@
         gridCols: 12,
         gridRowHeight: 80,
         gridMargin: [12, 12],
-        defaultBlockH: 8
+        defaultBlockH: 3,
+        // auto heights in grid rows, keyed by block id
+        autoHeights: {}
       }
     },
     computed: {
@@ -150,17 +193,34 @@
       gridLayout() {
         return this.blocks.map((b, idx) => {
           const g = b.grid || {}
+          const autoH = this.autoHeights[b.id]
           return {
             i: String(b.id),
             x: Number.isFinite(g.x) ? g.x : 0,
             y: Number.isFinite(g.y) ? g.y : idx * this.defaultBlockH,
             w: Number.isFinite(g.w) ? g.w : this.gridCols,
-            h: Number.isFinite(g.h) ? g.h : this.defaultBlockH
+            h: Number.isFinite(autoH) ? autoH
+              : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
           }
         })
       }
     },
     methods: {
+      getItemH(block) {
+        const g = block.grid || {}
+        const autoH = this.autoHeights[block.id]
+        return Number.isFinite(autoH)
+          ? autoH
+          : (Number.isFinite(g.h) ? g.h : this.defaultBlockH)
+      },
+
+      onBlockContentResize(id, contentPx) {
+        const rows = Math.max(1, Math.ceil(contentPx / this.gridRowHeight))
+        if (this.autoHeights[id] !== rows) {
+          this.$set(this.autoHeights, id, rows)
+        }
+      },
+
       // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
@@ -168,6 +228,7 @@
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
+          // default to full width; height autocomputed by ResizeObserver shortly after mount
           grid: { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
         }
 
@@ -177,13 +238,18 @@
       },
 
       onLayoutUpdated: debounce(function(newLayout) {
+        // Map layout back to blocks and reorder by reading order
         const idToGrid = new Map(
           newLayout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
         )
         const updated = this.blocks
           .map(b => {
             const g = idToGrid.get(String(b.id))
-            return g ? { ...b, grid: g } : b
+            // use current auto height if present (so order commit doesn't stomp it)
+            const autoH = this.autoHeights[b.id]
+            return g
+              ? { ...b, grid: { ...g, h: Number.isFinite(autoH) ? autoH : g.h } }
+              : b
           })
           .sort((a, b) => {
             const ga = a.grid || { x: 0, y: 0 }
@@ -351,6 +417,10 @@
     margin-top: -5px;
     cursor: move;
     @include dragGrid($color__drag, $color__block-bg);
+  }
+
+  .editorPreview__blockWrap {
+    display: block;
   }
 
   ::v-deep(.vue-grid-item) {
