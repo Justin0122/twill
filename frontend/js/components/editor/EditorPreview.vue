@@ -381,12 +381,14 @@
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
+          // eslint-disable-next-line vue/valid-next-tick
           .then(() => this.$nextTick(() => (this.loading = false)))
       },
       getPreview(index = -1) {
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
+          // eslint-disable-next-line vue/valid-next-tick
           .then(() => this.$nextTick(() => (this.loading = false)))
       },
 
