@@ -19,7 +19,6 @@
       </div>
 
       <div class="editorPreview__content" ref="previewContent">
-        <!-- vuedraggable only as DROP TARGET; no internal sorting -->
         <draggable
           class="editorPreview__dropzone"
           :value="blocks"
@@ -29,7 +28,7 @@
           @add="onAdd(add, edit, $event)"
         >
           <grid-layout
-            :layout="gridLayout"
+            :layout.sync="layout"
             :col-num="gridCols"
             :row-height="gridRowHeight"
             :is-draggable="true"
@@ -49,19 +48,25 @@
             @resizeend="suppressAutoHeight = false"
           >
             <grid-item
-              v-for="savedBlock in blocks"
-              :key="savedBlock.id"
-              :i="String(savedBlock.id)"
+              v-for="item in layout"
+              :key="item.i"
+              :i="item.i"
+              :x="item.x"
+              :y="item.y"
+              :w="item.w"
+              :h="item.h"
               :min-w="2"
               :min-h="1"
             >
-              <!-- Drag handle used by :draggable-handle -->
               <span class="editorPreview__handle" />
 
-              <!-- Wrap content so we can observe its INTRINSIC height (not 100%) -->
-              <div class="editorPreview__blockWrap" v-autoheight="{ id: savedBlock.id }">
+              <div
+                class="editorPreview__blockWrap"
+                v-autoheight="{ id: item.iNum }"
+              >
                 <a17-blockeditor-model
-                  :block="savedBlock"
+                  v-if="idToBlock[item.i]"
+                  :block="idToBlock[item.i]"
                   :editor-name="editorName"
                   v-slot="{
                     block,
@@ -80,7 +85,7 @@
                     :blockIndex="blockIndex"
                     :blocksLength="blocks.length"
                     :isBlockActive="isActive"
-                    :key="savedBlock.id"
+                    :key="block.id"
                     @block:select="_selectBlock(edit, blockIndex)"
                     @block:unselect="_unselectBlock(unEdit, blockIndex)"
                     @block:move="move"
@@ -131,14 +136,18 @@
       'a17-spinner': A17Spinner
     },
     directives: {
+      // Observe content size and push auto height into layout.h
       autoheight: {
         inserted(el, binding, vnode) {
           const ctx = vnode.context
-          const id = binding && binding.value && binding.value.id
+          const idStr = binding && binding.value && binding.value.id
+          const id = Number(idStr)
           if (!ctx || !id) return
 
           const measure = () => {
-            const px = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 0)
+            const px = Math.ceil(
+              el.scrollHeight || el.getBoundingClientRect().height || 0
+            )
             ctx.onBlockContentResize(id, px)
           }
 
@@ -156,8 +165,14 @@
           }
         },
         unbind(el) {
-          if (el.__ro) { el.__ro.disconnect(); delete el.__ro }
-          if (el.__resizeHandler) { window.removeEventListener('resize', el.__resizeHandler); delete el.__resizeHandler }
+          if (el.__ro) {
+            el.__ro.disconnect()
+            delete el.__ro
+          }
+          if (el.__resizeHandler) {
+            window.removeEventListener('resize', el.__resizeHandler)
+            delete el.__resizeHandler
+          }
         }
       }
     },
@@ -166,13 +181,16 @@
         loading: false,
         blockSelectIndex: -1,
         handle: '.editorPreview__handle',
+        // Grid config
         gridCols: 12,
         gridRowHeight: 80,
         gridMargin: [12, 12],
         defaultBlockH: 3,
         maxAutoRows: 200,
-        autoHeights: {},
-        suppressAutoHeight: false
+        suppressAutoHeight: false,
+
+        // The canonical layout array (docs-style)
+        layout: []
       }
     },
     computed: {
@@ -186,22 +204,17 @@
       previewStyle() {
         return { 'background-color': this.bgColor }
       },
-      gridLayout() {
-        return this.blocks.map((b, idx) => {
-          const g = this._gridOf(b, idx)
-          const autoH = this.autoHeights[b.id]
-          return {
-            i: String(b.id),
-            x: g.x,
-            y: g.y,
-            w: g.w,
-            h: Number.isFinite(autoH) ? autoH : g.h
-          }
-        })
+      // map id(string) -> block
+      idToBlock() {
+        const map = {}
+        for (const b of this.blocks) {
+          map[String(b.id)] = b
+        }
+        return map
       }
     },
     methods: {
-      // Prefer content.grid, then block.grid, then defaults; clamp to grid
+      // Prefer content.grid, then block.grid, else defaults
       _gridOf(block, idx = 0) {
         const cg = (block.content && block.content.grid) || {}
         const bg = block.grid || {}
@@ -211,65 +224,113 @@
           w: this.gridCols,
           h: this.defaultBlockH
         }
-        const raw = Object.assign({}, base, cg, bg) // block.grid wins over content.grid if present
+        const raw = Object.assign({}, base, cg, bg)
         const toNum = v => (Number.isFinite(v) ? v : 0)
         const x = Math.max(0, toNum(raw.x))
         const y = Math.max(0, toNum(raw.y))
-        const w = Math.min(this.gridCols, Math.max(1, Number.isFinite(raw.w) ? raw.w : this.gridCols))
+        const w = Math.min(
+          this.gridCols,
+          Math.max(1, Number.isFinite(raw.w) ? raw.w : this.gridCols)
+        )
         const h = Math.max(1, Number.isFinite(raw.h) ? raw.h : this.defaultBlockH)
         return { x, y, w, h }
       },
 
-      getItemH(block) {
-        const g = this._gridOf(block)
-        const autoH = this.autoHeights[block.id]
-        return Number.isFinite(autoH) ? autoH : g.h
+      // Build the layout array from current blocks (in reading order)
+      buildLayoutFromBlocks() {
+        const items = this.blocks.map((b, idx) => {
+          const g = this._gridOf(b, idx)
+          return {
+            x: g.x,
+            y: g.y,
+            w: g.w,
+            h: g.h,
+            i: String(b.id),
+            iNum: b.id // helper for the directive
+          }
+        })
+        // keep reading order stable
+        items.sort((a, b) => (a.y !== b.y ? a.y - b.y : a.x - b.x))
+        return items
       },
 
+      // Update layout.h for a given block id when content height changes
       onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
         if (!Number.isFinite(contentPx)) return
-        const rows = Math.max(1, Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight)))
-        if (this.autoHeights[id] !== rows) {
-          this.$set(this.autoHeights, id, rows)
+        const rows = Math.max(
+          1,
+          Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight))
+        )
+        const iStr = String(id)
+        const idx = this.layout.findIndex(li => li.i === iStr)
+        if (idx !== -1 && this.layout[idx].h !== rows) {
+          // mutate in place so :layout.sync picks it up without re-allocating the array
+          this.$set(this.layout[idx], 'h', rows)
         }
       },
 
+      // Determine the y to append a new item at the bottom
+      _appendY() {
+        if (!this.layout.length) return 0
+        const bottom = this.layout.reduce((m, it) => Math.max(m, it.y + it.h), 0)
+        return bottom
+      },
+
+      // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
-        const initialGrid = { x: 0, y: 0, w: this.gridCols, h: this.defaultBlockH }
+        const initGrid = {
+          x: 0,
+          y: this._appendY(), // append at bottom
+          w: this.gridCols,
+          h: this.defaultBlockH
+        }
         const block = {
           title: item.getAttribute('data-title'),
           component: item.getAttribute('data-component'),
           icon: item.getAttribute('data-icon'),
-          grid: initialGrid,
-          content: { ...(this.content || {}), grid: initialGrid }
+          grid: initGrid,
+          content: { grid: initGrid }
         }
 
         const index = Math.max(0, evt.newIndex)
         this.addAndEditBlock(add, edit, { block, index })
-        this._selectBlock(null, index)
+
+        // After the store assigns an id, add to local layout
+        this.$nextTick(() => {
+          const newBlock = this.blocks[index]
+          if (!newBlock) return
+          const idStr = String(newBlock.id)
+          if (!this.layout.find(li => li.i === idStr)) {
+            this.layout.push({ ...initGrid, i: idStr, iNum: newBlock.id })
+          }
+          this._selectBlock(null, index)
+        })
       },
 
       onLayoutUpdated: debounce(function(newLayout) {
-        // Sync layout to both block.grid and content.grid; keep reading order
+        // Ensure our local layout mirrors the one from the grid
+        this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
+
+        // Sync back to store: update each block's grid + content.grid
         const idToGrid = new Map(
-          newLayout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
+          this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
         )
+
         const updated = this.blocks
           .map(b => {
             const g = idToGrid.get(String(b.id)) || this._gridOf(b)
-            const autoH = this.autoHeights[b.id]
-            const finalG = { ...g, h: Number.isFinite(autoH) ? autoH : g.h }
             return {
               ...b,
-              grid: finalG,
-              content: { ...(b.content || {}), grid: finalG }
+              grid: g,
+              content: { ...(b.content || {}), grid: g }
             }
           })
+          // reorder blocks by layout reading order so index-based behavior remains sane
           .sort((a, b) => {
-            const ga = this._gridOf(a)
-            const gb = this._gridOf(b)
+            const ga = idToGrid.get(String(a.id)) || this._gridOf(a)
+            const gb = idToGrid.get(String(b.id)) || this._gridOf(b)
             return ga.y !== gb.y ? ga.y - gb.y : ga.x - gb.x
           })
 
@@ -277,7 +338,7 @@
           editorName: this.editorName,
           value: updated
         })
-      }, 100),
+      }, 80),
 
       _selectBlock(fn = null, index) {
         if (fn) this.selectBlock(fn, index)
@@ -320,17 +381,16 @@
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-          // eslint-disable-next-line vue/valid-next-tick
           .then(() => this.$nextTick(() => (this.loading = false)))
       },
       getPreview(index = -1) {
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
-          // eslint-disable-next-line vue/valid-next-tick
           .then(() => this.$nextTick(() => (this.loading = false)))
       },
 
+      // UI Management
       scrollToActive(target) {
         if (!this.$refs.previewContent) return
         this.$refs.previewContent.scrollTop = Math.max(0, target - 20)
@@ -352,6 +412,8 @@
       }
     },
     mounted() {
+      // Hydrate layout from blocks (using content.grid or block.grid)
+      this.layout = this.buildLayoutFromBlocks()
       this.init()
       this.$nextTick(this.getAllPreviews)
     },
@@ -359,9 +421,17 @@
       this.dispose()
     },
     watch: {
+      // If the editor switches (or server rehydrates blocks), rebuild layout once
       editorName() {
         this.unSubscribe()
+        this.layout = this.buildLayoutFromBlocks()
         this.getAllPreviews()
+      },
+      // If blocks count changes (add/remove), regenerate layout to include new ids
+      blocks(newVal, oldVal) {
+        if ((oldVal && oldVal.length) !== (newVal && newVal.length)) {
+          this.layout = this.buildLayoutFromBlocks()
+        }
       },
       hasBlockActive(active) {
         if (active) return
