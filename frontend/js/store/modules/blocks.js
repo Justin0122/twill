@@ -167,7 +167,7 @@ const actions = {
   async [ACTIONS.SAVE_GRID_LAYOUT]({ state, rootState }, { editorName }) {
     const url =
       (rootState.form && rootState.form.blockLayoutSaveUrl) ||
-      '/blocks/layout'
+      '/admin/blocks/layout/save'
 
     const blocks = state.blocks[editorName] || []
     const layout = blocks.map(b => ({

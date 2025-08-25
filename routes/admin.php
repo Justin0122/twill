@@ -66,8 +66,7 @@ if (config('twill.enabled.file-library')) {
 
 if (config('twill.enabled.block-editor')) {
     Route::post('blocks/preview', ['as' => 'blocks.preview', 'uses' => 'BlocksController@preview']);
-    Route::post('/blocks/layout', [A17\Twill\Http\Controllers\Admin\BlocksLayoutController::class, 'store'])
-        ->name('twill.blocks.layout.save');
+    Route::post('blocks/layout/save', [A17\Twill\Http\Controllers\Admin\BlocksLayoutController::class, 'store']);
 }
 
 if (config('twill.enabled.buckets')) {
