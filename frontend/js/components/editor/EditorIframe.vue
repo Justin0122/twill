@@ -40,6 +40,8 @@
     },
     computed: {
       preview() {
+        // eslint-disable-next-line no-console
+        console.log('preview', this.block)
         if (this.block && (this.block.previewHtml || this.block.html)) {
           return this.block.previewHtml || this.block.html
         }
