@@ -108,7 +108,7 @@
   import A17Spinner from '@/components/Spinner.vue'
   import { BlockEditorMixin } from '@/mixins'
   import ACTIONS from '@/store/actions/index'
-  import { BLOCKS, PREVIEW } from '@/store/mutations/index'
+  import { PREVIEW } from '@/store/mutations/index'
 
   export default {
     name: 'A17editorPreview',
