@@ -374,3 +374,86 @@
     }
   }
 </script>
+
+
+<style lang="scss" scoped>
+  .editorPreview {
+    background-color: inherit;
+    color: inherit;
+  }
+
+  .editorPreview__content {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: inherit;
+  }
+
+  .editorPreview__dropzone {
+    min-height: 100%;
+    display: block;
+  }
+
+  .editorPreview__empty {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    background-color: inherit;
+
+    &::after {
+      display: block;
+      content: '';
+      position: absolute;
+      top: 20px;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
+      border: 1px dashed $color__fborder;
+    }
+
+    > * {
+      padding: 0 40px;
+      @include font-medium;
+      line-height: 1.35em;
+      text-align: center;
+      font-weight: 400;
+    }
+  }
+
+  .editorPreview__empty + .editorPreview__content {
+    background-color: transparent;
+  }
+
+  .editorPreview__handle {
+    position: absolute;
+    height: 10px;
+    width: 40px;
+    left: 50%;
+    top: 50%;
+    margin-left: -20px;
+    margin-top: -5px;
+    cursor: move;
+    @include dragGrid($color__drag, $color__block-bg);
+  }
+
+  .editorPreview__blockWrap {
+    display: block;
+    height: auto !important;
+    box-sizing: border-box;
+  }
+
+  ::v-deep(.vue-grid-item) {
+    position: relative;
+    display: block;
+  }
+</style>
