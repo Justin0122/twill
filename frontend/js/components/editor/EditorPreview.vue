@@ -417,12 +417,11 @@
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
           .then((previewsMaybe) => {
+            const previews = Array.isArray(previewsMaybe) ? previewsMaybe : []
             this.$nextTick(() => {
-              const previews = Array.isArray(previewsMaybe) ? previewsMaybe : []
               // eslint-disable-next-line no-console
               console.log('[getAllPreviews] previews resolved', previews)
 
-              // Build map id -> grid from preview JSON
               const idToGrid = new Map()
               previews.forEach(p => {
                 let cg = p.content?.grid
@@ -439,7 +438,6 @@
                 }
               })
 
-              // Apply preview grid if present, otherwise fall back
               this.layout = this.blocks.map((b, idx) => {
                 const i = String(b.id)
                 const g = idToGrid.get(i) || this._gridOf(b, idx)

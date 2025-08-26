@@ -17,7 +17,7 @@ class BlocksController extends Controller
         Application $app,
         ViewFactory $viewFactory,
         Request $request,
-    ): string {
+    ) {
         if ($request->has('activeLanguage')) {
             $app->setLocale($request->get('activeLanguage'));
         }
@@ -41,7 +41,6 @@ class BlocksController extends Controller
 
         return response()->json([
             'id' => $data['id'] ?? null,
-            'blockId' => $data['id'] ?? null,
             'type' => $data['type'] ?? null,
             'content' => $data['content'] ?? [],
             'html' => html_entity_decode($result->render()),
