@@ -88,6 +88,7 @@
                     :blocksLength="blocks.length"
                     :isBlockActive="isActive"
                     :key="block.id"
+                    :html="block.previewHtml"
                     @block:select="_selectBlock(edit, blockIndex)"
                     @block:unselect="_unselectBlock(unEdit, blockIndex)"
                     @block:move="move"
@@ -440,7 +441,14 @@
 
               this.layout = this.blocks.map((b, idx) => {
                 const i = String(b.id)
-                const g = idToGrid.get(i) || this._gridOf(b, idx)
+                const preview = previews.find(p => String(p.id) === i)
+
+                const g = preview?.content?.grid || this._gridOf(b, idx)
+
+                if (preview?.html) {
+                  this.$set(b, 'previewHtml', preview.html)
+                }
+
                 return { ...g, i, iNum: b.id }
               }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
 
