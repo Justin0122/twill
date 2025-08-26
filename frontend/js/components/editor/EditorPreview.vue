@@ -28,6 +28,7 @@
           @add="onAdd(add, edit, $event)"
         >
           <grid-layout
+            ref="grid"
             :layout.sync="layout"
             :col-num="gridCols"
             :row-height="gridRowHeight"
@@ -132,11 +133,38 @@
           const idStr = binding && binding.value && binding.value.id
           const id = Number(idStr)
           if (!ctx || !id) return
+
           const measure = () => {
-            const px = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 0)
+            const px = Math.ceil(
+              el.scrollHeight ||
+                el.getBoundingClientRect().height ||
+                0
+            )
             ctx.onBlockContentResize(id, px)
           }
-          ctx.$nextTick(() => requestAnimationFrame(measure))
+
+          // 1) Initial burst: now → nextTick → rAF (layout) → rAF (paint)
+          ctx.$nextTick(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(measure)
+            })
+          })
+
+          // 2) Watch DOM changes inside the block (text inject, toggles, etc.)
+          const mo = new MutationObserver(() => requestAnimationFrame(measure))
+          mo.observe(el, { childList: true, subtree: true, characterData: true })
+          el.__mo = mo
+
+          // 3) Re-measure when images load
+          const imgs = el.querySelectorAll('img')
+          imgs.forEach(img => {
+            if (img.complete) return
+            const onImg = () => requestAnimationFrame(measure)
+            img.addEventListener('load', onImg, { once: true })
+            img.addEventListener('error', onImg, { once: true })
+          })
+
+          // 4) Fallback on window resize (including zoom / devtools open)
           const handler = () => requestAnimationFrame(measure)
           if (typeof ResizeObserver !== 'undefined') {
             const ro = new ResizeObserver(handler)
@@ -145,14 +173,11 @@
           } else {
             el.__resizeHandler = handler
             window.addEventListener('resize', handler)
-            handler()
           }
         },
-        unbind(el) {
-          if (el.__ro) {
-            el.__ro.disconnect()
-            delete el.__ro
-          }
+        unbind (el) {
+          if (el.__mo) { el.__mo.disconnect(); delete el.__mo }
+          if (el.__ro) { el.__ro.disconnect(); delete el.__ro }
           if (el.__resizeHandler) {
             window.removeEventListener('resize', el.__resizeHandler)
             delete el.__resizeHandler
@@ -229,17 +254,23 @@
       buildLayoutFromBlocks () {
         const items = this.blocks.map((b, idx) => {
           const g = this._gridOf(b, idx)
-          return { x: g.x, y: g.y, w: g.w, h: g.h, i: String(b.id), iNum: b.id }
+          return {
+            x: g.x, y: g.y, w: g.w,
+            h: 1,
+            i: String(b.id), iNum: b.id
+          }
         }).sort((a, b) => (a.y !== b.y ? a.y - b.y : a.x - b.x))
         return items
       },
       onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
         if (!Number.isFinite(contentPx)) return
+
         const rowsNeeded = Math.max(
           1,
           Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight))
         )
+
         const idx = this.layout.findIndex(li => li.i === String(id))
         if (idx === -1) return
 
@@ -348,14 +379,26 @@
                 let cg = previews.find(p => String(p.id) === i)?.content?.grid
                 if (typeof cg === 'string') { try { cg = JSON.parse(cg) } catch (e) { cg = null } }
                 const g = this._normalizeGrid(cg || this._gridOf(b, idx), idx)
-                return { ...g, i, iNum: b.id }
+                return { ...g, h: 1, i, iNum: b.id }
               }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
 
               this._ignoreNextLayoutEvent = true
               this.layout = next
               this._previewLayoutApplied = true
 
-              this.$nextTick(() => { this._ignoreNextLayoutEvent = false; this.loading = false })
+              this._ignoreNextLayoutEvent = true
+              this.layout = next
+              this._previewLayoutApplied = true
+
+              this.$nextTick(() => {
+                if (this.$refs.grid && typeof this.$refs.grid.updateWidth === 'function') {
+                  this.$refs.grid.updateWidth()
+                } else {
+                  window.dispatchEvent(new Event('resize'))
+                }
+                this._ignoreNextLayoutEvent = false
+                this.loading = false
+              })
             })
           })
       },
