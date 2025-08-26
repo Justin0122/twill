@@ -305,10 +305,32 @@
       },
       _syncLayoutWithBlocks () {
         const ids = new Set(this.blocks.map(b => String(b.id)))
+
         const filtered = this.layout.filter(li => ids.has(li.i))
-        if (filtered.length !== this.layout.length) {
+
+        const have = new Set(filtered.map(li => li.i))
+        const missingBlocks = this.blocks.filter(b => !have.has(String(b.id)))
+
+        let yBase = filtered.length ? filtered.reduce((m, it) => Math.max(m, it.y + it.h), 0) : 0
+        const additions = missingBlocks.map(b => {
+          const g = this._gridOf(b)
+          const li = {
+            x: g.x,
+            y: yBase,
+            w: g.w,
+            h: 1,
+            i: String(b.id),
+            iNum: b.id
+          }
+          yBase += li.h
+          return li
+        })
+
+        const next = filtered.concat(additions)
+
+        if (next.length !== this.layout.length || additions.length) {
           this._ignoreNextLayoutEvent = true
-          this.layout = filtered
+          this.layout = next
           this.$nextTick(() => {
             this._ignoreNextLayoutEvent = false
             if (this.$refs.grid && typeof this.$refs.grid.updateWidth === 'function') {
