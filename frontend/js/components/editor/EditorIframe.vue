@@ -40,6 +40,9 @@
     },
     computed: {
       preview() {
+        if (this.block && (this.block.previewHtml || this.block.html)) {
+          return this.block.previewHtml || this.block.html
+        }
         return this.previewsById(this.block.id) || ''
       },
       title() {

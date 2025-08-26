@@ -5,19 +5,12 @@
     @mousedown.stop
   >
     <div class="editorPreview__frame">
-      <div v-if="block.previewHtml || block.html"
-           class="editorPreview__html"
-           v-html="block.previewHtml || block.html">
-      </div>
-
       <a17-editor-iframe
-        v-else
         :block="block"
         @loaded="iframeLoaded"
         ref="blockIframe"
       />
     </div>
-
     <div
       class="editorPreview__protector editorPreview__dragger"
       @click.prevent="handleBlockPreviewClick"
@@ -65,8 +58,10 @@
   export default {
     name: 'A17EditorPreviewBlockItem',
     props: {
-      block: { type: Object, required: true },
-      isBlockActive: { type: Boolean, default: false }
+      isBlockActive: {
+        type: Boolean,
+        default: false
+      }
     },
     mixins: [BlockEditorItemMixin],
     components: {
@@ -183,9 +178,5 @@
 
   .editorPreview__item.sortable-ghost {
     opacity: 0.25;
-  }
-
-  .editorPreview__html {
-    width: 100%;
   }
 </style>
