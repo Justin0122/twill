@@ -88,7 +88,6 @@
                     :blocksLength="blocks.length"
                     :isBlockActive="isActive"
                     :key="block.id"
-                    :html="block.previewHtml"
                     @block:select="_selectBlock(edit, blockIndex)"
                     @block:unselect="_unselectBlock(unEdit, blockIndex)"
                     @block:move="move"

@@ -7,20 +7,12 @@
       <iframe
         v-if="sandbox"
         ref="frame"
+        :key="frameKey"
         :srcdoc="preview"
         :sandbox="sandboxOptions"
         scrolling="no"
         @load="loadedPreview"
-      >
-      </iframe>
-      <iframe
-        v-else
-        ref="frame"
-        :srcdoc="preview"
-        scrolling="no"
-        @load="loadedPreview"
-      >
-      </iframe>
+      />
     </template>
   </div>
 </template>
@@ -33,63 +25,69 @@
     props: {
       block: {
         type: Object,
-        default: function() {
-          return {}
-        }
+        default () { return {} }
       }
     },
+    inject: ['sandbox'],
     computed: {
       preview() {
         // eslint-disable-next-line no-console
-        console.log('preview', this.block)
+        console.log('preview', this.block.previewHtml, this.block.html)
         if (this.block && (this.block.previewHtml || this.block.html)) {
           return this.block.previewHtml || this.block.html
         }
-        return this.previewsById(this.block.id) || ''
+
+        const fromStore = this.previewsById(this.block.id)
+        if (!fromStore) return ''
+
+        if (typeof fromStore === 'string') return fromStore
+        if (fromStore && typeof fromStore === 'object' && typeof fromStore.html === 'string') {
+          return fromStore.html
+        }
+        return ''
       },
-      title() {
+      frameKey () {
+        return `${this.block?.id || 'noid'}:${this.preview.length}`
+      },
+      title () {
         return this.block.title || ''
       },
-      sandboxOptions() {
+      sandboxOptions () {
         return typeof this.sandbox === 'boolean'
           ? 'allow-same-origin allow-top-navigation allow-scripts'
           : this.sandbox.join(' ')
       },
       ...mapGetters(['previewsById'])
     },
-    inject: ['sandbox'],
     methods: {
-      loadedPreview() {
+      loadedPreview () {
         if (this.$refs.frame && this.$refs.frame.srcdoc) {
           this.$emit('loaded', this.$refs.frame)
           this.resize()
         }
       },
-      resize() {
+      resize () {
         if (!this.$refs.frame) return
-        const frameBody = this.$refs.frame.contentWindow.document.body
+        const doc = this.$refs.frame.contentWindow?.document
+        if (!doc) return
+        const frameBody = doc.body
 
-        // no scollbars
         frameBody.style.overflow = 'hidden'
 
-        // get body extra margin
         const bodyStyle = window.getComputedStyle(frameBody)
-        const bodyMarginTop = bodyStyle.getPropertyValue('margin-top')
-        const bodyMarginBottom = bodyStyle.getPropertyValue('margin-bottom')
-        const frameHeight =
-          frameBody.scrollHeight +
-          parseInt(bodyMarginTop) +
-          parseInt(bodyMarginBottom)
+        const mt = parseInt(bodyStyle.getPropertyValue('margin-top')) || 0
+        const mb = parseInt(bodyStyle.getPropertyValue('margin-bottom')) || 0
+        const frameHeight = frameBody.scrollHeight + mt + mb
 
         window.requestAnimationFrame(() => {
           this.$refs.frame.height = frameHeight + 'px'
         })
       }
     },
-    mounted() {
+    mounted () {
       window.addEventListener('resize', this.resize)
     },
-    beforeDestroy() {
+    beforeDestroy () {
       window.removeEventListener('resize', this.resize)
     }
   }
