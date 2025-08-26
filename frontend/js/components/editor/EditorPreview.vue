@@ -231,13 +231,17 @@
         }).sort((a, b) => (a.y !== b.y ? a.y - b.y : a.x - b.x))
         return items
       },
-      onBlockContentResize (id, contentPx) {
+      onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
+        const li = this.layout.find(li => li.i === String(id))
+        if (li && Number.isFinite(li.h) && li.h > 0) return
+
         if (!Number.isFinite(contentPx)) return
         const rows = Math.max(1, Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight)))
-        const iStr = String(id)
-        const idx = this.layout.findIndex(li => li.i === iStr)
-        if (idx !== -1 && this.layout[idx].h !== rows) this.$set(this.layout[idx], 'h', rows)
+        const idx = this.layout.findIndex(li => li.i === String(id))
+        if (idx !== -1 && this.layout[idx].h !== rows) {
+          this.$set(this.layout[idx], 'h', rows)
+        }
       },
       _appendY () {
         if (!this.layout.length) return 0
@@ -301,13 +305,21 @@
         this._unSubscribeInternal()
         this._unSubscribeInternal = null
       },
-      getAllPreviews () {
+      _normalizeGrid(raw, idx = 0) {
+        // fallbacks identical to _gridOf
+        const x = Math.max(0, this._toNum(raw?.x, 0))
+        const y = Math.max(0, this._toNum(raw?.y, Math.floor(idx * this.defaultBlockH)))
+        const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw?.w, this.gridCols)))
+        const h = Math.max(1, this._toNum(raw?.h, this.defaultBlockH))
+        return { x, y, w, h }
+      },
+
+      getAllPreviews() {
         this.loading = true
         this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
           .then((previewsMaybe) => {
             const previews = Array.isArray(previewsMaybe) ? previewsMaybe : []
             this.$nextTick(() => {
-              // build reactive html map
               const htmlById = {}
               previews.forEach(p => {
                 if (p && (p.id || p.blockId) && typeof p.html === 'string') {
@@ -316,12 +328,13 @@
               })
               this.previewHtmlById = htmlById
 
-              // layout
               this.layout = this.blocks.map((b, idx) => {
                 const i = String(b.id)
                 let cg = previews.find(p => String(p.id) === i)?.content?.grid
-                if (typeof cg === 'string') { try { cg = JSON.parse(cg) } catch (e) { cg = null } }
-                const g = cg || this._gridOf(b, idx)
+                if (typeof cg === 'string') {
+                  try { cg = JSON.parse(cg) } catch (e) { cg = null }
+                }
+                const g = this._normalizeGrid(cg || this._gridOf(b, idx), idx)
                 return { ...g, i, iNum: b.id }
               }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
 
