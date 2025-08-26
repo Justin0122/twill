@@ -269,27 +269,33 @@
           this._selectBlock(null, index)
         })
       },
-      onLayoutUpdated: debounce(function (newLayout) {
-        if (this._ignoreNextLayoutEvent) return
+      onLayoutUpdated (newLayout) {
+        if (!Array.isArray(newLayout)) return
 
-        const same = newLayout.length === this.layout.length &&
-          newLayout.every((nl, idx) => {
-            const ol = this.layout[idx]
-            return ol && ol.i === nl.i && ol.x === nl.x && ol.y === nl.y && ol.w === nl.w && ol.h === nl.h
-          })
-        if (same) return
+        const blocks = this.blocks
+        if (!Array.isArray(blocks) || !blocks.length) return
 
-        this._suppressBlockWatcher = true
-        this._previewLayoutApplied = false
-        this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
-        const idToGrid = new Map(this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }]))
-        const updated = this.blocks.map(b => {
-          const g = idToGrid.get(String(b.id)) || this._gridOf(b)
-          return { ...b, grid: g, content: { ...(b.content || {}), grid: g } }
+        const layoutById = {}
+        newLayout.forEach(item => {
+          const id = Number(item.iNum != null ? item.iNum : item.i)
+          if (Number.isFinite(id)) {
+            layoutById[id] = item
+          }
         })
-        this.$store.commit(BLOCKS.REORDER_BLOCKS, { editorName: this.editorName, value: updated })
-        this.$nextTick(() => { this._suppressBlockWatcher = false })
-      }, 80),
+
+        blocks.forEach(block => {
+          const item = layoutById[Number(block.id)]
+          if (!item) return
+          block.grid = {
+            x: Number.isFinite(item.x) ? item.x : (block.grid && block.grid.x) || 0,
+            y: Number.isFinite(item.y) ? item.y : (block.grid && block.grid.y) || 0,
+            w: Number.isFinite(item.w) ? item.w : (block.grid && block.grid.w) || this.gridCols,
+            h: Number.isFinite(item.h) ? item.h : (block.grid && block.grid.h) || 1
+          }
+        })
+
+        this._saveLayoutDebounced()
+      },
       _selectBlock (fn = null, index) {
         if (fn) this.selectBlock(fn, index)
         if (this.blockSelectIndex !== index) {
@@ -359,10 +365,8 @@
         this.loading = true
         this.$store.dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
           .then((p) => {
-            // update single preview html in map (if action returns it)
             if (p && (p.id || p.blockId) && typeof p.html === 'string') {
               const id = String(p.id || p.blockId)
-              // replace object to keep reactivity simple
               this.previewHtmlById = { ...this.previewHtmlById, [id]: p.html }
             }
             this.$nextTick(() => { this.loading = false })
@@ -379,6 +383,11 @@
       _resize: debounce(function () { this.resizeAllIframes() }, 200),
       init () { window.addEventListener('resize', this._resize) },
       dispose () { window.removeEventListener('resize', this._resize) }
+    },
+    created () {
+      this._saveLayoutDebounced = debounce(() => {
+        this.$store.dispatch(ACTIONS.SAVE_GRID_LAYOUT, { editorName: this.editorName })
+      }, 400)
     },
     mounted () { this.init(); this.$nextTick(this.getAllPreviews) },
     beforeDestroy () { this.dispose() },
