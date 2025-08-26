@@ -81,7 +81,7 @@
                     @block:unselect="_unselectBlock(unEdit, blockIndex)"
                     @block:move="move"
                     @block:clone="_cloneBlock(cloneBlock, blockIndex)"
-                    @block:delete="_deleteBlock(remove)"
+                    @block:delete="_deleteBlock(remove, block.id)"
                     @scroll-to="scrollToActive"
                   />
                 </a17-blockeditor-model>
@@ -303,6 +303,20 @@
           this._selectBlock(null, index)
         })
       },
+      _syncLayoutWithBlocks () {
+        const ids = new Set(this.blocks.map(b => String(b.id)))
+        const filtered = this.layout.filter(li => ids.has(li.i))
+        if (filtered.length !== this.layout.length) {
+          this._ignoreNextLayoutEvent = true
+          this.layout = filtered
+          this.$nextTick(() => {
+            this._ignoreNextLayoutEvent = false
+            if (this.$refs.grid && typeof this.$refs.grid.updateWidth === 'function') {
+              this.$refs.grid.updateWidth()
+            }
+          })
+        }
+      },
       onLayoutUpdated: debounce(function (newLayout) {
         if (this._ignoreNextLayoutEvent) return
 
@@ -344,8 +358,27 @@
         this.unselectBlock(fn, index)
         this.blockSelectIndex = -1
       },
-      _deleteBlock (fn) { this.unSubscribe(); this.deleteBlock(fn) },
+      _deleteBlock (fn, id) {
+        this.unSubscribe()
+        this.deleteBlock(fn)
+        this.$nextTick(() => {
+          this._removeLayoutItem(id)
+        })
+      },
       _cloneBlock (fn, index) { this.cloneBlock(fn); this.getPreview(index + 1) },
+      _removeLayoutItem(id) {
+        const idx = this.layout.findIndex(li => li.i === String(id))
+        if (idx !== -1) {
+          this._ignoreNextLayoutEvent = true
+          this.layout.splice(idx, 1)
+          this.$nextTick(() => {
+            this._ignoreNextLayoutEvent = false
+            if (this.$refs.grid && typeof this.$refs.grid.updateWidth === 'function') {
+              this.$refs.grid.updateWidth()
+            }
+          })
+        }
+      },
       unSubscribe () {
         if (!this._unSubscribeInternal) return
         this._unSubscribeInternal()
@@ -434,8 +467,11 @@
         deep: true,
         handler () {
           if (this._suppressBlockWatcher) return
+          this._syncLayoutWithBlocks()
           const allHaveGrid = this.blocks.length > 0 && this.blocks.every(this._hasContentGrid)
-          if (!this._previewLayoutApplied && allHaveGrid) this.layout = this.buildLayoutFromBlocks()
+          if (!this._previewLayoutApplied && allHaveGrid) {
+            this.layout = this.buildLayoutFromBlocks()
+          }
         }
       },
       editorName () {
