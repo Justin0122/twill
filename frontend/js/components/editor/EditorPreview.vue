@@ -191,6 +191,8 @@
         layout: [],
         // eslint-disable-next-line vue/no-reserved-keys
         _previewLayoutApplied: false,
+        // eslint-disable-next-line vue/no-reserved-keys
+        _suppressBlockWatcher: false,
       }
     },
     computed: {
@@ -340,34 +342,32 @@
         })
       },
       onLayoutUpdated: debounce(function(newLayout) {
-        this._previewLayoutApplied = false
         // eslint-disable-next-line no-console
         console.log('[onLayoutUpdated] newLayout', newLayout)
+        this._suppressBlockWatcher = true
+        this._previewLayoutApplied = false
         this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
+
         const idToGrid = new Map(
           this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
         )
 
-        const updated = this.blocks
-          .map(b => {
-            const g = idToGrid.get(String(b.id)) || this._gridOf(b)
-            return {
-              ...b,
-              grid: g,
-              content: { ...(b.content || {}), grid: g }
-            }
-          })
-          .sort((a, b) => {
-            const ga = idToGrid.get(String(a.id)) || this._gridOf(a)
-            const gb = idToGrid.get(String(b.id)) || this._gridOf(b)
-            return ga.y !== gb.y ? ga.y - gb.y : ga.x - gb.x
-          })
+        const updated = this.blocks.map(b => {
+          const g = idToGrid.get(String(b.id)) || this._gridOf(b)
+          return {
+            ...b,
+            grid: g,
+            content: { ...(b.content || {}), grid: g }
+          }
+        })
         // eslint-disable-next-line no-console
         console.log('[onLayoutUpdated] committing updated blocks', updated)
         this.$store.commit(BLOCKS.REORDER_BLOCKS, {
           editorName: this.editorName,
           value: updated
         })
+
+        this.$nextTick(() => { this._suppressBlockWatcher = false })
       }, 80),
       _selectBlock(fn = null, index) {
         if (fn) this.selectBlock(fn, index)
@@ -477,6 +477,11 @@
       blocks: {
         deep: true,
         handler() {
+          if (this._suppressBlockWatcher) {
+            // eslint-disable-next-line no-console
+            console.log('[watch:blocks] skipped due to suppression')
+            return
+          }
           // eslint-disable-next-line no-console
           console.log('[watch:blocks] fired', this.blocks)
           const allHaveGrid = this.blocks.length > 0 && this.blocks.every(this._hasContentGrid)
@@ -488,6 +493,8 @@
         }
       },
       editorName() {
+        // eslint-disable-next-line no-console
+        console.log('[watch:editorName] fired')
         this.unSubscribe()
         this._previewLayoutApplied = false
         this.getAllPreviews()
