@@ -138,7 +138,6 @@
       'a17-spinner': A17Spinner
     },
     directives: {
-      // Observe content size and push auto height into layout.h
       autoheight: {
         inserted(el, binding, vnode) {
           const ctx = vnode.context
@@ -183,15 +182,12 @@
         loading: false,
         blockSelectIndex: -1,
         handle: '.editorPreview__handle',
-        // Grid config
         gridCols: 12,
         gridRowHeight: 80,
         gridMargin: [12, 12],
         defaultBlockH: 3,
         maxAutoRows: 200,
         suppressAutoHeight: false,
-
-        // The canonical layout array (docs-style)
         layout: [],
         // eslint-disable-next-line vue/no-reserved-keys
         _previewLayoutApplied: false,
@@ -208,7 +204,6 @@
       previewStyle() {
         return { 'background-color': this.bgColor }
       },
-      // map id(string) -> block
       idToBlock() {
         const map = {}
         for (const b of this.blocks) {
@@ -245,9 +240,14 @@
         const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
         const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw.w, this.gridCols)))
         const h = Math.max(1, this._toNum(raw.h, this.defaultBlockH))
+
+        // eslint-disable-next-line no-console
+        console.log('[gridOf]', block.id, { bg, cg, raw }, { x, y, w, h })
         return { x, y, w, h }
       },
       _rebuildLayoutPreferPreview(previews = []) {
+        // eslint-disable-next-line no-console
+        console.log('[rebuildLayoutPreferPreview] previews', previews)
         const idToGrid = new Map()
         previews.forEach(p => {
           const id = String(p.id || p.blockId || p.block?.id)
@@ -265,11 +265,11 @@
           const g = idToGrid.get(i) || this._gridOf(b, idx)
           return { ...g, i, iNum: b.id }
         }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
-
+        // eslint-disable-next-line no-console
+        console.log('[rebuildLayoutPreferPreview] new layout', next)
         this.layout = next
-        this._previewLayoutApplied = true // 👈 mark as applied
+        this._previewLayoutApplied = true
       },
-      // Build the layout array from current blocks (in reading order)
       buildLayoutFromBlocks() {
         const items = this.blocks.map((b, idx) => {
           const g = this._gridOf(b, idx)
@@ -279,34 +279,14 @@
             w: g.w,
             h: g.h,
             i: String(b.id),
-            iNum: b.id // helper for the directive
+            iNum: b.id
           }
         })
         items.sort((a, b) => (a.y !== b.y ? a.y - b.y : a.x - b.x))
+        // eslint-disable-next-line no-console
+        console.log('[buildLayoutFromBlocks]', items)
         return items
       },
-
-      _shouldAdoptFreshLayout(current, fresh) {
-        if (!fresh.length) return false
-        if (current.length !== fresh.length) return true
-
-        const looksDefault = current.every((it, idx) => {
-          const isFullWidth = it.w === this.gridCols
-          const isX0 = it.x === 0
-          const isStacked = it.y === idx * this.defaultBlockH
-          return isFullWidth && isX0 && isStacked
-        })
-
-        if (!looksDefault) return false
-
-        // any difference -> adopt
-        return fresh.some((f, idx) => {
-          const c = current[idx]
-          return f.x !== c.x || f.y !== c.y || f.w !== c.w || f.h !== c.h
-        })
-      },
-
-      // Update layout.h for a given block id when content height changes
       onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
         if (!Number.isFinite(contentPx)) return
@@ -318,16 +298,14 @@
         const idx = this.layout.findIndex(li => li.i === iStr)
         if (idx !== -1 && this.layout[idx].h !== rows) {
           this.$set(this.layout[idx], 'h', rows)
+          // eslint-disable-next-line no-console
+          console.log('[onBlockContentResize] updated height', id, rows)
         }
       },
-
-      // Determine the y to append a new item at the bottom
       _appendY() {
         if (!this.layout.length) return 0
         return this.layout.reduce((m, it) => Math.max(m, it.y + it.h), 0)
       },
-
-      // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
         const initGrid = {
@@ -343,11 +321,12 @@
           grid: initGrid,
           content: { grid: initGrid }
         }
+        // eslint-disable-next-line no-console
+        console.log('[onAdd] new block initGrid', initGrid)
 
         const index = Math.max(0, evt.newIndex)
         this.addAndEditBlock(add, edit, { block, index })
 
-        // After the store assigns an id, add to local layout
         this.$nextTick(() => {
           const newBlock = this.blocks[index]
           if (!newBlock) return
@@ -355,13 +334,15 @@
           if (!this.layout.find(li => li.i === idStr)) {
             this.layout.push({ ...initGrid, i: idStr, iNum: newBlock.id })
           }
+          // eslint-disable-next-line no-console
+          console.log('[onAdd] layout after push', this.layout)
           this._selectBlock(null, index)
         })
       },
-
       onLayoutUpdated: debounce(function(newLayout) {
-        this._previewLayoutApplied = false;
-        // Mirror the grid back to Vuex and keep content.grid in sync
+        this._previewLayoutApplied = false
+        // eslint-disable-next-line no-console
+        console.log('[onLayoutUpdated] newLayout', newLayout)
         this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
         const idToGrid = new Map(
           this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }])
@@ -381,13 +362,13 @@
             const gb = idToGrid.get(String(b.id)) || this._gridOf(b)
             return ga.y !== gb.y ? ga.y - gb.y : ga.x - gb.x
           })
-
+        // eslint-disable-next-line no-console
+        console.log('[onLayoutUpdated] committing updated blocks', updated)
         this.$store.commit(BLOCKS.REORDER_BLOCKS, {
           editorName: this.editorName,
           value: updated
         })
       }, 80),
-
       _selectBlock(fn = null, index) {
         if (fn) this.selectBlock(fn, index)
         if (this.blockSelectIndex !== index) {
@@ -423,91 +404,71 @@
         this._unSubscribeInternal()
         this._unSubscribeInternal = null
       },
-
-      // Previews management
       getAllPreviews() {
+        // eslint-disable-next-line no-console
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-          .then((previewsMaybe) => {
+          .then(previewsMaybe => {
             this.$nextTick(() => {
               const previews =
                 previewsMaybe ||
                 this.$store.state.preview?.[this.editorName]?.items ||
                 this.$store.getters?.['preview/itemsByEditor']?.(this.editorName) ||
                 []
-
-              // Build a map id -> grid from preview payloads
-              const idToGrid = new Map()
-              previews.forEach(p => {
-                // Make this match your preview shape exactly
-                const id = String(p.id || p.blockId || p.block?.id)
-                const g = p.content?.grid
-                if (id && g && Number.isFinite(+g.w) && Number.isFinite(+g.h)) {
-                  idToGrid.set(id, { x:+g.x||0, y:+g.y||0, w:+g.w, h:+g.h })
-                }
-              })
-
-              // Prefer preview grid when present; otherwise fall back to _gridOf(block)
-              this.layout = this.blocks.map((b, idx) => {
-                const i = String(b.id)
-                const g = idToGrid.get(i) || this._gridOf(b, idx)
-                return { ...g, i, iNum: b.id }
-              }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
-
+              // eslint-disable-next-line no-console
+              console.log('[getAllPreviews] previews resolved', previews)
+              this._rebuildLayoutPreferPreview(previews)
               this.loading = false
             })
           })
       },
       getPreview(index = -1) {
+        // eslint-disable-next-line no-console
+        console.log('[getPreview]', index)
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
           // eslint-disable-next-line vue/valid-next-tick
-          .then(() => this.$nextTick(() => (this.loading = false)))
+          .then(() => this.$nextTick(() => {
+            // eslint-disable-next-line no-console
+            console.log('[getPreview] finished')
+            this.loading = false
+          }))
       },
-
-      // UI Management
       scrollToActive(target) {
+        // eslint-disable-next-line no-console
+        console.log('[scrollToActive]', target)
         if (!this.$refs.previewContent) return
         this.$refs.previewContent.scrollTop = Math.max(0, target - 20)
       },
       resizeAllIframes() {
+        // eslint-disable-next-line no-console
+        console.log('[resizeAllIframes]')
         if (!this.$refs.blockPreview) return
         this.$refs.blockPreview.forEach(preview => {
           preview.$refs.blockIframe.resize()
         })
       },
       _resize: debounce(function() {
+        // eslint-disable-next-line no-console
+        console.log('[window resize]')
         this.resizeAllIframes()
       }, 200),
       init() {
+        // eslint-disable-next-line no-console
+        console.log('[init]')
         window.addEventListener('resize', this._resize)
       },
       dispose() {
+        // eslint-disable-next-line no-console
+        console.log('[dispose]')
         window.removeEventListener('resize', this._resize)
       }
     },
     mounted() {
       this.init()
       this.$nextTick(this.getAllPreviews)
-    },
-    getAllPreviews() {
-      this.loading = true
-      this.$store
-        .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-        .then(previewsMaybe => {
-          this.$nextTick(() => {
-            const previews =
-              previewsMaybe ||
-              this.$store.state.preview?.[this.editorName]?.items ||
-              this.$store.getters?.['preview/itemsByEditor']?.(this.editorName) ||
-              []
-
-            this._rebuildLayoutPreferPreview(previews)
-            this.loading = false
-          })
-        })
     },
     beforeDestroy() {
       this.dispose()
@@ -516,8 +477,12 @@
       blocks: {
         deep: true,
         handler() {
+          // eslint-disable-next-line no-console
+          console.log('[watch:blocks] fired', this.blocks)
           const allHaveGrid = this.blocks.length > 0 && this.blocks.every(this._hasContentGrid)
           if (!this._previewLayoutApplied && allHaveGrid) {
+            // eslint-disable-next-line no-console
+            console.log('[watch:blocks] rebuilding from blocks')
             this.layout = this.buildLayoutFromBlocks()
           }
         }
@@ -530,6 +495,7 @@
     }
   }
 </script>
+
 
 <style lang="scss" scoped>
   .editorPreview {
