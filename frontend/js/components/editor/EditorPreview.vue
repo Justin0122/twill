@@ -81,7 +81,7 @@
                     @block:unselect="_unselectBlock(unEdit, blockIndex)"
                     @block:move="move"
                     @block:clone="_cloneBlock(cloneBlock, blockIndex)"
-                    @block:delete="_deleteBlock(remove, block.id)"
+                    @block:delete="_deleteBlock"
                     @scroll-to="scrollToActive"
                   />
                 </a17-blockeditor-model>
@@ -358,12 +358,18 @@
         this.unselectBlock(fn, index)
         this.blockSelectIndex = -1
       },
-      _deleteBlock (fn, id) {
+      async _deleteBlock (removeFn) {
         this.unSubscribe()
-        this.deleteBlock(fn)
-        this.$nextTick(() => {
-          this._removeLayoutItem(id)
-        })
+
+        const maybePromise = removeFn && removeFn()
+
+        if (maybePromise && typeof maybePromise.then === 'function') {
+          try {
+            const result = await maybePromise
+            if (result) this._syncLayoutWithBlocks()
+          } catch (_) {
+          }
+        }
       },
       _cloneBlock (fn, index) { this.cloneBlock(fn); this.getPreview(index + 1) },
       _removeLayoutItem(id) {
