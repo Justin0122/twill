@@ -225,18 +225,26 @@
       },
       _gridOf(block, idx = 0) {
         const bg = block.grid || {}
-        const cg =
-          (block.content && block.content.grid) ||
-          (block.preview && block.preview.content && block.preview.content.grid) ||
-          (block._preview && block._preview.content && block._preview.content.grid) ||
-          {}
 
-        const raw = Object.assign({
-          x: 0,
-          y: Math.floor(idx * this.defaultBlockH),
-          w: this.gridCols,
-          h: this.defaultBlockH
-        }, bg, cg)
+        let cg = (block.content && block.content.grid) || {}
+        if (typeof cg === 'string') {
+          try {
+            cg = JSON.parse(cg)
+          } catch (e) {
+            cg = {}
+          }
+        }
+
+        const raw = Object.assign(
+          {
+            x: 0,
+            y: Math.floor(idx * this.defaultBlockH),
+            w: this.gridCols,
+            h: this.defaultBlockH,
+          },
+          bg,
+          cg
+        )
 
         const x = Math.max(0, this._toNum(raw.x, 0))
         const y = Math.max(0, this._toNum(raw.y, Math.floor(idx * this.defaultBlockH)))
@@ -431,38 +439,26 @@
           .dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
           // eslint-disable-next-line vue/valid-next-tick
           .then(() => this.$nextTick(() => {
-            // eslint-disable-next-line no-console
-            console.log('[getPreview] finished')
             this.loading = false
           }))
       },
       scrollToActive(target) {
-        // eslint-disable-next-line no-console
-        console.log('[scrollToActive]', target)
         if (!this.$refs.previewContent) return
         this.$refs.previewContent.scrollTop = Math.max(0, target - 20)
       },
       resizeAllIframes() {
-        // eslint-disable-next-line no-console
-        console.log('[resizeAllIframes]')
         if (!this.$refs.blockPreview) return
         this.$refs.blockPreview.forEach(preview => {
           preview.$refs.blockIframe.resize()
         })
       },
       _resize: debounce(function() {
-        // eslint-disable-next-line no-console
-        console.log('[window resize]')
         this.resizeAllIframes()
       }, 200),
       init() {
-        // eslint-disable-next-line no-console
-        console.log('[init]')
         window.addEventListener('resize', this._resize)
       },
       dispose() {
-        // eslint-disable-next-line no-console
-        console.log('[dispose]')
         window.removeEventListener('resize', this._resize)
       }
     },
@@ -478,16 +474,10 @@
         deep: true,
         handler() {
           if (this._suppressBlockWatcher) {
-            // eslint-disable-next-line no-console
-            console.log('[watch:blocks] skipped due to suppression')
             return
           }
-          // eslint-disable-next-line no-console
-          console.log('[watch:blocks] fired', this.blocks)
           const allHaveGrid = this.blocks.length > 0 && this.blocks.every(this._hasContentGrid)
           if (!this._previewLayoutApplied && allHaveGrid) {
-            // eslint-disable-next-line no-console
-            console.log('[watch:blocks] rebuilding from blocks')
             this.layout = this.buildLayoutFromBlocks()
           }
         }
