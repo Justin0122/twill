@@ -1,8 +1,9 @@
 <template>
   <div class="editorIframe">
-    <div class="editorIframe__empty" v-if="preview === ''">
+    <div class="editorIframe__empty" v-if="!preview">
       {{ title }}
     </div>
+
     <template v-else>
       <iframe
         v-if="sandbox"
@@ -10,6 +11,14 @@
         :key="frameKey"
         :srcdoc="preview"
         :sandbox="sandboxOptions"
+        scrolling="no"
+        @load="loadedPreview"
+      />
+      <iframe
+        v-else
+        ref="frame"
+        :key="frameKey"
+        :srcdoc="preview"
         scrolling="no"
         @load="loadedPreview"
       />
@@ -23,6 +32,10 @@
   export default {
     name: 'A17editorIframe',
     props: {
+      previewHtml: {
+        type: String,
+        default: ''
+      },
       block: {
         type: Object,
         default () { return {} }
@@ -30,16 +43,14 @@
     },
     inject: ['sandbox'],
     computed: {
-      preview() {
-        // eslint-disable-next-line no-console
-        console.log('preview', this.block.previewHtml, this.block.html)
-        if (this.block && (this.block.previewHtml || this.block.html)) {
-          return this.block.previewHtml || this.block.html
-        }
+      preview () {
+        if (this.previewHtml && typeof this.previewHtml === 'string') return this.previewHtml
 
-        const fromStore = this.previewsById(this.block.id)
+        const direct = this.block && (this.block.previewHtml || this.block.html)
+        if (typeof direct === 'string' && direct.length) return direct
+
+        const fromStore = this.previewsById?.(this.block?.id)
         if (!fromStore) return ''
-
         if (typeof fromStore === 'string') return fromStore
         if (fromStore && typeof fromStore === 'object' && typeof fromStore.html === 'string') {
           return fromStore.html
@@ -47,15 +58,15 @@
         return ''
       },
       frameKey () {
-        return `${this.block?.id || 'noid'}:${this.preview.length}`
+        return `${this.block?.id || 'noid'}:${(this.preview || '').length}`
       },
       title () {
-        return this.block.title || ''
+        return this.block?.title || ''
       },
       sandboxOptions () {
         return typeof this.sandbox === 'boolean'
           ? 'allow-same-origin allow-top-navigation allow-scripts'
-          : this.sandbox.join(' ')
+          : Array.isArray(this.sandbox) ? this.sandbox.join(' ') : ''
       },
       ...mapGetters(['previewsById'])
     },
@@ -67,20 +78,23 @@
         }
       },
       resize () {
-        if (!this.$refs.frame) return
-        const doc = this.$refs.frame.contentWindow?.document
+        const frame = this.$refs.frame
+        if (!frame) return
+        const doc = frame.contentWindow && frame.contentWindow.document
         if (!doc) return
-        const frameBody = doc.body
 
-        frameBody.style.overflow = 'hidden'
+        const body = doc.body
+        if (!body) return
 
-        const bodyStyle = window.getComputedStyle(frameBody)
-        const mt = parseInt(bodyStyle.getPropertyValue('margin-top')) || 0
-        const mb = parseInt(bodyStyle.getPropertyValue('margin-bottom')) || 0
-        const frameHeight = frameBody.scrollHeight + mt + mb
+        body.style.overflow = 'hidden'
+
+        const style = doc.defaultView ? doc.defaultView.getComputedStyle(body) : window.getComputedStyle(body)
+        const mt = parseInt(style.getPropertyValue('margin-top')) || 0
+        const mb = parseInt(style.getPropertyValue('margin-bottom')) || 0
+        const h = body.scrollHeight + mt + mb
 
         window.requestAnimationFrame(() => {
-          this.$refs.frame.height = frameHeight + 'px'
+          frame.height = h + 'px'
         })
       }
     },

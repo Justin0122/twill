@@ -1,25 +1,17 @@
 <template>
-  <div
-    class="editorPreview__item"
-    :class="previewBlockItemClasses"
-    @mousedown.stop
-  >
+  <div class="editorPreview__item" :class="previewBlockItemClasses" @mousedown.stop>
     <div class="editorPreview__frame">
       <a17-editor-iframe
         :block="block"
+        :preview-html="previewHtml"
         @loaded="iframeLoaded"
         ref="blockIframe"
       />
     </div>
-    <div
-      class="editorPreview__protector editorPreview__dragger"
-      @click.prevent="handleBlockPreviewClick"
-    ></div>
+    <div class="editorPreview__protector editorPreview__dragger" @click.prevent="handleBlockPreviewClick"></div>
     <div class="editorPreview__header">
       <a17-buttonbar variant="visible">
-        <button type="button" @click="cloneBlock">
-          <span v-svg symbol="clone"></span>
-        </button>
+        <button type="button" @click="cloneBlock"><span v-svg symbol="clone"></span></button>
         <a17-dropdown
           v-if="blocksLength > 1"
           class="f--small"
@@ -29,23 +21,12 @@
           @open="handleDropDownOpen"
           @close="handleDropDownClose"
         >
-          <button type="button" @click="toggleBlockDropdown(blockIndex)">
-            <span v-svg symbol="drag"></span>
-          </button>
+          <button type="button" @click="toggleBlockDropdown(blockIndex)"><span v-svg symbol="drag"></span></button>
           <div slot="dropdown__content">
-            <button
-              type="button"
-              v-for="n in blocksLength"
-              @click="moveBlock(n - 1)"
-              :key="n"
-            >
-              {{ n }}
-            </button>
+            <button type="button" v-for="n in blocksLength" :key="n" @click="moveBlock(n - 1)">{{ n }}</button>
           </div>
         </a17-dropdown>
-        <button type="button" @click="deleteBlock">
-          <span v-svg symbol="trash"></span>
-        </button>
+        <button type="button" @click="deleteBlock"><span v-svg symbol="trash"></span></button>
       </a17-buttonbar>
     </div>
   </div>
@@ -58,22 +39,14 @@
   export default {
     name: 'A17EditorPreviewBlockItem',
     props: {
-      isBlockActive: {
-        type: Boolean,
-        default: false
-      }
+      isBlockActive: { type: Boolean, default: false },
+      previewHtml: { type: String, default: '' }
     },
     mixins: [BlockEditorItemMixin],
-    components: {
-      'a17-editor-iframe': EditorIframe
-    },
-    data() {
-      return {
-        dropdownOpen: false
-      }
-    },
+    components: { 'a17-editor-iframe': EditorIframe },
+    data () { return { dropdownOpen: false } },
     computed: {
-      previewBlockItemClasses() {
+      previewBlockItemClasses () {
         return {
           'editorPreview__item--active': this.isBlockActive,
           'editorPreview__item--dropdown-open': this.dropdownOpen
