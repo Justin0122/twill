@@ -108,7 +108,7 @@
   import A17Spinner from '@/components/Spinner.vue'
   import { BlockEditorMixin } from '@/mixins'
   import ACTIONS from '@/store/actions/index'
-  import { PREVIEW } from '@/store/mutations/index'
+  import { BLOCKS, PREVIEW } from '@/store/mutations/index'
 
   export default {
     name: 'A17editorPreview',
@@ -235,14 +235,17 @@
       },
       onBlockContentResize(id, contentPx) {
         if (this.suppressAutoHeight) return
-        const li = this.layout.find(li => li.i === String(id))
-        if (li && Number.isFinite(li.h) && li.h > 0) return
-
         if (!Number.isFinite(contentPx)) return
-        const rows = Math.max(1, Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight)))
+        const rowsNeeded = Math.max(
+          1,
+          Math.min(this.maxAutoRows, Math.ceil(contentPx / this.gridRowHeight))
+        )
         const idx = this.layout.findIndex(li => li.i === String(id))
-        if (idx !== -1 && this.layout[idx].h !== rows) {
-          this.$set(this.layout[idx], 'h', rows)
+        if (idx === -1) return
+
+        const current = Number(this.layout[idx].h) || 1
+        if (rowsNeeded > current) {
+          this.$set(this.layout[idx], 'h', rowsNeeded)
         }
       },
       _appendY () {
@@ -269,33 +272,28 @@
           this._selectBlock(null, index)
         })
       },
-      onLayoutUpdated (newLayout) {
-        if (!Array.isArray(newLayout)) return
+      onLayoutUpdated: debounce(function (newLayout) {
+        if (this._ignoreNextLayoutEvent) return
 
-        const blocks = this.blocks
-        if (!Array.isArray(blocks) || !blocks.length) return
+        // If nothing actually changed, skip committing
+        const same = newLayout.length === this.layout.length &&
+          newLayout.every((nl, idx) => {
+            const ol = this.layout[idx]
+            return ol && ol.i === nl.i && ol.x === nl.x && ol.y === nl.y && ol.w === nl.w && ol.h === nl.h
+          })
+        if (same) return
 
-        const layoutById = {}
-        newLayout.forEach(item => {
-          const id = Number(item.iNum != null ? item.iNum : item.i)
-          if (Number.isFinite(id)) {
-            layoutById[id] = item
-          }
+        this._suppressBlockWatcher = true
+        this._previewLayoutApplied = false
+        this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
+        const idToGrid = new Map(this.layout.map(l => [l.i, { x: l.x, y: l.y, w: l.w, h: l.h }]))
+        const updated = this.blocks.map(b => {
+          const g = idToGrid.get(String(b.id)) || this._gridOf(b)
+          return { ...b, grid: g, content: { ...(b.content || {}), grid: g } }
         })
-
-        blocks.forEach(block => {
-          const item = layoutById[Number(block.id)]
-          if (!item) return
-          block.grid = {
-            x: Number.isFinite(item.x) ? item.x : (block.grid && block.grid.x) || 0,
-            y: Number.isFinite(item.y) ? item.y : (block.grid && block.grid.y) || 0,
-            w: Number.isFinite(item.w) ? item.w : (block.grid && block.grid.w) || this.gridCols,
-            h: Number.isFinite(item.h) ? item.h : (block.grid && block.grid.h) || 1
-          }
-        })
-
-        this._saveLayoutDebounced()
-      },
+        this.$store.commit(BLOCKS.REORDER_BLOCKS, { editorName: this.editorName, value: updated })
+        this.$nextTick(() => { this._suppressBlockWatcher = false })
+      }, 80),
       _selectBlock (fn = null, index) {
         if (fn) this.selectBlock(fn, index)
         if (this.blockSelectIndex !== index) {
@@ -365,8 +363,10 @@
         this.loading = true
         this.$store.dispatch(ACTIONS.GET_PREVIEW, { editorName: this.editorName, index })
           .then((p) => {
+            // update single preview html in map (if action returns it)
             if (p && (p.id || p.blockId) && typeof p.html === 'string') {
               const id = String(p.id || p.blockId)
+              // replace object to keep reactivity simple
               this.previewHtmlById = { ...this.previewHtmlById, [id]: p.html }
             }
             this.$nextTick(() => { this.loading = false })
@@ -383,11 +383,6 @@
       _resize: debounce(function () { this.resizeAllIframes() }, 200),
       init () { window.addEventListener('resize', this._resize) },
       dispose () { window.removeEventListener('resize', this._resize) }
-    },
-    created () {
-      this._saveLayoutDebounced = debounce(() => {
-        this.$store.dispatch(ACTIONS.SAVE_GRID_LAYOUT, { editorName: this.editorName })
-      }, 400)
     },
     mounted () { this.init(); this.$nextTick(this.getAllPreviews) },
     beforeDestroy () { this.dispose() },
