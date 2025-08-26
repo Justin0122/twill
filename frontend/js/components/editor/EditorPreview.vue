@@ -384,7 +384,52 @@
         this.unSubscribe()
         this.deleteBlock(fn)
       },
-      _cloneBlock (fn, index) { this.cloneBlock(fn); this.getPreview(index + 1) },
+      _cloneBlock (fn, index) {
+        const beforeIds = new Set(this.blocks.map(b => String(b.id)))
+
+        this.cloneBlock(fn)
+
+        this.$nextTick(() => {
+          const srcBlock = this.blocks[index]
+          const srcId = srcBlock ? String(srcBlock.id) : null
+
+          const liSrc = srcId ? this.layout.find(li => li.i === srcId) : null
+          const base = liSrc || { x: 0, y: this._appendY(), w: this.gridCols, h: 1 }
+
+          const newOnes = this.blocks.filter(b => !beforeIds.has(String(b.id)))
+
+          if (newOnes.length) {
+            let nextY = base.y + (base.h || 1)
+
+            newOnes.forEach((b) => {
+              const idStr = String(b.id)
+              if (!this.layout.find(li => li.i === idStr)) {
+                const li = {
+                  x: base.x,
+                  y: nextY,
+                  w: base.w,
+                  h: 1,
+                  i: idStr,
+                  iNum: b.id
+                }
+                this._ignoreNextLayoutEvent = true
+                this.layout.push(li)
+                nextY += li.h
+              }
+            })
+
+            this.$nextTick(() => {
+              this._ignoreNextLayoutEvent = false
+              if (this.$refs.grid && typeof this.$refs.grid.updateWidth === 'function') {
+                this.$refs.grid.updateWidth()
+              }
+              this.getPreview(index + 1)
+            })
+          } else {
+            this.getPreview(index + 1)
+          }
+        })
+      },
       _removeLayoutItem(id) {
         const idx = this.layout.findIndex(li => li.i === String(id))
         if (idx !== -1) {
