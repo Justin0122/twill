@@ -176,7 +176,9 @@
         _previewLayoutApplied: false,
         // eslint-disable-next-line vue/no-reserved-keys
         _suppressBlockWatcher: false,
-        previewHtmlById: {}
+        previewHtmlById: {},
+        // eslint-disable-next-line vue/no-reserved-keys
+        _ignoreNextLayoutEvent: false,
       }
     },
     computed: {
@@ -268,6 +270,15 @@
         })
       },
       onLayoutUpdated: debounce(function (newLayout) {
+        if (this._ignoreNextLayoutEvent) return
+
+        const same = newLayout.length === this.layout.length &&
+          newLayout.every((nl, idx) => {
+            const ol = this.layout[idx]
+            return ol && ol.i === nl.i && ol.x === nl.x && ol.y === nl.y && ol.w === nl.w && ol.h === nl.h
+          })
+        if (same) return
+
         this._suppressBlockWatcher = true
         this._previewLayoutApplied = false
         this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
@@ -305,8 +316,7 @@
         this._unSubscribeInternal()
         this._unSubscribeInternal = null
       },
-      _normalizeGrid(raw, idx = 0) {
-        // fallbacks identical to _gridOf
+      _normalizeGrid (raw, idx = 0) {
         const x = Math.max(0, this._toNum(raw?.x, 0))
         const y = Math.max(0, this._toNum(raw?.y, Math.floor(idx * this.defaultBlockH)))
         const w = Math.min(this.gridCols, Math.max(1, this._toNum(raw?.w, this.gridCols)))
@@ -314,12 +324,13 @@
         return { x, y, w, h }
       },
 
-      getAllPreviews() {
+      getAllPreviews () {
         this.loading = true
         this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
           .then((previewsMaybe) => {
             const previews = Array.isArray(previewsMaybe) ? previewsMaybe : []
             this.$nextTick(() => {
+              // HTML map
               const htmlById = {}
               previews.forEach(p => {
                 if (p && (p.id || p.blockId) && typeof p.html === 'string') {
@@ -328,18 +339,19 @@
               })
               this.previewHtmlById = htmlById
 
-              this.layout = this.blocks.map((b, idx) => {
+              const next = this.blocks.map((b, idx) => {
                 const i = String(b.id)
                 let cg = previews.find(p => String(p.id) === i)?.content?.grid
-                if (typeof cg === 'string') {
-                  try { cg = JSON.parse(cg) } catch (e) { cg = null }
-                }
+                if (typeof cg === 'string') { try { cg = JSON.parse(cg) } catch (e) { cg = null } }
                 const g = this._normalizeGrid(cg || this._gridOf(b, idx), idx)
                 return { ...g, i, iNum: b.id }
               }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
 
+              this._ignoreNextLayoutEvent = true
+              this.layout = next
               this._previewLayoutApplied = true
-              this.loading = false
+
+              this.$nextTick(() => { this._ignoreNextLayoutEvent = false; this.loading = false })
             })
           })
       },
