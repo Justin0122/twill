@@ -39,6 +39,12 @@ class BlocksController extends Controller
             );
         }
 
-        return html_entity_decode($result->render());
+        return response()->json([
+            'id' => $data['id'] ?? null,
+            'blockId' => $data['id'] ?? null,
+            'type' => $data['type'] ?? null,
+            'content' => $data['content'] ?? [],
+            'html' => html_entity_decode($result->render()),
+        ]);
     }
 }

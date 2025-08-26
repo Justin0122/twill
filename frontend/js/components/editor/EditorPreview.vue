@@ -413,20 +413,40 @@
         this._unSubscribeInternal = null
       },
       getAllPreviews() {
-        // eslint-disable-next-line no-console
         this.loading = true
         this.$store
           .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
-          .then(previewsMaybe => {
+          .then((previewsMaybe) => {
             this.$nextTick(() => {
-              const previews =
-                previewsMaybe ||
-                this.$store.state.preview?.[this.editorName]?.items ||
-                this.$store.getters?.['preview/itemsByEditor']?.(this.editorName) ||
-                []
+              const previews = Array.isArray(previewsMaybe) ? previewsMaybe : []
               // eslint-disable-next-line no-console
               console.log('[getAllPreviews] previews resolved', previews)
-              this._rebuildLayoutPreferPreview(previews)
+
+              // Build map id -> grid from preview JSON
+              const idToGrid = new Map()
+              previews.forEach(p => {
+                let cg = p.content?.grid
+                if (typeof cg === 'string') {
+                  try { cg = JSON.parse(cg) } catch (e) { cg = null }
+                }
+                if (p.id && cg && Number.isFinite(+cg.w) && Number.isFinite(+cg.h)) {
+                  idToGrid.set(String(p.id), {
+                    x: +cg.x || 0,
+                    y: +cg.y || 0,
+                    w: +cg.w,
+                    h: +cg.h
+                  })
+                }
+              })
+
+              // Apply preview grid if present, otherwise fall back
+              this.layout = this.blocks.map((b, idx) => {
+                const i = String(b.id)
+                const g = idToGrid.get(i) || this._gridOf(b, idx)
+                return { ...g, i, iNum: b.id }
+              }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
+
+              this._previewLayoutApplied = true
               this.loading = false
             })
           })
