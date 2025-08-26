@@ -192,7 +192,9 @@
         suppressAutoHeight: false,
 
         // The canonical layout array (docs-style)
-        layout: []
+        layout: [],
+        // eslint-disable-next-line vue/no-reserved-keys
+        _previewLayoutApplied: false,
       }
     },
     computed: {
@@ -216,15 +218,16 @@
       }
     },
     methods: {
-      // coerce to Number; accept numeric strings too
+      _hasContentGrid(b) {
+        const g = b?.content?.grid
+        return g && Number.isFinite(+g.w) && Number.isFinite(+g.h)
+      },
       _toNum(val, fallback) {
         const n = Number(val)
         return Number.isFinite(n) ? n : fallback
       },
-
       _gridOf(block, idx = 0) {
         const bg = block.grid || {}
-
         const cg =
           (block.content && block.content.grid) ||
           (block.preview && block.preview.content && block.preview.content.grid) ||
@@ -244,7 +247,28 @@
         const h = Math.max(1, this._toNum(raw.h, this.defaultBlockH))
         return { x, y, w, h }
       },
+      _rebuildLayoutPreferPreview(previews = []) {
+        const idToGrid = new Map()
+        previews.forEach(p => {
+          const id = String(p.id || p.blockId || p.block?.id)
+          let cg = p.content?.grid
+          if (typeof cg === 'string') {
+            try { cg = JSON.parse(cg) } catch (e) { cg = null }
+          }
+          if (id && cg && Number.isFinite(+cg.w) && Number.isFinite(+cg.h)) {
+            idToGrid.set(id, { x:+cg.x||0, y:+cg.y||0, w:+cg.w, h:+cg.h })
+          }
+        })
 
+        const next = this.blocks.map((b, idx) => {
+          const i = String(b.id)
+          const g = idToGrid.get(i) || this._gridOf(b, idx)
+          return { ...g, i, iNum: b.id }
+        }).sort((a, b) => (a.y - b.y) || (a.x - b.x))
+
+        this.layout = next
+        this._previewLayoutApplied = true // 👈 mark as applied
+      },
       // Build the layout array from current blocks (in reading order)
       buildLayoutFromBlocks() {
         const items = this.blocks.map((b, idx) => {
@@ -336,6 +360,7 @@
       },
 
       onLayoutUpdated: debounce(function(newLayout) {
+        this._previewLayoutApplied = false;
         // Mirror the grid back to Vuex and keep content.grid in sync
         this.layout = newLayout.map(li => ({ ...li, iNum: Number(li.i) }))
         const idToGrid = new Map(
@@ -464,9 +489,25 @@
       }
     },
     mounted() {
-      this.layout = this.buildLayoutFromBlocks()
       this.init()
       this.$nextTick(this.getAllPreviews)
+    },
+    getAllPreviews() {
+      this.loading = true
+      this.$store
+        .dispatch(ACTIONS.GET_ALL_PREVIEWS, { editorName: this.editorName })
+        .then(previewsMaybe => {
+          this.$nextTick(() => {
+            const previews =
+              previewsMaybe ||
+              this.$store.state.preview?.[this.editorName]?.items ||
+              this.$store.getters?.['preview/itemsByEditor']?.(this.editorName) ||
+              []
+
+            this._rebuildLayoutPreferPreview(previews)
+            this.loading = false
+          })
+        })
     },
     beforeDestroy() {
       this.dispose()
@@ -475,19 +516,17 @@
       blocks: {
         deep: true,
         handler() {
-          this.layout = this.buildLayoutFromBlocks()
+          const allHaveGrid = this.blocks.length > 0 && this.blocks.every(this._hasContentGrid)
+          if (!this._previewLayoutApplied && allHaveGrid) {
+            this.layout = this.buildLayoutFromBlocks()
+          }
         }
       },
       editorName() {
         this.unSubscribe()
-        this.layout = this.buildLayoutFromBlocks()
+        this._previewLayoutApplied = false
         this.getAllPreviews()
       },
-      hasBlockActive(active) {
-        if (active) return
-        this.unSubscribe()
-        this.blockSelectIndex = -1
-      }
     }
   }
 </script>
