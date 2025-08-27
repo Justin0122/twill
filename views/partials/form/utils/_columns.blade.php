@@ -1,9 +1,10 @@
 @php
-    $colStyle = (isset($middle) || isset($middleFields)) ? '' : 'width: 49%; box-sizing: border-box; display: inline-block; vertical-align: top;';
     $colClassAttr = (isset($middle) || isset($middleFields)) ? 'col--third col--third-wrap' : '';
+    $colStyle = 'flex: 1 1 0; min-width: 0; box-sizing: border-box; vertical-align: top;';
 @endphp
-<div class="wrapper" style="margin-left: 0; white-space: nowrap; gap:0.6rem;">
-    <div class="{{ $colClassAttr }}" @if($colStyle)style="{{ $colStyle }}"@endif>
+<div class="wrapper"
+     style="display: flex; gap: 0.6rem; margin-left: 0; white-space: normal; width: 100%;">
+    <div class="{{ $colClassAttr }}" style="{{ $colStyle }}">
         @isset($leftFields)
             @foreach($leftFields as $field)
                 {!! $field->render() !!}
@@ -12,7 +13,7 @@
         {{ $left }}
     </div>
     @if(isset($middle) || isset($middleFields))
-        <div class="{{ $colClassAttr }}">
+        <div class="{{ $colClassAttr }}" style="{{ $colStyle }}">
             @isset($middleFields)
                 @foreach($middleFields as $field)
                     {!! $field->render() !!}
@@ -21,7 +22,7 @@
             {{ $middle }}
         </div>
     @endif
-    <div class="{{ $colClassAttr }}" @if($colStyle)style="{{ $colStyle }}"@endif>
+    <div class="{{ $colClassAttr }}" style="{{ $colStyle }}">
         @isset($rightFields)
             @foreach($rightFields as $field)
                 {!! $field->render() !!}
