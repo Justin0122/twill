@@ -179,6 +179,11 @@
       },
       onSearchInput: function(event) {
         this.searchValue = event.target.value
+        this.debouncedEmitSearch()
+      },
+      emitSearch: function() {
+        const formData = FormDataAsObj(this.$refs.form)
+        this.$emit('submit', formData)
       },
       clear: function() {
         this.searchValue = ''
@@ -194,6 +199,9 @@
       _resize: debounce(function() {
         this.resetHeight()
       }, 50)
+    },
+    created() {
+      this.debouncedEmitSearch = debounce(this.emitSearch, 300)
     },
     beforeMount: function() {
       if (!this.$slots.navigation) this.withNavigation = false
