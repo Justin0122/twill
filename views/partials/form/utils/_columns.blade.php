@@ -1,31 +1,32 @@
 @php
-    $colClassAttr = (isset($middle) || isset($middleFields)) ? 'col--third col--third-wrap' : 'col--double col--double-wrap';
+    $colStyle = (isset($middle) || isset($middleFields)) ? '' : 'width: 50%; box-sizing: border-box; display: inline-block; vertical-align: top;';
+    $colClassAttr = (isset($middle) || isset($middleFields)) ? 'col--third col--third-wrap' : '';
 @endphp
-<div class="wrapper">
-    <div class="{{ $colClassAttr }}">
-      @isset($leftFields)
-        @foreach($leftFields as $field)
-            {!! $field->render() !!}
-        @endforeach
-      @endisset
-      {{ $left }}
+<div class="wrapper" style="margin-left: 0; white-space: nowrap;">
+    <div class="{{ $colClassAttr }}" @if($colStyle)style="{{ $colStyle }}"@endif>
+        @isset($leftFields)
+            @foreach($leftFields as $field)
+                {!! $field->render() !!}
+            @endforeach
+        @endisset
+        {{ $left }}
     </div>
     @if(isset($middle) || isset($middleFields))
-    <div class="{{ $colClassAttr }}">
-      @isset($middleFields)
-        @foreach($middleFields as $field)
-            {!! $field->render() !!}
-        @endforeach
-      @endisset
-      {{ $middle }}
-    </div>
+        <div class="{{ $colClassAttr }}">
+            @isset($middleFields)
+                @foreach($middleFields as $field)
+                    {!! $field->render() !!}
+                @endforeach
+            @endisset
+            {{ $middle }}
+        </div>
     @endif
-    <div class="{{ $colClassAttr }}">
-      @isset($rightFields)
-        @foreach($rightFields as $field)
-          {!! $field->render() !!}
-        @endforeach
-      @endisset
-      {{ $right }}
+    <div class="{{ $colClassAttr }}" @if($colStyle)style="{{ $colStyle }}"@endif>
+        @isset($rightFields)
+            @foreach($rightFields as $field)
+                {!! $field->render() !!}
+            @endforeach
+        @endisset
+        {{ $right }}
     </div>
 </div>
