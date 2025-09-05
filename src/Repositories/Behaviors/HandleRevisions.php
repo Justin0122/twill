@@ -14,9 +14,31 @@ use Illuminate\Support\Facades\Auth;
 trait HandleRevisions
 {
     /**
-     * The Laravel queue name to be used for the revision limiting.
+     * Queue name (when using queue/after_response modes)
      */
     protected string $revisionLimitJobQueue = 'default';
+
+    /**
+     * Queue connection; null = use default (config('queue.default')).
+     * e.g. 'redis', 'database', 'sync'
+     */
+    protected ?string $revisionLimitJobConnection = null;
+
+    /**
+     * Dispatch mode for cleanup:
+     *  - 'auto'            -> sync for small counts, else after_response/queue
+     *  - 'sync'            -> run immediately in the request
+     *  - 'after_response'  -> run after HTTP response is sent
+     *  - 'queue'           -> push to the queue (requires worker)
+     *
+     * Default keeps existing behavior.
+     */
+    protected string $revisionLimitDispatchMode = 'queue';
+
+    /**
+     * If mode is 'auto', run sync when total revisions <= this threshold.
+     */
+    protected int $revisionLimitSyncThreshold = 100;
 
     public function hydrateHandleRevisions(TwillModelContract $object, array $fields): TwillModelContract
     {
@@ -54,11 +76,66 @@ trait HandleRevisions
         }
 
         if (isset($object->limitRevisions) || TwillConfig::getRevisionLimit()) {
-            CleanupRevisions::dispatch($object)
-                ->onQueue($this->revisionLimitJobQueue);
+            $this->dispatchRevisionCleanup($object);
         }
 
         return $fields;
+    }
+
+    protected function dispatchRevisionCleanup(TwillModelContract $object): void
+    {
+        $queue = $this->revisionLimitJobQueue;
+        $connection = $this->revisionLimitJobConnection;
+
+        // Count to decide sync vs async when in 'auto'
+        $revisionCount = (int) $object->revisions()->count();
+        $mode = $this->resolveRevisionDispatchMode($revisionCount);
+
+        switch ($mode) {
+            case 'sync':
+                CleanupRevisions::dispatchSync($object);
+                break;
+
+            case 'after_response':
+                // Prefer after-response if available; otherwise fall back to queue
+                if (method_exists(CleanupRevisions::class, 'dispatchAfterResponse')) {
+                    $pending = CleanupRevisions::dispatchAfterResponse($object)->onQueue($queue);
+                    if ($connection) {
+                        $pending->onConnection($connection);
+                    }
+                    break;
+                }
+            // no break; fallback to queue
+
+            case 'queue':
+            default:
+                $pending = CleanupRevisions::dispatch($object)->onQueue($queue);
+                if ($connection) {
+                    $pending->onConnection($connection);
+                }
+                break;
+        }
+    }
+
+    protected function resolveRevisionDispatchMode(int $revisionCount): string
+    {
+        $mode = $this->revisionLimitDispatchMode;
+
+        if ($mode !== 'auto') {
+            return $mode;
+        }
+
+        // If default connection is sync, just run sync.
+        $defaultConn = config('queue.default');
+        if ($defaultConn === 'sync') {
+            return 'sync';
+        }
+
+        if ($revisionCount <= $this->revisionLimitSyncThreshold) {
+            return 'sync';
+        }
+
+        return 'after_response';
     }
 
     public function preview(int $id, array $fields): TwillModelContract
