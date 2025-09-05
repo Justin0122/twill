@@ -16,7 +16,7 @@ trait HandleRevisions
     /**
      * Queue name (when using queue/after_response modes)
      */
-    protected string $revisionLimitJobQueue = 'default';
+    protected string $revisionLimitJobQueue = 'revisions';
 
     /**
      * Queue connection; null = use default (config('queue.default')).

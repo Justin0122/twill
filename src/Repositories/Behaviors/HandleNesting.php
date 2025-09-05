@@ -10,7 +10,7 @@ trait HandleNesting
     /**
      * Queue name (when using queue/after_response modes).
      */
-    protected string $reorderNestedModuleItemsJobQueue = 'sync';
+    protected string $reorderNestedModuleItemsJobQueue = 'nesting';
 
     /**
      * Queue connection; null = use default (config('queue.default')).
@@ -113,7 +113,6 @@ trait HandleNesting
             return 'sync';
         }
 
-        // Prefer after-response (keeps UX snappy without requiring a worker to *start* quickly)
         return function_exists('fastcgi_finish_request') ? 'after_response' : 'queue';
     }
 }

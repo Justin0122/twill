@@ -43,3 +43,50 @@ protected function previewData($item)
     ];
 }
 ```
+
+### Queued jobs
+
+You can control how Twill dispatches background work for revision cleanup.
+
+#### Dispatch modes
+
+`queue` — push to your queue (default; backward-compatible).
+
+`after_response` — run after the response is sent.
+
+`sync` — run immediately in the request (fastest for small batches; blocks the request).
+
+`auto` — smart mode: sync for small workloads, otherwise after_response (or queue if needed).
+If your default queue connection is sync, auto resolves to sync.
+
+#### Overridable properties
+
+These protected properties are defined on the HandleRevision trait and can be overridden in your repositories.
+
+```php
+protected string  $revisionLimitDispatchMode = 'queue';     // 'queue' | 'after_response' | 'sync' | 'auto'
+protected int     $revisionLimitSyncThreshold = 100;        // used only in 'auto'
+protected ?string $revisionLimitJobConnection = null;       // e.g. 'redis', 'database', 'sync'
+protected string  $revisionLimitJobQueue = 'revisions';     // queue name
+```
+To override them, add the following code to the constructor:
+```php
+<?php
+namespace App\Repositories;
+
+use A17\Twill\Repositories\ModuleRepository;
+use A17\Twill\Repositories\Behaviors\HandleRevisions;
+
+class PagesRepository extends ModuleRepository
+{
+    use HandleRevisions;
+
+    public function __construct()
+    {
+        $this->revisionLimitDispatchMode = 'auto';
+        $this->revisionLimitSyncThreshold = 100;
+        $this->revisionLimitJobConnection = 'redis';
+        $this->revisionLimitJobQueue = 'custom-queue-name';
+    }
+...
+```

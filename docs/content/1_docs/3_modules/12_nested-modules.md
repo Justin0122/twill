@@ -260,3 +260,51 @@ Breadcrumbs are added via the `$this->setBreadcrumbs` method, you can remove tha
 
 ![child module index](/assets/nested-child-index.png)
 ![nested child form](/assets/nested-child-form.png)
+
+### Queued jobs
+
+You can control how Twill dispatches background work for nested item reordering
+
+#### Dispatch modes
+
+`queue` — push to your queue (default; backward-compatible).
+
+`after_response` — run after the HTTP response is sent.
+
+`sync` — run immediately in the request (fastest for small batches; blocks the request).
+
+`auto` — smart mode: sync for small workloads, otherwise after_response (or queue if needed).
+If your default queue connection is sync, auto resolves to sync.
+
+#### Overridable properties
+
+These properties are defined on the HandleNesting trait and can be overridden in your repositories.
+
+```php
+protected string  $reorderNestedDispatchMode = 'queue';     // 'queue' | 'after_response' | 'sync' | 'auto'
+protected int     $reorderNestedSyncThreshold = 50;         // used only in 'auto'
+protected ?string $reorderNestedModuleItemsJobConnection = null; // e.g. 'redis', 'database', 'sync'. Defaults to the queue connection from config/queue.php
+protected string  $reorderNestedModuleItemsJobQueue = 'nesting';  // queue name
+```
+To override them, add the following code to the constructor:
+```php
+<?php
+namespace App\Repositories;
+
+use A17\Twill\Repositories\ModuleRepository;
+use A17\Twill\Repositories\Behaviors\HandleNesting;
+
+class PagesRepository extends ModuleRepository
+{
+    use HandleNesting;
+
+    public function __construct()
+    {
+        $this->reorderNestedDispatchMode = 'auto';
+        $this->reorderNestedModuleItemsJobConnection = 'redis';
+        $this->reorderNestedModuleItemsJobQueue = 'custom-queue-name';
+    }
+...
+```
+
+
