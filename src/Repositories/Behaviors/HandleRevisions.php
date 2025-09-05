@@ -3,20 +3,42 @@
 namespace A17\Twill\Repositories\Behaviors;
 
 use A17\Twill\Facades\TwillConfig;
+use A17\Twill\Jobs\CleanupRevisions;
 use A17\Twill\Models\Behaviors\HasRelated;
 use A17\Twill\Models\Contracts\TwillModelContract;
 use A17\Twill\Models\RelatedItem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use A17\Twill\Jobs\CleanupRevisions;
 
 trait HandleRevisions
 {
     /**
-     * The Laravel queue name to be used for the revision limiting.
+     * Queue name (when using queue/after_response modes)
      */
     protected string $revisionLimitJobQueue = 'default';
+
+    /**
+     * Queue connection; null = use default (config('queue.default')).
+     * e.g. 'redis', 'database', 'sync'
+     */
+    protected ?string $revisionLimitJobConnection = null;
+
+    /**
+     * Dispatch mode for cleanup:
+     *  - 'auto'            -> sync for small counts, else after_response/queue
+     *  - 'sync'            -> run immediately in the request
+     *  - 'after_response'  -> run after HTTP response is sent
+     *  - 'queue'           -> push to the queue (requires worker)
+     *
+     * Default keeps existing behavior.
+     */
+    protected string $revisionLimitDispatchMode = 'queue';
+
+    /**
+     * If mode is 'auto', run sync when total revisions <= this threshold.
+     */
+    protected int $revisionLimitSyncThreshold = 100;
 
     public function hydrateHandleRevisions(TwillModelContract $object, array $fields): TwillModelContract
     {
@@ -44,7 +66,7 @@ trait HandleRevisions
 
     public function createRevisionIfNeeded(TwillModelContract $object, array $fields): array
     {
-        $lastRevisionPayload = json_decode($object->revisions->first()->payload ?? "{}", true);
+        $lastRevisionPayload = json_decode($object->revisions->first()->payload ?? '{}', true);
 
         if ($fields !== $lastRevisionPayload) {
             $object->revisions()->create([
@@ -54,11 +76,66 @@ trait HandleRevisions
         }
 
         if (isset($object->limitRevisions) || TwillConfig::getRevisionLimit()) {
-            CleanupRevisions::dispatch($object)
-                ->onQueue($this->revisionLimitJobQueue);
+            $this->dispatchRevisionCleanup($object);
         }
 
         return $fields;
+    }
+
+    protected function dispatchRevisionCleanup(TwillModelContract $object): void
+    {
+        $queue = $this->revisionLimitJobQueue;
+        $connection = $this->revisionLimitJobConnection;
+
+        // Count to decide sync vs async when in 'auto'
+        $revisionCount = (int) $object->revisions()->count();
+        $mode = $this->resolveRevisionDispatchMode($revisionCount);
+
+        switch ($mode) {
+            case 'sync':
+                CleanupRevisions::dispatchSync($object);
+                break;
+
+            case 'after_response':
+                // Prefer after-response if available; otherwise fall back to queue
+                if (method_exists(CleanupRevisions::class, 'dispatchAfterResponse')) {
+                    $pending = CleanupRevisions::dispatchAfterResponse($object)->onQueue($queue);
+                    if ($connection) {
+                        $pending->onConnection($connection);
+                    }
+                    break;
+                }
+            // no break; fallback to queue
+
+            case 'queue':
+            default:
+                $pending = CleanupRevisions::dispatch($object)->onQueue($queue);
+                if ($connection) {
+                    $pending->onConnection($connection);
+                }
+                break;
+        }
+    }
+
+    protected function resolveRevisionDispatchMode(int $revisionCount): string
+    {
+        $mode = $this->revisionLimitDispatchMode;
+
+        if ($mode !== 'auto') {
+            return $mode;
+        }
+
+        // If default connection is sync, just run sync.
+        $defaultConn = config('queue.default');
+        if ($defaultConn === 'sync') {
+            return 'sync';
+        }
+
+        if ($revisionCount <= $this->revisionLimitSyncThreshold) {
+            return 'sync';
+        }
+
+        return 'after_response';
     }
 
     public function preview(int $id, array $fields): TwillModelContract
@@ -95,7 +172,7 @@ trait HandleRevisions
         null|string|TwillModelContract $model = null,
         ?string $customHydratedRelationship = null
     ): void {
-        $fieldsHasElements = isset($fields[$relationship]) && !empty($fields[$relationship]);
+        $fieldsHasElements = isset($fields[$relationship]) && ! empty($fields[$relationship]);
         $relatedElements = $fieldsHasElements ? $fields[$relationship] : [];
 
         $relationRepository = $this->getModelRepository($relationship, $model);
@@ -126,7 +203,7 @@ trait HandleRevisions
         string $positionAttribute = 'position',
         null|TwillModelContract|string $model = null
     ): void {
-        $fieldsHasElements = isset($fields['browsers'][$relationship]) && !empty($fields['browsers'][$relationship]);
+        $fieldsHasElements = isset($fields['browsers'][$relationship]) && ! empty($fields['browsers'][$relationship]);
         $relatedElements = $fieldsHasElements ? $fields['browsers'][$relationship] : [];
 
         $relationRepository = $this->getModelRepository($relationship, $model);
@@ -157,11 +234,9 @@ trait HandleRevisions
 
         foreach ($relatedBrowsers as $browser) {
             $browserField = $fields['browsers'][$browser['browserName']] ?? [];
-
+            $position = 1;
             foreach ($browserField as $values) {
-                $position = 1;
-
-                $relatedBrowserItems->push(RelatedItem::make([
+                $relatedBrowserItems->push(new RelatedItem([
                     'subject_id' => $object->getKey(),
                     'subject_type' => $object->getMorphClass(),
                     'related_id' => $values['id'],
@@ -184,7 +259,7 @@ trait HandleRevisions
         string $model,
         ?string $repeaterName = null
     ): void {
-        if (!$repeaterName) {
+        if (! $repeaterName) {
             $repeaterName = $relationship;
         }
 
@@ -210,6 +285,7 @@ trait HandleRevisions
     public function getCountForMine(): int
     {
         $query = $this->model->newQuery();
+
         return $this->filter($query, $this->countScope)->mine()->count();
     }
 
