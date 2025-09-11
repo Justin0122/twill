@@ -259,28 +259,31 @@ class BlockRenderer
         $modelType = $model->getMorphClass();
         $pageId = $model->getKey();
 
-        // Cache key now includes model type (repository)
-        $blockIds = Cache::remember(
-            "blocks_structure_{$modelType}_{$pageId}_{$editorName}",
-            3600,
-            function () use ($model, $editorName) {
-                return $model->blocks
-                    ->where('editor_name', $editorName)
-                    ->where('parent_id', null)
-                    ->pluck('id')
-                    ->toArray();
+        $cacheKey = "block_renderer_{$modelType}_{$pageId}_{$editorName}";
+
+        return Cache::remember($cacheKey, 3600, function () use ($model, $editorName, $blockRepository, $modelType, $pageId) {
+            $blockIds = Cache::remember(
+                "blocks_structure_{$modelType}_{$pageId}_{$editorName}",
+                3600,
+                function () use ($model, $editorName) {
+                    return $model->blocks
+                        ->where('editor_name', $editorName)
+                        ->where('parent_id', null)
+                        ->pluck('id')
+                        ->toArray();
+                }
+            );
+
+            $instance = new self([], false, $blockRepository);
+
+            foreach ($blockIds as $blockId) {
+                $cachedBlock = $blockRepository->getBlock($modelType, $pageId, $blockId);
+                $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
+                $instance->rootBlocks[] = $data;
             }
-        );
 
-        $instance = new self([], false, $blockRepository);
-
-        foreach ($blockIds as $blockId) {
-            $cachedBlock = $blockRepository->getBlock($modelType, $pageId, $blockId);
-            $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
-            $instance->rootBlocks[] = $data;
-        }
-
-        return $instance;
+            return $instance;
+        });
     }
 
     public static function getNestedBlocksForBlock(
