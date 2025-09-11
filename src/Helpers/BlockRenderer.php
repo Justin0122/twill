@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use A17\Twill\Repositories\BlockRepository;
 
 /**
  * This class can take either an Editor or a Cms array of data to render.
