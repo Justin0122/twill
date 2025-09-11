@@ -287,7 +287,10 @@ class BlockRenderer
         $children = [];
 
         foreach ($block->children ?? [] as $childBlock) {
-            $cachedChild = $blockRepository->getBlock($childBlock->id);
+            $cachedChild = $blockRepository->getBlock(
+                $rootModel->getKey(),
+                $childBlock->id
+            );
             $children[] = self::getNestedBlocksForBlock(
                 $cachedChild,
                 $rootModel,
