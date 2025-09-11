@@ -10,6 +10,7 @@ use A17\Twill\Models\Contracts\TwillModelContract;
 use A17\Twill\Models\Model;
 use A17\Twill\Repositories\BlockRepository;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -135,6 +136,10 @@ trait HandleBlocks
         array $existingBlockIds,
         array &$usedBlockIds
     ): void {
+        $pageId = $blockData['blockable_id'];
+        $modelType = $blockData['blockable_type'];
+
+        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
         // Find an existing block id based on the frontend id.
         if (
             ! in_array($blockData['id'] ?? null, $existingBlockIds, false) &&

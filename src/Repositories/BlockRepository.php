@@ -69,6 +69,8 @@ class BlockRepository extends ModuleRepository
         $modelType = $model->getMorphClass();
 
         Cache::forget("block_{$modelType}_{$pageId}_{$model->getKey()}");
+        Cache::forget("blocks_structure_{$modelType}_{$pageId}");
+        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
 
 
         if (! empty($fields['browsers'])) {
@@ -91,7 +93,11 @@ class BlockRepository extends ModuleRepository
     {
         $modelType = $object->getMorphClass();
         $pageId = $object->subject_id ?? $object->getKey();
+        $modelType = $object->getMorphClass();
+
         Cache::forget("block_{$modelType}_{$pageId}_{$object->getKey()}");
+        Cache::forget("blocks_structure_{$modelType}_{$pageId}");
+        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
 
         $object->medias()->detach();
         $object->files()->detach();
