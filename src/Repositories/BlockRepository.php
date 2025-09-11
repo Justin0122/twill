@@ -54,9 +54,9 @@ class BlockRepository extends ModuleRepository
         return parent::hydrate($model, $fields);
     }
 
-    public function getBlock(int $pageId, int $blockId)
+    public function getBlock(string $modelType, int $pageId, int $blockId)
     {
-        $cacheKey = 'block_' . $pageId . '_' . $blockId;
+        $cacheKey = "block_{$modelType}_{$pageId}_{$blockId}";
         return Cache::remember($cacheKey, 3600, function () use ($blockId) {
             return $this->model->find($blockId);
         });
@@ -66,8 +66,9 @@ class BlockRepository extends ModuleRepository
     public function afterSave(TwillModelContract $model, array $fields): void
     {
         $pageId = $model->subject_id ?? $model->getKey();
+        $modelType = $model->getMorphClass();
 
-        Cache::forget('block_' . $pageId . '_' . $model->getKey());
+        Cache::forget("block_{$modelType}_{$pageId}_{$model->getKey()}");
 
 
         if (! empty($fields['browsers'])) {
@@ -88,8 +89,9 @@ class BlockRepository extends ModuleRepository
     /** @param Block $object */
     public function afterDelete(TwillModelContract $object): void
     {
+        $modelType = $object->getMorphClass();
         $pageId = $object->subject_id ?? $object->getKey();
-        Cache::forget('block_' . $pageId . '_' . $object->getKey());
+        Cache::forget("block_{$modelType}_{$pageId}_{$object->getKey()}");
 
         $object->medias()->detach();
         $object->files()->detach();

@@ -264,7 +264,8 @@ class BlockRenderer
 
             foreach ($blocks as $block) {
                 // Use getBlock to fetch cached block
-                $cachedBlock = $blockRepository->getBlock($model->getKey(), $block->id);
+                $modelType = $model->getMorphClass();
+                $cachedBlock = $blockRepository->getBlock($modelType, $model->getKey(), $block->id);
                 $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
                 $instance->rootBlocks[] = $data;
             }
@@ -282,13 +283,16 @@ class BlockRenderer
     ): Block
     {
         $blockRepository = $blockRepository ?? app(BlockRepository::class);
+        $modelType = $rootModel->getMorphClass();
+        $pageId = $rootModel->getKey();
 
         $class = Block::findFirstWithType($block->type)->newInstance();
         $children = [];
 
         foreach ($block->children ?? [] as $childBlock) {
             $cachedChild = $blockRepository->getBlock(
-                $rootModel->getKey(),
+                $modelType,
+                $pageId,
                 $childBlock->id
             );
             $children[] = self::getNestedBlocksForBlock(
