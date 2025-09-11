@@ -14,6 +14,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * This class can take either an Editor or a Cms array of data to render.
@@ -53,7 +54,8 @@ class BlockRenderer
     public function render(
         array $blockViewMappings = [],
         array $data = [],
-    ): string {
+    ): string
+    {
         $viewResult = [];
         /** @var Block $block */
         foreach ($this->rootBlocks as $block) {
@@ -82,13 +84,14 @@ class BlockRenderer
     }
 
     private static function getNestedBlocksForData(
-        array $data,
-        string $editorName,
+        array   $data,
+        string  $editorName,
         ?string $parentEditorName = null
-    ): Block {
+    ): Block
+    {
         $class = clone Block::getForComponent($data['type'], $data['is_repeater'] ?? false)->newInstance();
 
-        if (! $class) {
+        if (!$class) {
             $type = Str::replace('a17-block-', '', $data['type']);
             // It is important to always clone this as it would otherwise overwrite the renderData inside.
             $class = clone Block::getForType($type, $data['is_repeater'] ?? false)->newInstance();
@@ -211,7 +214,7 @@ class BlockRenderer
                 if (array_key_exists($role, $crops)) {
                     Collection::make($mediasForRole)->each(function ($media) use (&$medias, $role, $locale) {
                         $customMetadatas = $media['metadatas']['custom'] ?? [];
-                        if (isset($media['crops']) && ! empty($media['crops'])) {
+                        if (isset($media['crops']) && !empty($media['crops'])) {
                             foreach ($media['crops'] as $cropName => $cropData) {
                                 $media = (new Media())->forceFill(
                                     $data = [
@@ -243,30 +246,35 @@ class BlockRenderer
 
     public static function fromEditor(
         TwillModelContract $model,
-        string $editorName,
-    ): self {
-        if (! isset(class_uses_recursive($model)[HasBlocks::class])) {
+        string             $editorName,
+    ): self
+    {
+        if (!isset(class_uses_recursive($model)[HasBlocks::class])) {
             throw new Exception('Model ' . $model::class . ' does not implement HasBlocks');
         }
 
-        $renderer = new self();
+        $cacheKey = 'blocks_' . $model->getKey() . '_' . $editorName;
+        $renderer = Cache::remember($cacheKey, 3600, function () use ($model, $editorName) {
+            $instance = new self();
+            /** @var A17Block[] $blocks */
+            $blocks = $model->blocks->where('editor_name', $editorName)->where('parent_id', null);
 
-        /** @var A17Block[] $blocks */
-        $blocks = $model->blocks->where('editor_name', $editorName)->where('parent_id', null);
-
-        foreach ($blocks as $block) {
-            $data = self::getNestedBlocksForBlock($block, $model, $editorName);
-            $renderer->rootBlocks[] = $data;
-        }
+            foreach ($blocks as $block) {
+                $data = self::getNestedBlocksForBlock($block, $model, $editorName);
+                $instance->rootBlocks[] = $data;
+            }
+            return $instance;
+        });
 
         return $renderer;
     }
 
     public static function getNestedBlocksForBlock(
-        A17Block $block,
+        A17Block           $block,
         TwillModelContract $rootModel,
-        string $editorName
-    ): Block {
+        string             $editorName
+    ): Block
+    {
         // We do not know if the block is a repeater or block so we use the first match.
         $class = Block::findFirstWithType($block->type)->newInstance();
 

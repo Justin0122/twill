@@ -11,6 +11,7 @@ use A17\Twill\Repositories\Behaviors\HandleMedias;
 use A17\Twill\Services\Blocks\Block as BlockConfig;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class BlockRepository extends ModuleRepository
 {
@@ -28,7 +29,10 @@ class BlockRepository extends ModuleRepository
 
     public function getCrops(string $role): array
     {
-        return TwillBlocks::getAllCropConfigs()[$role];
+        $cacheKey = 'crops_' . $role;
+        return Cache::remember($cacheKey, 3600, function () use ($role) {
+            return TwillBlocks::getAllCropConfigs()[$role];
+        });
     }
 
     public function hydrate(TwillModelContract $model, array $fields): TwillModelContract
@@ -53,6 +57,8 @@ class BlockRepository extends ModuleRepository
     /** @param Block $model */
     public function afterSave(TwillModelContract $model, array $fields): void
     {
+        Cache::forget('blocks_' . $model->getKey() . '_default');
+
         if (! empty($fields['browsers'])) {
             $browserNames = collect($fields['browsers'])->each(function ($items, $browserName) use ($model) {
                 // This will create items or delete them if they are missing
@@ -71,6 +77,9 @@ class BlockRepository extends ModuleRepository
     /** @param Block $object */
     public function afterDelete(TwillModelContract $object): void
     {
+        // Invalidate block cache for this model
+        Cache::forget('blocks_' . $object->getKey() . '_default');
+
         $object->medias()->detach();
         $object->files()->detach();
 
