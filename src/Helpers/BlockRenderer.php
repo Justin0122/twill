@@ -264,7 +264,7 @@ class BlockRenderer
 
             foreach ($blocks as $block) {
                 // Use getBlock to fetch cached block
-                $cachedBlock = $blockRepository->getBlock($block->id);
+                $cachedBlock = $blockRepository->getBlock($model->getKey(), $block->id);
                 $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
                 $instance->rootBlocks[] = $data;
             }

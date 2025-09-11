@@ -54,9 +54,9 @@ class BlockRepository extends ModuleRepository
         return parent::hydrate($model, $fields);
     }
 
-    public function getBlock(int $blockId)
+    public function getBlock(int $pageId, int $blockId)
     {
-        $cacheKey = 'block_' . $blockId;
+        $cacheKey = 'block_' . $pageId . '_' . $blockId;
         return Cache::remember($cacheKey, 3600, function () use ($blockId) {
             return $this->model->find($blockId);
         });
@@ -65,8 +65,10 @@ class BlockRepository extends ModuleRepository
     /** @param Block $model */
     public function afterSave(TwillModelContract $model, array $fields): void
     {
-        Cache::forget('blocks_' . $model->getKey() . '_default');
-        Cache::forget('block_' . $model->getKey());
+        $pageId = $model->subject_id ?? $model->getKey();
+
+        Cache::forget('block_' . $pageId . '_' . $model->getKey());
+
 
         if (! empty($fields['browsers'])) {
             $browserNames = collect($fields['browsers'])->each(function ($items, $browserName) use ($model) {
@@ -86,9 +88,8 @@ class BlockRepository extends ModuleRepository
     /** @param Block $object */
     public function afterDelete(TwillModelContract $object): void
     {
-        // Invalidate block cache for this model
-        Cache::forget('blocks_' . $object->getKey() . '_default');
-        Cache::forget('block_' . $model->getKey());
+        $pageId = $object->subject_id ?? $object->getKey();
+        Cache::forget('block_' . $pageId . '_' . $object->getKey());
 
         $object->medias()->detach();
         $object->files()->detach();
