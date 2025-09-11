@@ -256,23 +256,31 @@ class BlockRenderer
         }
 
         $blockRepository = $blockRepository ?? app(BlockRepository::class);
+        $modelType = $model->getMorphClass();
+        $pageId = $model->getKey();
 
-        $cacheKey = 'blocks_' . $model->getKey() . '_' . $editorName;
-        $renderer = Cache::remember($cacheKey, 3600, function () use ($model, $editorName, $blockRepository) {
-            $instance = new self([], false, $blockRepository);
-            $blocks = $model->blocks->where('editor_name', $editorName)->where('parent_id', null);
-
-            foreach ($blocks as $block) {
-                // Use getBlock to fetch cached block
-                $modelType = $model->getMorphClass();
-                $cachedBlock = $blockRepository->getBlock($modelType, $model->getKey(), $block->id);
-                $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
-                $instance->rootBlocks[] = $data;
+        // Cache key now includes model type (repository)
+        $blockIds = Cache::remember(
+            "blocks_structure_{$modelType}_{$pageId}_{$editorName}",
+            3600,
+            function () use ($model, $editorName) {
+                return $model->blocks
+                    ->where('editor_name', $editorName)
+                    ->where('parent_id', null)
+                    ->pluck('id')
+                    ->toArray();
             }
-            return $instance;
-        });
+        );
 
-        return $renderer;
+        $instance = new self([], false, $blockRepository);
+
+        foreach ($blockIds as $blockId) {
+            $cachedBlock = $blockRepository->getBlock($modelType, $pageId, $blockId);
+            $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
+            $instance->rootBlocks[] = $data;
+        }
+
+        return $instance;
     }
 
     public static function getNestedBlocksForBlock(
