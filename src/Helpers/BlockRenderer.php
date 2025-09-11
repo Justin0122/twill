@@ -246,21 +246,25 @@ class BlockRenderer
 
     public static function fromEditor(
         TwillModelContract $model,
-        string             $editorName,
+        string $editorName,
+        ?BlockRepository $blockRepository = null
     ): self
     {
         if (!isset(class_uses_recursive($model)[HasBlocks::class])) {
             throw new Exception('Model ' . $model::class . ' does not implement HasBlocks');
         }
 
+        $blockRepository = $blockRepository ?? app(BlockRepository::class);
+
         $cacheKey = 'blocks_' . $model->getKey() . '_' . $editorName;
-        $renderer = Cache::remember($cacheKey, 3600, function () use ($model, $editorName) {
-            $instance = new self();
-            /** @var A17Block[] $blocks */
+        $renderer = Cache::remember($cacheKey, 3600, function () use ($model, $editorName, $blockRepository) {
+            $instance = new self([], false, $blockRepository);
             $blocks = $model->blocks->where('editor_name', $editorName)->where('parent_id', null);
 
             foreach ($blocks as $block) {
-                $data = self::getNestedBlocksForBlock($block, $model, $editorName);
+                // Use getBlock to fetch cached block
+                $cachedBlock = $blockRepository->getBlock($block->id);
+                $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
                 $instance->rootBlocks[] = $data;
             }
             return $instance;
@@ -270,21 +274,24 @@ class BlockRenderer
     }
 
     public static function getNestedBlocksForBlock(
-        A17Block           $block,
+        A17Block $block,
         TwillModelContract $rootModel,
-        string             $editorName
+        string $editorName,
+        ?BlockRepository $blockRepository = null
     ): Block
     {
-        // We do not know if the block is a repeater or block so we use the first match.
-        $class = Block::findFirstWithType($block->type)->newInstance();
+        $blockRepository = $blockRepository ?? app(BlockRepository::class);
 
+        $class = Block::findFirstWithType($block->type)->newInstance();
         $children = [];
 
         foreach ($block->children ?? [] as $childBlock) {
+            $cachedChild = $blockRepository->getBlock($childBlock->id);
             $children[] = self::getNestedBlocksForBlock(
-                block: $childBlock,
-                rootModel: $rootModel,
-                editorName: $editorName,
+                $cachedChild,
+                $rootModel,
+                $editorName,
+                $blockRepository
             );
         }
 

@@ -54,10 +54,19 @@ class BlockRepository extends ModuleRepository
         return parent::hydrate($model, $fields);
     }
 
+    public function getBlock(int $blockId)
+    {
+        $cacheKey = 'block_' . $blockId;
+        return Cache::remember($cacheKey, 3600, function () use ($blockId) {
+            return $this->model->find($blockId);
+        });
+    }
+
     /** @param Block $model */
     public function afterSave(TwillModelContract $model, array $fields): void
     {
         Cache::forget('blocks_' . $model->getKey() . '_default');
+        Cache::forget('block_' . $model->getKey());
 
         if (! empty($fields['browsers'])) {
             $browserNames = collect($fields['browsers'])->each(function ($items, $browserName) use ($model) {
@@ -79,6 +88,7 @@ class BlockRepository extends ModuleRepository
     {
         // Invalidate block cache for this model
         Cache::forget('blocks_' . $object->getKey() . '_default');
+        Cache::forget('block_' . $model->getKey());
 
         $object->medias()->detach();
         $object->files()->detach();
