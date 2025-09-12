@@ -98,7 +98,7 @@ class BlockRepository extends ModuleRepository
         $modelType = $object->getMorphClass();
 
         Cache::forget("block_{$modelType}_{$pageId}_{$object->getKey()}");
-        BlockRenderer::forgetBlocksStructureCache($model, 'default');
+        BlockRenderer::forgetBlocksStructureCache($object, 'default');
         Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
 
         $object->medias()->detach();
