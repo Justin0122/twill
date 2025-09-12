@@ -255,86 +255,86 @@
     padding: 8px 0;
     flex: 1 1 auto;
     overflow: auto;
+  }
 
-    .editor {
+  .editor {
+    display: block;
+    width: 100%;
+    padding: 0;
+    position: relative;
+    flex-grow: 1;
+    background-color: $color__background;
+  }
+
+  .editor__leave {
+    position: fixed;
+    right: 20px;
+    top: 13px;
+    z-index: $zindex__overlay + 1;
+  }
+
+  .editor__frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-flow: column nowrap;
+  }
+
+  .editor__inner {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    flex-grow: 1;
+    display: flex;
+    flex-flow: row nowrap;
+    // height: calc(100vh - 60px);
+  }
+
+  /* Sidebar / Preview / Resizer */
+  .editor__sidebar {
+    background: $color__border--light;
+    width: 30vw;
+    min-width: 400px;
+    display: flex; /* stack tabs + pane vertically */
+    flex-direction: column; /* tabs on top, pane below */
+  }
+
+  .editor__resizer {
+    width: 10px;
+    min-width: 10px;
+    cursor: col-resize;
+    background: $color__border--light;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+
+    span {
+      width: 2px;
+      height: 20px;
       display: block;
-      width: 100%;
-      padding: 0;
-      position: relative;
-      flex-grow: 1;
-      background-color: $color__background;
-    }
-
-    .editor__leave {
-      position: fixed;
-      right: 20px;
-      top: 13px;
-      z-index: $zindex__overlay + 1;
-    }
-
-    .editor__frame {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-flow: column nowrap;
-    }
-
-    .editor__inner {
-      position: relative;
-      width: 100%;
+      background: dragGrid__dots($color__drag);
       overflow: hidden;
-      flex-grow: 1;
-      display: flex;
-      flex-flow: row nowrap;
-      // height: calc(100vh - 60px);
+      margin-left: auto;
+      margin-right: auto;
     }
+  }
 
-    /* Sidebar / Preview / Resizer */
-    .editor__sidebar {
-      background: $color__border--light;
-      width: 30vw;
-      min-width: 400px;
-      display: flex; /* stack tabs + pane vertically */
-      flex-direction: column; /* tabs on top, pane below */
-    }
+  .editor__preview {
+    flex-grow: 1;
+    position: relative;
+    min-width: 300px;
+    color: $color__text--light;
+  }
 
-    .editor__resizer {
-      width: 10px;
-      min-width: 10px;
-      cursor: col-resize;
-      background: $color__border--light;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
+  .editor__preview--dark {
+    color: $color__background;
+  }
 
-      span {
-        width: 2px;
-        height: 20px;
-        display: block;
-        background: dragGrid__dots($color__drag);
-        overflow: hidden;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    }
-
-    .editor__preview {
-      flex-grow: 1;
-      position: relative;
-      min-width: 300px;
-      color: $color__text--light;
-    }
-
-    .editor__preview--dark {
-      color: $color__background;
-    }
-
-    .editorDropdown__trigger {
-      color: inherit;
-    }
+  .editorDropdown__trigger {
+    color: inherit;
   }
 </style>
