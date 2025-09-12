@@ -8,7 +8,7 @@
     >
       <transition-group name="fade" tag="ul">
         <li v-for="(b, i) in items" :key="b.id" class="reorder__item">
-          <span class="reorder__handle" aria-hidden="true">⋮⋮</span>
+          <span class="reorder__handle" aria-hidden="true">⋮</span>
           <div class="reorder__meta">
             <div class="reorder__title">{{ i + 1 }}. {{ titleOf(b) }}</div>
           </div>
