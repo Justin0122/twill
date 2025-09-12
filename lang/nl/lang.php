@@ -84,7 +84,7 @@ return [
     'fields' => [
         'block-editor' => [
             'add-content' => 'Inhoud toevoegen',
-            'reoder' => 'Volgorde wijzigen',
+            'reorder' => 'Volgorde wijzigen',
             'collapse-all' => 'Alles inklappen',
             'create-another' => 'Nieuw maken',
             'delete' => 'Verwijderen',
