@@ -56,16 +56,43 @@
         <div class="editor__frame">
           <div class="editor__inner">
             <div class="editor__sidebar" ref="sidebar">
-              <a17-editorsidebar
-                :editor-name="editorName"
-                :hasBlockActive="hasBlockActive"
-                :editorNames="editorNames"
-                :blocks="availableBlocks"
-                @editorName:update="updateEditorName"
-              >
-                {{ $trans('fields.block-editor.add-content', 'Add content') }}
-              </a17-editorsidebar>
-            </div>
+              <div class="editorTabs">
+                <button
+                  type="button"
+                  :class="['editorTabs__tab', { 'is-active': activeTab === 'add' }]"
+                  @click="activeTab = 'add'"
+                >
+                  {{ $trans('fields.block-editor.add-content', 'Add content') }}
+                </button>
+                <button
+                  type="button"
+                  :class="['editorTabs__tab', { 'is-active': activeTab === 'reorder' }]"
+                  @click="activeTab = 'reorder'"
+                >
+                  {{ $trans('fields.block-editor.reorder', 'Reorder') }}
+                </button>
+              </div>
+
+              <!-- Tab panes -->
+              <div v-show="activeTab === 'add'" class="editorPane">
+                <a17-editorsidebar
+                  :editor-name="editorName"
+                  :hasBlockActive="hasBlockActive"
+                  :editorNames="editorNames"
+                  :blocks="availableBlocks"
+                  @editorName:update="updateEditorName"
+                >
+                  {{ $trans('fields.block-editor.add-content', 'Add content') }}
+                </a17-editorsidebar>
+              </div>
+
+              <div v-show="activeTab === 'reorder'" class="editorPane">
+                <!-- Embed reorder component -->
+                <a17-blocks-reorder
+                  :items="savedBlocks"
+                  @reorder="payload => moveBlock(payload)"
+                />
+              </div>
             <div class="editor__resizer" @mousedown="resize"><span></span></div>
             <div class="editor__preview">
               <a17-editorpreview
@@ -92,6 +119,7 @@
   import A17BlocksList from '@/components/blocks/BlocksList'
   import A17EditorPreview from '@/components/editor/EditorPreview.vue'
   import A17EditorSidebar from '@/components/editor/EditorSidebar.vue'
+  import A17BlocksReorder from '@/components/editor/BlocksReorder.vue'
   import htmlClasses from '@/utils/htmlClasses'
 
   export default {
@@ -99,23 +127,19 @@
     components: {
       'a17-editorsidebar': A17EditorSidebar,
       'a17-editorpreview': A17EditorPreview,
-      'a17-blocks-list': A17BlocksList
+      'a17-blocks-list': A17BlocksList,
+      'a17-blocks-reorder': A17BlocksReorder
     },
     props: {
-      bgColor: {
-        type: String,
-        default: '#FFFFFF'
-      },
-      previewSandbox: {
-        type: [Boolean, Array],
-        default: true
-      }
+      bgColor: { type: String, default: '#FFFFFF' },
+      previewSandbox: { type: [Boolean, Array], default: true }
     },
     data() {
       return {
         editorName: null,
         editorOpen: false,
-        htmlEditorClass: htmlClasses.editor
+        htmlEditorClass: htmlClasses.editor,
+        activeTab: 'add'
       }
     },
     computed: {
@@ -199,6 +223,26 @@
 
 <style lang="scss" scoped>
   $height__nav: 80px;
+
+  .editorTabs {
+    display: flex;
+    background: $color__border--light;
+    border-bottom: 1px solid $color__border;
+  }
+  .editorTabs__tab {
+    flex: 1 1 50%;
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    &.is-active {
+      background: $color__background;
+      border-bottom: 2px solid $color__drag;
+    }
+  }
+  .editorPane { padding: 8px 0; }
 
   .editor {
     display: block;
