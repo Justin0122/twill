@@ -31,6 +31,7 @@
         </div>
       </a17-dropdown>
     </template>
+
     <a17-blocks-list
       :editor-name="editorName"
       v-slot="{
@@ -49,12 +50,13 @@
           size="small"
           @click="openPreview"
         >
-          <span class="hide--xsmall" v-svg symbol="preview"></span
-          >{{ $trans('fields.block-editor.preview', 'Preview') }}
+          <span class="hide--xsmall" v-svg symbol="preview"></span>
+          {{ $trans('fields.block-editor.preview', 'Preview') }}
         </a17-button>
 
         <div class="editor__frame">
           <div class="editor__inner">
+            <!-- SIDEBAR -->
             <div class="editor__sidebar" ref="sidebar">
               <div class="editorTabs">
                 <button
@@ -87,13 +89,16 @@
               </div>
 
               <div v-show="activeTab === 'reorder'" class="editorPane">
-                <!-- Embed reorder component -->
                 <a17-blocks-reorder
                   :items="savedBlocks"
                   @reorder="payload => moveBlock(payload)"
                 />
               </div>
+            </div>
+
+            <!-- RESIZER + PREVIEW are siblings of sidebar -->
             <div class="editor__resizer" @mousedown="resize"><span></span></div>
+
             <div class="editor__preview">
               <a17-editorpreview
                 ref="previews"
@@ -146,9 +151,7 @@
       currentEditorLabel() {
         const current =
           this.editorNames &&
-          this.editorNames.find(
-            editorName => editorName.value === this.editorName
-          )
+          this.editorNames.find(en => en.value === this.editorName)
         return current && current.label
       },
       ...mapState({
@@ -183,14 +186,13 @@
         if (editorName) {
           this.updateEditorName(editorName)
         }
-
         this.editorOpen = true
-
         this.$refs.overlay.open()
       },
       close() {
         this.editorOpen = false
       },
+      // Sidebar resizer
       resize() {
         window.addEventListener('mousemove', this.resizeSidebar, false)
         window.addEventListener('mouseup', this.stopResizeSidebar, false)
@@ -206,7 +208,6 @@
       stopResizeSidebar() {
         window.removeEventListener('mousemove', this.resizeSidebar, false)
         window.removeEventListener('mouseup', this.stopResizeSidebar, false)
-
         // resize all previews
         this.$refs.previews.resizeAllIframes()
       },
@@ -224,10 +225,12 @@
 <style lang="scss" scoped>
   $height__nav: 80px;
 
+  /* Tabs */
   .editorTabs {
     display: flex;
     background: $color__border--light;
     border-bottom: 1px solid $color__border;
+    flex: 0 0 auto; /* keep height natural */
   }
   .editorTabs__tab {
     flex: 1 1 50%;
@@ -242,7 +245,10 @@
       border-bottom: 2px solid $color__drag;
     }
   }
-  .editorPane { padding: 8px 0; }
+  .editorPane {
+    padding: 8px 0;
+    flex: 1 1 auto;
+    overflow: auto;
 
   .editor {
     display: block;
@@ -280,10 +286,13 @@
     // height: calc(100vh - 60px);
   }
 
+  /* Sidebar / Preview / Resizer */
   .editor__sidebar {
     background: $color__border--light;
     width: 30vw;
     min-width: 400px;
+    display: flex;          /* stack tabs + pane vertically */
+    flex-direction: column; /* tabs on top, pane below */
   }
 
   .editor__resizer {
