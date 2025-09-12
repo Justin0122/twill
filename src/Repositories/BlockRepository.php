@@ -4,6 +4,7 @@ namespace A17\Twill\Repositories;
 
 use A17\Twill\Facades\TwillBlocks;
 use A17\Twill\Helpers\BlockRenderer;
+use A17\Twill\Http\Controllers\Traits\PurgesBlockCaches;
 use A17\Twill\Models\Block;
 use A17\Twill\Models\Contracts\TwillModelContract;
 use A17\Twill\Models\RelatedItem;
@@ -18,6 +19,7 @@ class BlockRepository extends ModuleRepository
 {
     use HandleMedias;
     use HandleFiles;
+    use PurgesBlockCaches;
 
     protected Config $config;
 
@@ -66,13 +68,11 @@ class BlockRepository extends ModuleRepository
     /** @param Block $model */
     public function afterSave(TwillModelContract $model, array $fields): void
     {
-        $pageId = $model->subject_id ?? $model->getKey();
+        $pageId    = $model->subject_id ?? $model->getKey();
         $modelType = $model->getMorphClass();
 
-        Cache::forget("block_{$modelType}_{$pageId}_{$model->getKey()}");
-        Cache::forget("blocks_structure_{$modelType}_{$pageId}");
-        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
-        BlockRenderer::forgetBlocksStructureCache($model, 'default');
+        $this->purgeBlockCachesFor($modelType, $pageId);
+        $this->purgeAllBlockPreviews();
 
 
         if (!empty($fields['browsers'])) {
@@ -93,13 +93,11 @@ class BlockRepository extends ModuleRepository
     /** @param Block $object */
     public function afterDelete(TwillModelContract $object): void
     {
-        $modelType = $object->getMorphClass();
-        $pageId = $object->subject_id ?? $object->getKey();
+        $pageId    = $object->subject_id ?? $object->getKey();
         $modelType = $object->getMorphClass();
 
-        Cache::forget("block_{$modelType}_{$pageId}_{$object->getKey()}");
-        BlockRenderer::forgetBlocksStructureCache($object, 'default');
-        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
+        $this->purgeBlockCachesFor($modelType, $pageId);
+        $this->purgeAllBlockPreviews();
 
         $object->medias()->detach();
         $object->files()->detach();
@@ -131,15 +129,11 @@ class BlockRepository extends ModuleRepository
     public function bulkDelete(array $ids): bool
     {
         foreach ($ids as $id) {
-            $object = $this->model->find($id);
-            if ($object) {
-                $modelType = $object->getMorphClass();
-                $pageId = $object->blockable_id ?? $object->id;
-                $editorName = $object->editor_name ?? 'default';
-                \Illuminate\Support\Facades\Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
+            if ($object = $this->model->find($id)) {
+                $this->purgeBlockCachesFor($object->getMorphClass(), $object->blockable_id ?? $object->id);
             }
-            BlockRenderer::forgetBlocksStructureCache($object, $editorName ?? 'default');
         }
+        $this->purgeAllBlockPreviews();
 
         return parent::bulkDelete($ids);
     }

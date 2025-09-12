@@ -535,11 +535,12 @@ trait HandleBlocks
 
     public function afterDeleteHandleBlocks(Model $object, array $fields): void
     {
-        $modelType = $object->getMorphClass();
-        $pageId = $object->blockable_id ?? $object->id;
+        $modelType  = $object->getMorphClass();
+        $pageId     = $object->blockable_id ?? $object->id;
         $editorName = $object->editor_name ?? 'default';
 
-        Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
+        $this->purgeBlockCachesFor($modelType, $pageId, $editorName);
+        $this->purgeAllBlockPreviews();
     }
 
     protected function hasRelatedTable(): bool
