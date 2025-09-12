@@ -3,7 +3,6 @@
 namespace A17\Twill\Repositories;
 
 use A17\Twill\Facades\TwillBlocks;
-use A17\Twill\Helpers\BlockRenderer;
 use A17\Twill\Http\Controllers\Traits\PurgesBlockCaches;
 use A17\Twill\Models\Block;
 use A17\Twill\Models\Contracts\TwillModelContract;

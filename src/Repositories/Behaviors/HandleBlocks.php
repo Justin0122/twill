@@ -4,6 +4,7 @@ namespace A17\Twill\Repositories\Behaviors;
 
 use A17\Twill\Facades\TwillBlocks;
 use A17\Twill\Facades\TwillUtil;
+use A17\Twill\Http\Controllers\Traits\PurgesBlockCaches;
 use A17\Twill\Models\Behaviors\HasMedias;
 use A17\Twill\Models\Block;
 use A17\Twill\Models\Contracts\TwillModelContract;
@@ -19,6 +20,7 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 trait HandleBlocks
 {
+    use PurgesBlockCaches;
     protected static $hasRelatedTableCache;
 
     private ?\Illuminate\Validation\Validator $blockValidator = null;
