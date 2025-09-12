@@ -11,27 +11,28 @@ trait PurgesBlockCaches
         $table  = config('cache.stores.database.table', 'cache');
         $prefix = config('cache.prefix', 'laravel_cache');
 
-        // Escape only LIKE wildcards. Do NOT touch backslashes.
-        $esc = fn (string $v) => str_replace(['%','_'], ['\\%','\\_'], $v);
 
-        $modelType  = $esc($modelType);          // e.g. App\Models\Page
-        $pageId     = $esc((string)$pageId);     // e.g. 1
+        // Escape only LIKE wildcards. Do NOT touch underscores.
+        $esc = fn (string $v) => str_replace('%', '\\%', $v);
+
+        dd($esc, $modelType, $pageId, $editorName);
+
+        $modelType  = $esc($modelType);
+        $pageId     = $esc((string)$pageId);
         $editorName = $editorName ? $esc($editorName) : null;
 
-        // Base (underscore) patterns
         $patterns = [
-            "{$prefix}_block_{$modelType}_{$pageId}\\_%",
-            "{$prefix}_blocks_structure_{$modelType}_{$pageId}\\_%",
-            "{$prefix}_block_renderer_{$modelType}_{$pageId}\\_%",
+            "{$prefix}_block_{$modelType}_{$pageId}_%",
+            "{$prefix}_blocks_structure_{$modelType}_{$pageId}_%",
+            "{$prefix}_block_renderer_{$modelType}_{$pageId}_%",
         ];
 
         \Log::info('Purging block caches for: ' . implode(', ', $patterns));
 
         if ($editorName) {
-            $patterns[] = "{$prefix}_block_renderer_{$modelType}_{$pageId}\\_{$editorName}";
-            $patterns[] = "{$prefix}_blocks_structure_{$modelType}_{$pageId}\\_{$editorName}";
+            $patterns[] = "{$prefix}_block_renderer_{$modelType}_{$pageId}_{$editorName}";
+            $patterns[] = "{$prefix}_blocks_structure_{$modelType}_{$pageId}_{$editorName}";
         }
-
 
         DB::table($table)->where(function ($q) use ($patterns) {
             foreach ($patterns as $p) {
