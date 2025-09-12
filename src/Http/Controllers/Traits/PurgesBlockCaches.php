@@ -18,7 +18,6 @@ trait PurgesBlockCaches
         $pageId     = $esc((string)$pageId);
         $editorName = $editorName ? $esc($editorName) : null;
 
-        dd($modelType, $pageId, $editorName, $table, $prefix);
 
         $patterns = [
             "{$prefix}_block_{$modelType}_{$pageId}_%",
@@ -26,12 +25,12 @@ trait PurgesBlockCaches
             "{$prefix}_block_renderer_{$modelType}_{$pageId}_%",
         ];
 
-        \Log::info('Purging block caches for: ' . implode(', ', $patterns));
-
         if ($editorName) {
             $patterns[] = "{$prefix}_block_renderer_{$modelType}_{$pageId}_{$editorName}";
             $patterns[] = "{$prefix}_blocks_structure_{$modelType}_{$pageId}_{$editorName}";
         }
+
+        dd($patterns);
 
         DB::table($table)->where(function ($q) use ($patterns) {
             foreach ($patterns as $p) {
