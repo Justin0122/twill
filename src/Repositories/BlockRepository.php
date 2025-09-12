@@ -138,8 +138,8 @@ class BlockRepository extends ModuleRepository
                 $editorName = $object->editor_name ?? 'default';
                 \Illuminate\Support\Facades\Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
             }
+            BlockRenderer::forgetBlocksStructureCache($object, $editorName ?? 'default');
         }
-        BlockRenderer::forgetBlocksStructureCache($object, $editorName ?? 'default');
 
         return parent::bulkDelete($ids);
     }
