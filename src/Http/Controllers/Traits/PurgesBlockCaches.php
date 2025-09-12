@@ -8,31 +8,29 @@ trait PurgesBlockCaches
 {
     protected function purgeBlockCachesFor(string $modelType, int|string $pageId, ?string $editorName = null): void
     {
-        // DB cache table & prefix
         $table  = config('cache.stores.database.table', 'cache');
         $prefix = config('cache.prefix', 'laravel_cache');
 
-        // Escape LIKE wildcards just in case (MySQL: \% and \_ act as literals)
-        $esc = fn (string $v) => str_replace(['\\','%','_'], ['\\\\','\\%','\\_'], $v);
+        // Escape only LIKE wildcards. Do NOT touch backslashes.
+        $esc = fn (string $v) => str_replace(['%','_'], ['\\%','\\_'], $v);
 
-        $modelType = $esc($modelType);
-        $pageId    = $esc((string) $pageId);
+        $modelType  = $esc($modelType);          // e.g. App\Models\Page
+        $pageId     = $esc((string)$pageId);     // e.g. 1
+        $editorName = $editorName ? $esc($editorName) : null;
 
-        // Base patterns (page-scoped)
+        // Base (underscore) patterns
         $patterns = [
-            "{$prefix}_block_{$modelType}_{$pageId}\\_%",           // laravel_cache_block_{type}_{page}_{blockId}
-            "{$prefix}_blocks_structure_{$modelType}_{$pageId}\\_%",// laravel_cache_blocks_structure_{type}_{page}_{editor}
-            "{$prefix}_block_renderer_{$modelType}_{$pageId}\\_%",  // laravel_cache_block_renderer_{type}_{page}_{editor}
+            "{$prefix}block_{$modelType}_{$pageId}\\_%",
+            "{$prefix}blocks_structure_{$modelType}_{$pageId}\\_%",
+            "{$prefix}block_renderer_{$modelType}_{$pageId}\\_%",
         ];
 
-        // Optionally narrow to a given editor
+
         if ($editorName) {
-            $editorName = $esc($editorName);
             $patterns[] = "{$prefix}_block_renderer_{$modelType}_{$pageId}\\_{$editorName}";
             $patterns[] = "{$prefix}_blocks_structure_{$modelType}_{$pageId}\\_{$editorName}";
         }
 
-        // Delete matching rows
         DB::table($table)->where(function ($q) use ($patterns) {
             foreach ($patterns as $p) {
                 $q->orWhere('key', 'like', $p);
