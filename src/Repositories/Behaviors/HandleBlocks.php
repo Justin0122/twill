@@ -136,11 +136,12 @@ trait HandleBlocks
         array $existingBlockIds,
         array &$usedBlockIds
     ): void {
-        $pageId = $blockData['blockable_id'];
-        $modelType = $blockData['blockable_type'];
+        $pageId     = $blockData['blockable_id'];
+        $modelType  = $blockData['blockable_type'];
         $editorName = $blockData['editor_name'] ?? 'default';
 
-        Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
+        $this->purgeBlockCachesFor($modelType, $pageId, $editorName);
+        $this->purgeAllBlockPreviews();
 
         if (
             ! in_array($blockData['id'] ?? null, $existingBlockIds, false) &&
