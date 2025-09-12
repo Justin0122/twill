@@ -138,9 +138,10 @@ trait HandleBlocks
     ): void {
         $pageId = $blockData['blockable_id'];
         $modelType = $blockData['blockable_type'];
+        $editorName = $blockData['editor_name'] ?? 'default';
 
-        Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
-        // Find an existing block id based on the frontend id.
+        Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
+
         if (
             ! in_array($blockData['id'] ?? null, $existingBlockIds, false) &&
             $id = TwillUtil::hasBlockIdFor($blockData['id'])
@@ -529,6 +530,15 @@ trait HandleBlocks
             $repository->afterDuplicate($block, $newBlock);
             $this->afterDuplicateHandleBlocks($block, $newBlock);
         }
+    }
+
+    public function afterDeleteHandleBlocks(Model $object, array $fields): void
+    {
+        $modelType = $object->getMorphClass();
+        $pageId = $object->blockable_id ?? $object->id;
+        $editorName = $object->editor_name ?? 'default';
+
+        Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
     }
 
     protected function hasRelatedTable(): bool

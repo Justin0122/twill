@@ -28,7 +28,7 @@ class BlocksController extends Controller
         $layout = config('twill.block_editor.block_single_layout');
         $cacheKey = 'block_preview_' . md5(json_encode($data));
 
-        $content = Cache::remember($cacheKey, 3600, function () use ($data, $mapping) {
+        $content = Cache::remember($cacheKey, 720, function () use ($data, $mapping) {
             return BlockRenderer::fromCmsArray($data)->render($mapping, []);
         });
 
