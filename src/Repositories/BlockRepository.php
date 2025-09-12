@@ -3,6 +3,7 @@
 namespace A17\Twill\Repositories;
 
 use A17\Twill\Facades\TwillBlocks;
+use A17\Twill\Helpers\BlockRenderer;
 use A17\Twill\Models\Block;
 use A17\Twill\Models\Contracts\TwillModelContract;
 use A17\Twill\Models\RelatedItem;
@@ -38,8 +39,8 @@ class BlockRepository extends ModuleRepository
     public function hydrate(TwillModelContract $model, array $fields): TwillModelContract
     {
         $relatedItems = collect($fields['browsers'])
-            ->flatMap(fn ($items, $browserName) => collect($items)
-                ->map(fn ($item, $position) => new RelatedItem([
+            ->flatMap(fn($items, $browserName) => collect($items)
+                ->map(fn($item, $position) => new RelatedItem([
                     'subject_id' => $model->getKey(),
                     'subject_type' => $model->getMorphClass(),
                     'related_id' => $item['id'],
@@ -71,9 +72,10 @@ class BlockRepository extends ModuleRepository
         Cache::forget("block_{$modelType}_{$pageId}_{$model->getKey()}");
         Cache::forget("blocks_structure_{$modelType}_{$pageId}");
         Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
+        BlockRenderer::forgetBlocksStructureCache($model, 'default');
 
 
-        if (! empty($fields['browsers'])) {
+        if (!empty($fields['browsers'])) {
             $browserNames = collect($fields['browsers'])->each(function ($items, $browserName) use ($model) {
                 // This will create items or delete them if they are missing
                 $model->saveRelated($items, $browserName);
@@ -96,7 +98,7 @@ class BlockRepository extends ModuleRepository
         $modelType = $object->getMorphClass();
 
         Cache::forget("block_{$modelType}_{$pageId}_{$object->getKey()}");
-        Cache::forget("blocks_structure_{$modelType}_{$pageId}");
+        BlockRenderer::forgetBlocksStructureCache($model, 'default');
         Cache::forget("block_renderer_{$modelType}_{$pageId}_default");
 
         $object->medias()->detach();
@@ -113,7 +115,7 @@ class BlockRepository extends ModuleRepository
 
         $block['instance'] = $blockInstance;
 
-        $block['content'] = empty($block['content']) ? new \stdClass() : (object) $block['content'];
+        $block['content'] = empty($block['content']) ? new \stdClass() : (object)$block['content'];
 
         if ($block['browsers'] ?? null) {
             $browsers = Collection::make($block['browsers'])->map(function ($items) {
@@ -137,6 +139,7 @@ class BlockRepository extends ModuleRepository
                 \Illuminate\Support\Facades\Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
             }
         }
+        BlockRenderer::forgetBlocksStructureCache($model, $editorName ?? 'default');
 
         return parent::bulkDelete($ids);
     }

@@ -286,6 +286,17 @@ class BlockRenderer
         });
     }
 
+    public static function forgetBlocksStructureCache(TwillModelContract $model, string $editorName): void
+    {
+        $modelType = $model->getMorphClass();
+        $pageId = $model->getKey();
+        $cacheKey = "blocks_structure_{$modelType}_{$pageId}_{$editorName}";
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+
+        $cacheKey = 'block_'. $modelType . '_' . $pageId . '_%';
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+    }
+
     public static function getNestedBlocksForBlock(
         A17Block $block,
         TwillModelContract $rootModel,
