@@ -20,15 +20,16 @@ trait PurgesBlockCaches
 
 
         $patterns = [
-            "{$prefix}_block_{$modelType}_{$pageId}_%",
-            "{$prefix}_blocks_structure_{$modelType}_{$pageId}_%",
-            "{$prefix}_block_renderer_{$modelType}_{$pageId}_%",
+            "{$prefix}block_{$modelType}_{$pageId}_%",
+            "{$prefix}blocks_structure_{$modelType}_{$pageId}_%",
+            "{$prefix}block_renderer_{$modelType}_{$pageId}_%",
         ];
 
         if ($editorName) {
-            $patterns[] = "{$prefix}_block_renderer_{$modelType}_{$pageId}_{$editorName}";
-            $patterns[] = "{$prefix}_blocks_structure_{$modelType}_{$pageId}_{$editorName}";
+            $patterns[] = "{$prefix}block_renderer_{$modelType}_{$pageId}_{$editorName}";
+            $patterns[] = "{$prefix}blocks_structure_{$modelType}_{$pageId}_{$editorName}";
         }
+
 
         dd($patterns);
 
