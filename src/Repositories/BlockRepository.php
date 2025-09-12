@@ -31,10 +31,7 @@ class BlockRepository extends ModuleRepository
 
     public function getCrops(string $role): array
     {
-        $cacheKey = 'crops_' . $role;
-        return Cache::remember($cacheKey, 3600, function () use ($role) {
-            return TwillBlocks::getAllCropConfigs()[$role];
-        });
+        return TwillBlocks::getAllCropConfigs()[$role];
     }
 
     public function hydrate(TwillModelContract $model, array $fields): TwillModelContract
@@ -58,10 +55,7 @@ class BlockRepository extends ModuleRepository
 
     public function getBlock(string $modelType, int $pageId, int $blockId)
     {
-        $cacheKey = "block_{$modelType}_{$pageId}_{$blockId}";
-        return Cache::remember($cacheKey, 3600, function () use ($blockId) {
-            return $this->model->find($blockId);
-        });
+        return $this->model->find($blockId);
     }
 
     /** @param Block $model */

@@ -20,18 +20,12 @@ trait PurgesBlockCaches
 
 
         $patterns = [
-            "{$prefix}block_{$modelType}_{$pageId}_%",
-            "{$prefix}blocks_structure_{$modelType}_{$pageId}_%",
             "{$prefix}block_renderer_{$modelType}_{$pageId}_%",
         ];
 
         if ($editorName) {
             $patterns[] = "{$prefix}block_renderer_{$modelType}_{$pageId}_{$editorName}";
-            $patterns[] = "{$prefix}blocks_structure_{$modelType}_{$pageId}_{$editorName}";
         }
-
-
-        dd($patterns);
 
         DB::table($table)->where(function ($q) use ($patterns) {
             foreach ($patterns as $p) {
