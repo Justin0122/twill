@@ -215,6 +215,37 @@
       scrollToActive(target) {
         this.$refs.previewContent.$el.scrollTop = Math.max(0, target - 20)
       },
+      scrollToBlock({ id, index }) {
+        if (id != null && this.scrollToId(String(id))) return
+        if (typeof index === 'number') this.scrollToIndex(index)
+      },
+
+      scrollToId(id) {
+        // refs created via :ref="block.id"
+        const refEntry = this.$refs[id]
+        const comp = Array.isArray(refEntry) ? refEntry[0] : refEntry
+        if (!comp || !comp.$el || !this.$refs.previewContent) return false
+
+        const container = this.$refs.previewContent.$el || this.$refs.previewContent
+        const targetEl = comp.$el
+
+        const containerBox = container.getBoundingClientRect()
+        const targetBox = targetEl.getBoundingClientRect()
+        // position inside scroll container:
+        const offsetTop = targetBox.top - containerBox.top + container.scrollTop
+
+        this.scrollToActive(Math.max(0, offsetTop - 20))
+        return true
+      },
+
+      scrollToIndex(index) {
+        // Fallback: try to resolve by index via the block ref list
+        // We can map from blocks[index].id -> ref
+        const b = this.blocks && this.blocks[index]
+        if (b && b.id != null) {
+          this.scrollToId(String(b.id))
+        }
+      },
       resizeAllIframes() {
         if (!this.$refs.blockPreview) return
         this.$refs.blockPreview.forEach(preview => {

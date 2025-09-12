@@ -98,6 +98,7 @@
                 <a17-blocks-reorder
                   :items="savedBlocks"
                   @reorder="payload => moveBlock(payload)"
+                  @focus="handleFocusFromReorder"
                 />
               </div>
             </div>
@@ -175,6 +176,11 @@
       }
     },
     methods: {
+      handleFocusFromReorder({ id, index }) {
+        if (this.$refs.previews && this.$refs.previews.scrollToBlock) {
+          this.$refs.previews.scrollToBlock({ id, index })
+        }
+      },
       // EditorName functions
       initEditorName() {
         if (!this.editorName) {
