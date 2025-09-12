@@ -125,4 +125,19 @@ class BlockRepository extends ModuleRepository
 
         return $block;
     }
+
+    public function bulkDelete(array $ids): bool
+    {
+        foreach ($ids as $id) {
+            $object = $this->model->find($id);
+            if ($object) {
+                $modelType = $object->getMorphClass();
+                $pageId = $object->blockable_id ?? $object->id;
+                $editorName = $object->editor_name ?? 'default';
+                \Illuminate\Support\Facades\Cache::forget("block_renderer_{$modelType}_{$pageId}_{$editorName}");
+            }
+        }
+
+        return parent::bulkDelete($ids);
+    }
 }
