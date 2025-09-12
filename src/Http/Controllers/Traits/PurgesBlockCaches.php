@@ -11,15 +11,14 @@ trait PurgesBlockCaches
         $table  = config('cache.stores.database.table', 'cache');
         $prefix = config('cache.prefix', 'laravel_cache');
 
-
-        // Escape only LIKE wildcards. Do NOT touch underscores.
-        $esc = fn (string $v) => str_replace('%', '\\%', $v);
-
-        dd($esc, $modelType, $pageId, $editorName);
+        // Escape LIKE wildcards: % and _
+        $esc = fn (string $v) => str_replace(['%', '_'], ['\\%', '\\_'], $v);
 
         $modelType  = $esc($modelType);
         $pageId     = $esc((string)$pageId);
         $editorName = $editorName ? $esc($editorName) : null;
+
+        dd($modelType, $pageId, $editorName, $table, $prefix);
 
         $patterns = [
             "{$prefix}_block_{$modelType}_{$pageId}_%",
