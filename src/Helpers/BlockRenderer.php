@@ -262,17 +262,11 @@ class BlockRenderer
         $cacheKey = "block_renderer_{$modelType}_{$pageId}_{$editorName}";
 
         return Cache::remember($cacheKey, 3600, function () use ($model, $editorName, $blockRepository, $modelType, $pageId) {
-            $blockIds = Cache::remember(
-                "blocks_structure_{$modelType}_{$pageId}_{$editorName}",
-                3600,
-                function () use ($model, $editorName) {
-                    return $model->blocks
-                        ->where('editor_name', $editorName)
-                        ->where('parent_id', null)
-                        ->pluck('id')
-                        ->toArray();
-                }
-            );
+            $blockIds = $model->blocks
+                ->where('editor_name', $editorName)
+                ->where('parent_id', null)
+                ->pluck('id')
+                ->toArray();
 
             $instance = new self([], false, $blockRepository);
 
