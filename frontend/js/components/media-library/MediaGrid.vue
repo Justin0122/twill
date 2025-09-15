@@ -205,19 +205,15 @@
         const snapshotSelected = this.contextMenu.selectedIdsAtOpen || []
         const anchorId = this.contextMenu.anchorId
 
-        const anchorInCurrent =
-          anchorId != null && currentSelected.includes(anchorId)
-        const anchorInSnapshot =
-          anchorId != null && snapshotSelected.includes(anchorId)
+        const anchorInCurrent = anchorId != null && currentSelected.includes(anchorId)
+        const anchorInSnapshot = anchorId != null && snapshotSelected.includes(anchorId)
 
         const mediaIds =
-          currentSelected.length && (anchorId == null || anchorInCurrent)
+          (currentSelected.length && (anchorId == null || anchorInCurrent))
             ? currentSelected
-            : snapshotSelected.length && (anchorId == null || anchorInSnapshot)
-            ? snapshotSelected
-            : anchorId != null
-            ? [anchorId]
-            : []
+            : (snapshotSelected.length && (anchorId == null || anchorInSnapshot))
+              ? snapshotSelected
+              : (anchorId != null ? [anchorId] : [])
 
         if (!mediaIds.length) {
           this.contextMenu.open = false
