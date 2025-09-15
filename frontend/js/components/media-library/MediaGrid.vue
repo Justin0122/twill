@@ -1,5 +1,11 @@
 <template>
   <div class="mediagrid">
+    <input
+      type="color"
+      v-model="selectedColor"
+      style="margin-bottom: 16px;"
+      aria-label="Select image background color"
+    />
     <div
       class="mediagrid__item"
       v-show="!item.isReplacement"
@@ -8,10 +14,10 @@
     >
       <span class="mediagrid__button s--loading">
         <span class="mediagrid__progress" v-if="!item.error"
-        ><span
-          class="mediagrid__progressBar"
-          :style="loadingProgress(index)"
-        ></span
+          ><span
+            class="mediagrid__progressBar"
+            :style="loadingProgress(index)"
+          ></span
         ></span>
         <span class="mediagrid__progressError" v-else>Upload Error</span>
       </span>
@@ -43,6 +49,7 @@
         <img
           :src="item.thumbnail"
           class="mediagrid__img"
+          :style="{ background: selectedColor }"
           loading="lazy"
           decoding="async"
           fetchpriority="low"
@@ -68,9 +75,19 @@
         aria-label="Move to trash"
         title="Move to trash"
       >
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
-          <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
-                fill="none" stroke="currentColor" stroke-width="1.5" />
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          width="16"
+          height="16"
+        >
+          <path
+            d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
         </svg>
         <span class="label">Trash</span>
       </button>
@@ -91,8 +108,9 @@
           open: false,
           x: 0,
           y: 0,
-          anchorId: null,
-        }
+          anchorId: null
+        },
+        selectedColor: '#6868681c' // default color
       }
     },
     computed: {
@@ -168,7 +186,9 @@
           selectedIdsAtOpen: Array.from(this.selectedIdsSet)
         }
 
-        document.addEventListener('click', this.closeContextMenuOnce, { once: true })
+        document.addEventListener('click', this.closeContextMenuOnce, {
+          once: true
+        })
         document.addEventListener('keydown', this.closeOnEsc, { once: true })
       },
       closeContextMenuOnce: function() {
@@ -185,15 +205,19 @@
         const snapshotSelected = this.contextMenu.selectedIdsAtOpen || []
         const anchorId = this.contextMenu.anchorId
 
-        const anchorInCurrent = anchorId != null && currentSelected.includes(anchorId)
-        const anchorInSnapshot = anchorId != null && snapshotSelected.includes(anchorId)
+        const anchorInCurrent =
+          anchorId != null && currentSelected.includes(anchorId)
+        const anchorInSnapshot =
+          anchorId != null && snapshotSelected.includes(anchorId)
 
         const mediaIds =
-          (currentSelected.length && (anchorId == null || anchorInCurrent))
+          currentSelected.length && (anchorId == null || anchorInCurrent)
             ? currentSelected
-            : (snapshotSelected.length && (anchorId == null || anchorInSnapshot))
-              ? snapshotSelected
-              : (anchorId != null ? [anchorId] : [])
+            : snapshotSelected.length && (anchorId == null || anchorInSnapshot)
+            ? snapshotSelected
+            : anchorId != null
+            ? [anchorId]
+            : []
 
         if (!mediaIds.length) {
           this.contextMenu.open = false
