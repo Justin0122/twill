@@ -1,11 +1,5 @@
 <template>
   <div class="mediagrid">
-    <input
-      type="color"
-      v-model="selectedColor"
-      style="margin-bottom: 16px;"
-      aria-label="Select image background color"
-    />
     <div
       class="mediagrid__item"
       v-show="!item.isReplacement"
