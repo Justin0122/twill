@@ -6,7 +6,6 @@ use A17\Twill\Helpers\BlockRenderer;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\View\Factory as ViewFactory;
-use Illuminate\Support\Facades\Cache;
 
 class BlocksController extends Controller
 {
@@ -24,19 +23,20 @@ class BlocksController extends Controller
         }
 
         $data = $request->except('activeLanguage');
+
         $mapping = config('twill.block_editor.block_views_mappings');
-        $layout = config('twill.block_editor.block_single_layout');
-        $cacheKey = 'block_preview_' . md5(json_encode($data));
 
-        $content = Cache::remember($cacheKey, 720, function () use ($data, $mapping) {
-            return BlockRenderer::fromCmsArray($data)->render($mapping, []);
-        });
-
-        if ($viewFactory->exists($layout)) {
-            $viewFactory->inject('content', $content);
-            $result = view($layout);
+        if ($viewFactory->exists(config('twill.block_editor.block_single_layout'))) {
+            $viewFactory->inject(
+                'content',
+                BlockRenderer::fromCmsArray($data)->render($mapping, [])
+            );
+            $result = view(config('twill.block_editor.block_single_layout'));
         } else {
-            $result = view('twill::errors.block_layout', ['view' => $layout]);
+            $result = view(
+                'twill::errors.block_layout',
+                ['view' => config('twill.block_editor.block_single_layout')]
+            );
         }
 
         return html_entity_decode($result->render());
