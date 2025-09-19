@@ -272,7 +272,7 @@
 
         const containerBox = container.getBoundingClientRect()
         const scrollTop = container.scrollTop
-        const threshold = -8
+        const threshold = 40
 
         let topIdx = -1
         let topOffset = -Infinity

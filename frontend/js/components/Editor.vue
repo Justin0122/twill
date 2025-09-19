@@ -180,8 +180,6 @@
     },
     methods: {
       onTopVisible({ index }) {
-        // eslint-disable-next-line no-console
-        console.log('top visible ->', index);
         this.activeIndex = index
       },
       handleFocusFromReorder({ id, index }) {
