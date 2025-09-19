@@ -36,65 +36,65 @@
 </template>
 
 <script>
-import draggable from 'vuedraggable'
+  import draggable from 'vuedraggable'
 
-export default {
-  name: 'A17BlocksReorder',
-  components: { draggable },
-  props: {
-    items: { type: Array, required: true },
-    activeIndex: { type: Number, default: -1 }
-  },
-  data () {
-    return { markerTop: 0 }
-  },
-  mounted () {
-    this.updateMarker()
-    this._ro = new (window.ResizeObserver || class { observe(){} disconnect(){} })(() => {
+  export default {
+    name: 'A17BlocksReorder',
+    components: { draggable },
+    props: {
+      items: { type: Array, required: true },
+      activeIndex: { type: Number, default: -1 }
+    },
+    data () {
+      return { markerTop: 0 }
+    },
+    mounted () {
       this.updateMarker()
-    })
-    if (this.$refs.list && this.$refs.list.$el) {
-      this._ro.observe(this.$refs.list.$el)
-    }
-  },
-  beforeDestroy () {
-    if (this._ro) this._ro.disconnect()
-  },
-  watch: {
-    activeIndex () { this.updateMarker() },
-    items: { handler () { this.updateMarker() }, deep: true }
-  },
-  methods: {
-    titleOf (b) {
-      return b.title || b.label || b.component || (this.$t && this.$t('fields.block-editor.block', 'Block')) || 'Block'
-    },
-    emitFocus (b, i) {
-      if (!b) return
-      this.$emit('focus', { id: b.id, index: i })
-    },
-    onStart (evt) {
-      const idx = evt && typeof evt.oldIndex === 'number' ? evt.oldIndex : -1
-      const b = this.items[idx]
-      if (b) this.$emit('focus', { id: b.id, index: idx })
-    },
-    onEnd (evt) {
-      const { oldIndex, newIndex } = evt || {}
-      if (oldIndex === newIndex || oldIndex == null || newIndex == null) return
-      this.$emit('reorder', { oldIndex, newIndex })
-      const b = this.items[newIndex]
-      if (b) this.$emit('focus', { id: b.id, index: newIndex })
-    },
-    updateMarker () {
-      if (this.activeIndex < 0) return
-      this.$nextTick(() => {
-        const refEntry = this.$refs['item-' + this.activeIndex]
-        const el = Array.isArray(refEntry) ? refEntry[0] : refEntry
-        if (!el) return
-        this.markerTop = el.offsetTop
+      this._ro = new (window.ResizeObserver || class { observe(){} disconnect(){} })(() => {
+        this.updateMarker()
       })
+      if (this.$refs.list && this.$refs.list.$el) {
+        this._ro.observe(this.$refs.list.$el)
+      }
+    },
+    beforeDestroy () {
+      if (this._ro) this._ro.disconnect()
+    },
+    watch: {
+      activeIndex () { this.updateMarker() },
+      items: { handler () { this.updateMarker() }, deep: true }
+    },
+    methods: {
+      titleOf (b) {
+        return b.title || b.label || b.component || (this.$t && this.$t('fields.block-editor.block', 'Block')) || 'Block'
+      },
+      emitFocus (b, i) {
+        if (!b) return
+        this.$emit('focus', { id: b.id, index: i })
+      },
+      onStart (evt) {
+        const idx = evt && typeof evt.oldIndex === 'number' ? evt.oldIndex : -1
+        const b = this.items[idx]
+        if (b) this.$emit('focus', { id: b.id, index: idx })
+      },
+      onEnd (evt) {
+        const { oldIndex, newIndex } = evt || {}
+        if (oldIndex === newIndex || oldIndex == null || newIndex == null) return
+        this.$emit('reorder', { oldIndex, newIndex })
+        const b = this.items[newIndex]
+        if (b) this.$emit('focus', { id: b.id, index: newIndex })
+      },
+      updateMarker () {
+        if (this.activeIndex < 0) return
+        this.$nextTick(() => {
+          const refEntry = this.$refs['item-' + this.activeIndex]
+          const el = Array.isArray(refEntry) ? refEntry[0] : refEntry
+          if (!el) return
+          this.markerTop = el.offsetTop
+        })
+      }
     }
   }
-}
 </script>
 
 <style scoped lang="scss">
