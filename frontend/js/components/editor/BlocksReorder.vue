@@ -10,10 +10,10 @@
       <!-- Sliding marker -->
       <div
         class="reorder__marker"
-        :style="{ top: markerTop + 'px', height: markerHeight + 'px' }"
+        :style="{ top: markerTop + 'px', height: '2.6rem' }"
         v-show="items && items.length && activeIndex >= 0"
       ></div>
-      <transition-group name="fade" tag="ul">
+      <transition-group name="fade" tag="ul" ref="list">
         <li
           v-for="(b, i) in items"
           :key="b.id"
@@ -56,8 +56,9 @@
         })(entries => {
         this.updateMarker()
       })
-      if (this.$refs.list && this.$refs.list.$el)
+      if (this.$refs.list && this.$refs.list.$el) {
         this._ro.observe(this.$refs.list.$el)
+      }
     },
     beforeDestroy() {
       if (this._ro) this._ro.disconnect()
@@ -108,9 +109,7 @@
           const refEntry = this.$refs['item-' + this.activeIndex]
           const el = Array.isArray(refEntry) ? refEntry[0] : refEntry
           if (!el) return
-          // marker tracks the item vertically, full height
           this.markerTop = el.offsetTop
-          this.markerHeight = el.offsetHeight
         })
       }
     }
@@ -122,6 +121,7 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    position: relative; /* anchor for absolute marker */
   }
   /* Sliding highlight marker */
   .reorder__marker {
@@ -140,7 +140,8 @@
     padding: 10px 12px;
     border-bottom: 1px solid $color__border;
     background: $color__block-bg;
-    position: relative; z-index: 1;
+    position: relative;
+    z-index: 1;
   }
   .reorder__handle {
     display: inline-flex;

@@ -98,6 +98,7 @@
                 <a17-blocks-reorder
                   :items="savedBlocks"
                   @reorder="payload => moveBlock(payload)"
+                  :active-index="activeIndex"
                   @focus="handleFocusFromReorder"
                 />
               </div>
