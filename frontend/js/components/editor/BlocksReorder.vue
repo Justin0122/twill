@@ -64,7 +64,9 @@
       if (this._ro) this._ro.disconnect()
     },
     watch: {
-      activeIndex() {
+      activeIndex(n) {
+        // eslint-disable-next-line no-console
+        console.log('activeIndex changed', n)
         this.updateMarker()
       },
       items: {
@@ -132,7 +134,7 @@
     border-left: 3px solid rgba(100, 150, 255, 0.9);
     pointer-events: none;
     transition: top 0.18s ease, height 0.18s ease;
-    z-index: 0;
+    z-index: 2;
   }
   .reorder__item {
     display: flex;

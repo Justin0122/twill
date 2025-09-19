@@ -180,7 +180,9 @@
     },
     methods: {
       onTopVisible({ index }) {
-        if (typeof index === 'number') this.activeIndex = index
+        // eslint-disable-next-line no-console
+        console.log('top visible ->', index);
+        this.activeIndex = index
       },
       handleFocusFromReorder({ id, index }) {
         if (this.$refs.previews && this.$refs.previews.scrollToBlock) {
