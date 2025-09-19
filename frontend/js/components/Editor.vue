@@ -116,6 +116,7 @@
                 :sandbox="previewSandbox"
                 :bgColor="bgColor"
                 @blocks:move="moveBlock"
+                @visible:top="onTopVisible"
               />
             </div>
           </div>
@@ -151,7 +152,8 @@
         editorName: null,
         editorOpen: false,
         htmlEditorClass: htmlClasses.editor,
-        activeTab: 'add'
+        activeTab: 'add',
+        activeIndex: -1
       }
     },
     computed: {
@@ -176,6 +178,9 @@
       }
     },
     methods: {
+      onTopVisible({ index }) {
+        if (typeof index === 'number') this.activeIndex = index
+      },
       handleFocusFromReorder({ id, index }) {
         if (this.$refs.previews && this.$refs.previews.scrollToBlock) {
           this.$refs.previews.scrollToBlock({ id, index })

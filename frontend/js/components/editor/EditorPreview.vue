@@ -226,7 +226,8 @@
         const comp = Array.isArray(refEntry) ? refEntry[0] : refEntry
         if (!comp || !comp.$el || !this.$refs.previewContent) return false
 
-        const container = this.$refs.previewContent.$el || this.$refs.previewContent
+        const container =
+          this.$refs.previewContent.$el || this.$refs.previewContent
         const targetEl = comp.$el
 
         const containerBox = container.getBoundingClientRect()
@@ -260,6 +261,41 @@
       },
       dispose() {
         window.removeEventListener('resize', this._resize)
+      },
+      emitTopVisible() {
+        const container =
+          this.$refs.previewContent && this.$refs.previewContent.$el
+            ? this.$refs.previewContent.$el
+            : this.$refs.previewContent
+        if (!container || !Array.isArray(this.blocks) || !this.blocks.length)
+          return
+
+        const containerBox = container.getBoundingClientRect()
+        const scrollTop = container.scrollTop
+
+        let bestIndex = 0
+        let bestDelta = Infinity
+        // a small tolerance so the “top” feels natural
+        const tolerance = 8
+
+        for (let i = 0; i < this.blocks.length; i++) {
+          const b = this.blocks[i]
+          const refEntry = this.$refs[String(b.id)]
+          const comp = Array.isArray(refEntry) ? refEntry[0] : refEntry
+          if (!comp || !comp.$el) continue
+          const box = comp.$el.getBoundingClientRect()
+          const offset = box.top - containerBox.top + scrollTop
+          const delta = Math.max(0, offset - scrollTop - tolerance)
+          if (delta < bestDelta) {
+            bestDelta = delta
+            bestIndex = i
+          }
+        }
+        const topBlock = this.blocks[bestIndex]
+        this.$emit('visible:top', {
+          index: bestIndex,
+          id: topBlock && topBlock.id
+        })
       }
     },
     mounted() {
@@ -267,9 +303,35 @@
       this.$nextTick(() => {
         this.getAllPreviews()
       })
+      // Scroll listener (rAF throttled)
+      const container =
+        this.$refs.previewContent && this.$refs.previewContent.$el
+          ? this.$refs.previewContent.$el
+          : this.$refs.previewContent
+      if (container) {
+        this._scrollRAF = null
+        this._onScroll = () => {
+          if (this._scrollRAF) return
+          this._scrollRAF = requestAnimationFrame(() => {
+            this._scrollRAF = null
+            this.emitTopVisible()
+          })
+        }
+        container.addEventListener('scroll', this._onScroll, { passive: true })
+        // fire once to set initial state
+        this.emitTopVisible()
+      }
     },
     beforeDestroy() {
       this.dispose()
+      const container =
+        this.$refs.previewContent && this.$refs.previewContent.$el
+          ? this.$refs.previewContent.$el
+          : this.$refs.previewContent
+      if (container && this._onScroll) {
+        container.removeEventListener('scroll', this._onScroll)
+      }
+      if (this._scrollRAF) cancelAnimationFrame(this._scrollRAF)
     },
     watch: {
       editorName() {
