@@ -272,11 +272,12 @@
 
         const containerBox = container.getBoundingClientRect()
         const scrollTop = container.scrollTop
+        const threshold = 8
 
-        let bestIndex = 0
-        let bestDelta = Infinity
-        // a small tolerance so the “top” feels natural
-        const tolerance = 8
+        let topIdx = -1
+        let topOffset = -Infinity
+        let nextIdx = -1
+        let nextOffset = Infinity
 
         for (let i = 0; i < this.blocks.length; i++) {
           const b = this.blocks[i]
@@ -285,12 +286,20 @@
           if (!comp || !comp.$el) continue
           const box = comp.$el.getBoundingClientRect()
           const offset = box.top - containerBox.top + scrollTop
-          const delta = Math.max(0, offset - scrollTop - tolerance)
-          if (delta < bestDelta) {
-            bestDelta = delta
-            bestIndex = i
+
+          if (offset <= scrollTop + threshold) {
+            if (offset > topOffset) {
+              topOffset = offset
+              topIdx = i
+            }
+          } else {
+            if (offset < nextOffset) {
+              nextOffset = offset
+              nextIdx = i
+            }
           }
         }
+        const bestIndex = topIdx !== -1 ? topIdx : nextIdx !== -1 ? nextIdx : 0
         const topBlock = this.blocks[bestIndex]
         this.$emit('visible:top', {
           index: bestIndex,
