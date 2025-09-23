@@ -1,54 +1,59 @@
 <template>
   <div class="editorSidebar__listItems">
-    <!-- DRAGGABLE: categories (Vue 2 syntax) -->
-    <draggable
+\    <draggable
       v-model="renderOrder"
       :list="renderOrder"
+      :item-key="'id'"
       :options="categoryDragOptions"
       element="div"
       class="editorSidebar__categories"
-      @end="saveOrderFromRender"
+      @change="saveOrderFromRender"
     >
       <div
-        v-for="category in renderOrder"
-        :key="category"
+        v-for="cat in renderOrder"
+        :key="cat.id"
         class="editorSidebar__category"
       >
         <button
-          @click="toggleCollapse(category)"
+          @click="toggleCollapse(cat.name)"
           class="editorSidebar__categoryHeader"
           type="button"
-          :title="`Drag to reorder ${category}`"
+          :title="`Drag to reorder ${cat.name}`"
         >
-          <span class="editorSidebar__categoryTitle">{{ category }}</span>
-          <span class="editorSidebar__categoryIcon" :class="{ 'is-open': !isCollapsed(category) }">▼</span>
+          <span class="editorSidebar__categoryTitle">{{ cat.name }}</span>
+          <span
+            class="editorSidebar__categoryIcon"
+            :class="{ 'is-open': !isCollapsed(cat.name) }"
+          >▼</span
+          >
         </button>
 
         <transition name="collapse">
-          <div
-            v-show="!isCollapsed(category)"
-            class="editorSidebar__panel"
-          >
+          <div v-show="!isCollapsed(cat.name)" class="editorSidebar__panel">
             <draggable
               class="editorSidebar__blocks"
               :class="[editorSidebarClasses]"
-              :style="{ backgroundColor: getCategoryColor(category) }"
+              :style="{ backgroundColor: getCategoryColor(cat.name) }"
               :list="blocks"
               :group="{ name: 'editorBlocks', pull: 'clone', put: false }"
               :sort="false"
               handle=".editorSidebar__button"
             >
               <div
-                v-for="block in groupedBlocks[category]"
+                v-for="block in groupedBlocks[cat.name]"
                 :key="block.component"
                 class="editorSidebar__button"
-                :class="{ 'editorSidebar__button--full-width': hasOnlyOneBlock(category) }"
+                :class="{
+                  'editorSidebar__button--full-width': hasOnlyOneBlock(cat.name)
+                }"
                 :data-title="block.title"
                 :data-icon="block.icon"
                 :data-component="block.component"
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
-                <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
+                <span class="editorSidebar__buttonLabel">{{
+                    block.title
+                  }}</span>
               </div>
             </draggable>
           </div>
@@ -77,8 +82,9 @@
     data() {
       return {
         collapsedCategories: {},
-        categoryOrder: [],
-        renderOrder: []
+        categoryOrder: [], // persisted names
+        renderOrder: [], // [{ id, name }]
+        hydrated: false // set true after storage load; blocks may still be async
       }
     },
     computed: {
@@ -106,7 +112,7 @@
         }, {})
       },
       categoriesFromData() {
-        return Object.keys(this.groupedBlocks)
+        return Object.keys(this.groupedBlocks) // names
       },
       hasOnlyOneBlock() {
         return category => (this.groupedBlocks[category] || []).length === 1
@@ -116,8 +122,9 @@
       }
     },
     watch: {
+      // Important: don't run immediately during creation (when blocks is still empty)
       groupedBlocks: {
-        immediate: true,
+        immediate: false,
         handler() {
           this.reconcileOrder()
         }
@@ -130,32 +137,55 @@
       }
     },
     created() {
-      this.loadLayout()
+      this.loadLayout() // sets hydrated=true
+    },
+    mounted() {
+      // Run once after mount; if blocks already available, this applies order.
+      this.reconcileOrder()
     },
     methods: {
+      // ---------- icon helpers ----------
       iconSymbol(icon) {
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
       hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
       },
-      toggleCollapse(category) {
-        this.$set(
-          this.collapsedCategories,
-          category,
-          !this.isCollapsed(category)
-        )
+
+      // ---------- collapse ----------
+      toggleCollapse(name) {
+        this.$set(this.collapsedCategories, name, !this.isCollapsed(name))
       },
-      isCollapsed(category) {
-        return !!this.collapsedCategories[category]
+      isCollapsed(name) {
+        return !!this.collapsedCategories[name]
       },
-      getCategoryColor(category) {
-        const hash = category
+
+      // ---------- colors ----------
+      getCategoryColor(name) {
+        const hash = name
           .split('')
           .reduce((acc, ch) => ch.charCodeAt(0) + ((acc << 5) - acc), 0)
         return tinycolor({ h: hash % 360, s: 30, l: 97 }).toHexString()
       },
-      // ----- persistence -----
+
+      // ---------- ids & mapping ----------
+      catId(name) {
+        const slug = String(name)
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+        let h = 0
+        for (let i = 0; i < name.length; i++)
+          h = ((h << 5) - h + name.charCodeAt(i)) | 0
+        return `${slug}__${Math.abs(h)}`
+      },
+      toObjects(names) {
+        return names.map(n => ({ id: this.catId(n), name: n }))
+      },
+      toNames(objs) {
+        return objs.map(o => o.name)
+      },
+
+      // ---------- persistence ----------
       storageRead() {
         try {
           return JSON.parse(localStorage.getItem(this.storageKey) || '{}')
@@ -169,54 +199,74 @@
       loadLayout() {
         const { order = [], collapsed = {} } = this.storageRead()
         this.categoryOrder = Array.isArray(order) ? order : []
-        this.collapsedCategories = (collapsed && typeof collapsed === 'object') ? collapsed : {}
-        this.reconcileOrder()
+        this.collapsedCategories = collapsed && typeof collapsed === 'object' ? collapsed : {}
+        this.hydrated = true
       },
       saveOrderFromRender() {
+        if (!this.hydrated) return
         this.categoryOrder = this.toNames(this.renderOrder)
         const saved = this.storageRead()
         this.storageWrite({ ...saved, order: this.categoryOrder })
       },
       saveCollapsed() {
+        if (!this.hydrated) return
         const saved = this.storageRead()
         this.storageWrite({ ...saved, collapsed: this.collapsedCategories })
       },
+
+      // Keep user order; add/remove categories as data changes; compute visible & render objects
       reconcileOrder() {
-        const present = this.categoriesFromData
+        if (!this.hydrated) return
 
-        // Start from current user order if exists; else from data
-        let base = this.categoryOrder.length ? this.categoryOrder.slice() : present.slice()
-
-        // Remove categories that no longer exist
-        base = base.filter(c => present.includes(c))
-
-        // Append any new categories at the end (don’t disturb existing order)
-        const missing = present.filter(c => !base.includes(c))
-        if (missing.length) base.push(...missing)
-
-        // Filter to categories that have blocks (do filtering here, not in template)
-        const visible = base.filter(c => (this.groupedBlocks[c] || []).length > 0)
-
-        // Only update when needed to avoid churn
-        if (JSON.stringify(this.renderOrder) !== JSON.stringify(visible)) {
-          this.renderOrder = visible
+        const present = this.categoriesFromData // names available now
+        // If blocks haven't populated yet, don't write back; just show saved order in UI if any
+        if (present.length === 0) {
+          if (this.categoryOrder.length && this.renderOrder.length === 0) {
+            this.renderOrder = this.toObjects(this.categoryOrder)
+          }
+          return
         }
 
-        // Also persist normalized full order so it survives reloads
+        let base = this.categoryOrder.length
+          ? [...this.categoryOrder]
+          : [...present]
+
+        // remove names no longer present
+        base = base.filter(n => present.includes(n))
+        // append new names at the end
+        const missing = present.filter(n => !base.includes(n))
+        if (missing.length) base.push(...missing)
+
+        // visible = only categories that currently have blocks
+        const visibleNames = base.filter(
+          n => (this.groupedBlocks[n] || []).length > 0
+        )
+        const nextObjects = this.toObjects(visibleNames)
+
+        // update renderOrder only if changed (avoid churn)
+        if (JSON.stringify(this.renderOrder) !== JSON.stringify(nextObjects)) {
+          this.renderOrder = nextObjects
+        }
+
+        // Only persist when we actually have present categories (avoid overwriting with [])
         if (JSON.stringify(this.categoryOrder) !== JSON.stringify(base)) {
           this.categoryOrder = base
           const saved = this.storageRead()
           this.storageWrite({ ...saved, order: this.categoryOrder })
         }
 
-        // Clean collapsed keys
+        // scrub collapsed keys for removed categories
         const cleaned = {}
-        for (const c of present) {
-          if (Object.prototype.hasOwnProperty.call(this.collapsedCategories, c)) {
-            cleaned[c] = this.collapsedCategories[c]
+        for (const n of present) {
+          if (
+            Object.prototype.hasOwnProperty.call(this.collapsedCategories, n)
+          ) {
+            cleaned[n] = this.collapsedCategories[n]
           }
         }
-        if (JSON.stringify(cleaned) !== JSON.stringify(this.collapsedCategories)) {
+        if (
+          JSON.stringify(cleaned) !== JSON.stringify(this.collapsedCategories)
+        ) {
           this.collapsedCategories = cleaned
           this.saveCollapsed()
         }
@@ -228,6 +278,7 @@
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
 
+  /* Full-width categories stacked vertically */
   .editorSidebar__categories {
     display: flex;
     flex-direction: column;
@@ -237,12 +288,9 @@
   .editorSidebar__category {
     flex: 0 0 100%;
     width: 100%;
-  }
-
-  @media (max-width: 768px) {
-    .editorSidebar__category {
-      flex-basis: 100%;
-    }
+    min-height: var(--cat-min-h, 44px);
+    position: relative;
+    contain: layout paint;
   }
 
   .editorSidebar__categoryHeader {
@@ -256,6 +304,9 @@
     border-radius: $border-radius;
     border: 1px solid $color__border;
     cursor: move; // drag handle
+    user-select: none;
+    -webkit-user-drag: none;
+
     &:hover {
       border-color: $color__border--focus;
     }
@@ -276,11 +327,15 @@
     }
   }
 
+  /* Collapse only inner panel; keep outer footprint stable */
+  .editorSidebar__panel {
+    overflow: hidden;
+  }
+
   .collapse-enter-active,
   .collapse-leave-active {
     transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
     max-height: 1000px;
-    overflow: hidden;
   }
 
   .collapse-enter,
@@ -364,5 +419,21 @@
 
   .editorPreview__content .editorSidebar__button {
     width: 100%;
+  }
+
+  /* Sortable feedback */
+  .is-ghost {
+    opacity: 0.6;
+    min-height: var(--cat-min-h, 44px);
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px dashed rgba(0, 0, 0, 0.1);
+  }
+
+  .is-chosen {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06) inset;
+  }
+
+  .is-drag {
+    cursor: grabbing;
   }
 </style>
