@@ -1,6 +1,6 @@
 <template>
   <div class="editorSidebar__listItems">
-\    <draggable
+    <draggable
       v-model="renderOrder"
       :list="renderOrder"
       :item-key="'id'"
