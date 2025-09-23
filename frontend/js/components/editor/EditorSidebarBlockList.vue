@@ -2,15 +2,15 @@
   <div class="editorSidebar__listItems">
     <!-- DRAGGABLE: categories (Vue 2 syntax) -->
     <draggable
-      v-model="categoryOrder"
-      :list="categoryOrder"
+      v-model="renderOrder"
+      :list="renderOrder"
       :options="categoryDragOptions"
       element="div"
       class="editorSidebar__categories"
-      @end="saveOrder"
+      @end="saveOrderFromRender"
     >
       <div
-        v-for="category in visibleCategories"
+        v-for="category in renderOrder"
         :key="category"
         class="editorSidebar__category"
       >
@@ -77,7 +77,8 @@
     data() {
       return {
         collapsedCategories: {},
-        categoryOrder: [] // array of category name strings
+        categoryOrder: [],
+        renderOrder: []
       }
     },
     computed: {
@@ -106,20 +107,6 @@
       },
       categoriesFromData() {
         return Object.keys(this.groupedBlocks)
-      },
-      // Use saved order; if empty or stale, fall back to live categories
-      orderedCategories() {
-        if (!this.categoryOrder.length) return this.categoriesFromData
-        const existing = this.categoryOrder.filter(c => this.groupedBlocks[c])
-        const missing = this.categoriesFromData.filter(
-          c => !existing.includes(c)
-        )
-        return [...existing, ...missing]
-      },
-      visibleCategories() {
-        return this.orderedCategories.filter(
-          c => this.groupedBlocks[c] && this.groupedBlocks[c].length
-        )
       },
       hasOnlyOneBlock() {
         return category => (this.groupedBlocks[category] || []).length === 1
@@ -182,8 +169,8 @@
       loadLayout() {
         const { order = [], collapsed = {} } = this.storageRead()
         this.categoryOrder = Array.isArray(order) ? order : []
-        this.collapsedCategories =
-          collapsed && typeof collapsed === 'object' ? collapsed : {}
+        this.collapsedCategories = (collapsed && typeof collapsed === 'object') ? collapsed : {}
+        this.reconcileOrder()
       },
       saveOrder() {
         const saved = this.storageRead()
@@ -194,31 +181,41 @@
         this.storageWrite({ ...saved, collapsed: this.collapsedCategories })
       },
       reconcileOrder() {
-        const current = this.categoriesFromData
-        if (!this.categoryOrder.length) {
-          this.categoryOrder = current.slice()
-          this.saveOrder()
-          return
+        const present = this.categoriesFromData
+
+        // Start from current user order if exists; else from data
+        let base = this.categoryOrder.length ? this.categoryOrder.slice() : present.slice()
+
+        // Remove categories that no longer exist
+        base = base.filter(c => present.includes(c))
+
+        // Append any new categories at the end (don’t disturb existing order)
+        const missing = present.filter(c => !base.includes(c))
+        if (missing.length) base.push(...missing)
+
+        // Filter to categories that have blocks (do filtering here, not in template)
+        const visible = base.filter(c => (this.groupedBlocks[c] || []).length > 0)
+
+        // Only update when needed to avoid churn
+        if (JSON.stringify(this.renderOrder) !== JSON.stringify(visible)) {
+          this.renderOrder = visible
         }
-        const kept = this.categoryOrder.filter(c => current.includes(c))
-        const missing = current.filter(c => !kept.includes(c))
-        const next = [...kept, ...missing]
-        if (JSON.stringify(next) !== JSON.stringify(this.categoryOrder)) {
-          this.categoryOrder = next
-          this.saveOrder()
+
+        // Also persist normalized full order so it survives reloads
+        if (JSON.stringify(this.categoryOrder) !== JSON.stringify(base)) {
+          this.categoryOrder = base
+          const saved = this.storageRead()
+          this.storageWrite({ ...saved, order: this.categoryOrder })
         }
-        // Clean collapsed map
+
+        // Clean collapsed keys
         const cleaned = {}
-        for (const c of current) {
-          if (
-            Object.prototype.hasOwnProperty.call(this.collapsedCategories, c)
-          ) {
+        for (const c of present) {
+          if (Object.prototype.hasOwnProperty.call(this.collapsedCategories, c)) {
             cleaned[c] = this.collapsedCategories[c]
           }
         }
-        if (
-          JSON.stringify(cleaned) !== JSON.stringify(this.collapsedCategories)
-        ) {
+        if (JSON.stringify(cleaned) !== JSON.stringify(this.collapsedCategories)) {
           this.collapsedCategories = cleaned
           this.saveCollapsed()
         }
