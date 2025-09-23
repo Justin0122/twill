@@ -1,71 +1,59 @@
 <template>
   <div class="editorSidebar__listItems">
-    <!-- DRAGGABLE: categories -->
+    <!-- DRAGGABLE: categories (Vue 2 syntax) -->
     <draggable
       v-model="categoryOrder"
-      :item-key="c => c"
-      tag="div"
+      :list="categoryOrder"
+      :options="categoryDragOptions"
+      element="div"
       class="editorSidebar__categories"
-      handle=".editorSidebar__categoryHeader"
       @end="saveOrder"
     >
-      <template #item="{ element: category }">
-        <div
-          v-if="groupedBlocks[category] && groupedBlocks[category].length"
-          :key="category"
-          class="editorSidebar__category"
+      <div
+        v-for="category in visibleCategories"
+        :key="category"
+        class="editorSidebar__category"
+      >
+        <button
+          @click="toggleCollapse(category)"
+          class="editorSidebar__categoryHeader"
+          type="button"
+          :title="`Drag to reorder ${category}`"
         >
-          <button
-            @click="toggleCollapse(category)"
-            class="editorSidebar__categoryHeader"
-            type="button"
-            :title="`Drag to reorder ${category}`"
-          >
-            <span class="editorSidebar__categoryTitle">{{ category }}</span>
-            <span
-              class="editorSidebar__categoryIcon"
-              :class="{ 'is-open': !isCollapsed(category) }"
-            >
-              ▼
-            </span>
-          </button>
+          <span class="editorSidebar__categoryTitle">{{ category }}</span>
+          <span class="editorSidebar__categoryIcon" :class="{ 'is-open': !isCollapsed(category) }">▼</span>
+        </button>
 
-          <!-- eslint-disable vue/no-mutating-props -->
-          <transition name="collapse">
+        <transition name="collapse">
+          <div
+            v-show="!isCollapsed(category)"
+            class="editorSidebar__panel"
+          >
             <draggable
-              v-show="!isCollapsed(category)"
               class="editorSidebar__blocks"
               :class="[editorSidebarClasses]"
               :style="{ backgroundColor: getCategoryColor(category) }"
               :list="blocks"
-              :group="{
-                name: 'editorBlocks',
-                pull: 'clone',
-                put: false
-              }"
+              :group="{ name: 'editorBlocks', pull: 'clone', put: false }"
+              :sort="false"
               handle=".editorSidebar__button"
             >
-              <!--eslint-enable-->
               <div
                 v-for="block in groupedBlocks[category]"
                 :key="block.component"
                 class="editorSidebar__button"
-                :class="{
-                  'editorSidebar__button--full-width': hasOnlyOneBlock(category)
-                }"
+                :class="{ 'editorSidebar__button--full-width': hasOnlyOneBlock(category) }"
                 :data-title="block.title"
                 :data-icon="block.icon"
                 :data-component="block.component"
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
-                <span class="editorSidebar__buttonLabel">{{
-                  block.title
-                }}</span>
+                <span class="editorSidebar__buttonLabel">{{ block.title }}</span>
               </div>
             </draggable>
-          </transition>
-        </div>
-      </template>
+          </div>
+        </transition>
+      </div>
     </draggable>
   </div>
 </template>
@@ -80,30 +68,35 @@
   export default {
     name: 'A17EditorSidebarBlockList',
     props: {
-      blocks: {
-        type: Array,
-        default: () => []
-      },
-      inFieldset: {
-        type: Boolean,
-        default: false
-      },
-      storageKey: {
-        type: String,
-        default: DEFAULT_STORAGE_KEY
-      }
+      blocks: { type: Array, default: () => [] },
+      inFieldset: { type: Boolean, default: false },
+      storageKey: { type: String, default: DEFAULT_STORAGE_KEY }
     },
     mixins: [DraggableMixin],
     components: { draggable },
     data() {
       return {
         collapsedCategories: {},
-        categoryOrder: [] // persisted order of category names
+        categoryOrder: [] // array of category name strings
       }
     },
     computed: {
+      categoryDragOptions() {
+        return {
+          handle: '.editorSidebar__categoryHeader',
+          animation: 180,
+          easing: 'ease',
+          direction: 'vertical',
+          swapThreshold: 0.15,
+          invertSwap: true,
+          fallbackOnBody: true,
+          forceFallback: true,
+          ghostClass: 'is-ghost',
+          chosenClass: 'is-chosen',
+          dragClass: 'is-drag'
+        }
+      },
       groupedBlocks() {
-        // Group by first word of title
         return this.blocks.reduce((acc, block) => {
           const category = block.title.split(' ')[0]
           if (!acc[category]) acc[category] = []
@@ -114,13 +107,25 @@
       categoriesFromData() {
         return Object.keys(this.groupedBlocks)
       },
+      // Use saved order; if empty or stale, fall back to live categories
+      orderedCategories() {
+        if (!this.categoryOrder.length) return this.categoriesFromData
+        const existing = this.categoryOrder.filter(c => this.groupedBlocks[c])
+        const missing = this.categoriesFromData.filter(
+          c => !existing.includes(c)
+        )
+        return [...existing, ...missing]
+      },
+      visibleCategories() {
+        return this.orderedCategories.filter(
+          c => this.groupedBlocks[c] && this.groupedBlocks[c].length
+        )
+      },
       hasOnlyOneBlock() {
         return category => (this.groupedBlocks[category] || []).length === 1
       },
       editorSidebarClasses() {
-        return {
-          'editorSidebar__blocks--in-fieldset': this.inFieldset
-        }
+        return { 'editorSidebar__blocks--in-fieldset': this.inFieldset }
       }
     },
     watch: {
@@ -130,7 +135,6 @@
           this.reconcileOrder()
         }
       },
-      // Persist collapsed state any time it changes
       collapsedCategories: {
         deep: true,
         handler() {
@@ -142,15 +146,12 @@
       this.loadLayout()
     },
     methods: {
-      // ---------- Icons ----------
       iconSymbol(icon) {
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
       hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
       },
-
-      // ---------- Collapse ----------
       toggleCollapse(category) {
         this.$set(
           this.collapsedCategories,
@@ -161,20 +162,13 @@
       isCollapsed(category) {
         return !!this.collapsedCategories[category]
       },
-
-      // ---------- Colors ----------
       getCategoryColor(category) {
-        const hash = category.split('').reduce((acc, char) => {
-          return char.charCodeAt(0) + ((acc << 5) - acc)
-        }, 0)
-        return tinycolor({
-          h: hash % 360,
-          s: 30,
-          l: 97
-        }).toHexString()
+        const hash = category
+          .split('')
+          .reduce((acc, ch) => ch.charCodeAt(0) + ((acc << 5) - acc), 0)
+        return tinycolor({ h: hash % 360, s: 30, l: 97 }).toHexString()
       },
-
-      // ---------- Persistence ----------
+      // ----- persistence -----
       storageRead() {
         try {
           return JSON.parse(localStorage.getItem(this.storageKey) || '{}')
@@ -189,24 +183,16 @@
         const { order = [], collapsed = {} } = this.storageRead()
         this.categoryOrder = Array.isArray(order) ? order : []
         this.collapsedCategories =
-          typeof collapsed === 'object' && collapsed ? collapsed : {}
+          collapsed && typeof collapsed === 'object' ? collapsed : {}
       },
       saveOrder() {
         const saved = this.storageRead()
-        this.storageWrite({
-          ...saved,
-          order: this.categoryOrder
-        })
+        this.storageWrite({ ...saved, order: this.categoryOrder })
       },
       saveCollapsed() {
         const saved = this.storageRead()
-        this.storageWrite({
-          ...saved,
-          collapsed: this.collapsedCategories
-        })
+        this.storageWrite({ ...saved, collapsed: this.collapsedCategories })
       },
-
-      // Ensure saved order matches current categories (add new, drop missing)
       reconcileOrder() {
         const current = this.categoriesFromData
         if (!this.categoryOrder.length) {
@@ -214,28 +200,26 @@
           this.saveOrder()
           return
         }
-        // Keep only existing categories
         const kept = this.categoryOrder.filter(c => current.includes(c))
-        // Append any new categories not yet saved
         const missing = current.filter(c => !kept.includes(c))
         const next = [...kept, ...missing]
-        // Only write if changed to avoid churn
         if (JSON.stringify(next) !== JSON.stringify(this.categoryOrder)) {
           this.categoryOrder = next
           this.saveOrder()
         }
-        // Drop collapsed flags for categories that no longer exist
-        const collapsedClean = {}
+        // Clean collapsed map
+        const cleaned = {}
         for (const c of current) {
-          if (this.collapsedCategories.hasOwnProperty(c)) {
-            collapsedClean[c] = this.collapsedCategories[c]
+          if (
+            Object.prototype.hasOwnProperty.call(this.collapsedCategories, c)
+          ) {
+            cleaned[c] = this.collapsedCategories[c]
           }
         }
         if (
-          JSON.stringify(collapsedClean) !==
-          JSON.stringify(this.collapsedCategories)
+          JSON.stringify(cleaned) !== JSON.stringify(this.collapsedCategories)
         ) {
-          this.collapsedCategories = collapsedClean
+          this.collapsedCategories = cleaned
           this.saveCollapsed()
         }
       }
@@ -247,11 +231,20 @@
   @import '~styles/setup/_mixins-colors-vars.scss';
 
   .editorSidebar__categories {
-    display: block; // container for draggable items
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .editorSidebar__category {
-    margin-bottom: 15px;
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .editorSidebar__category {
+      flex-basis: 100%;
+    }
   }
 
   .editorSidebar__categoryHeader {
@@ -264,8 +257,7 @@
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
-    cursor: move; /* handle for category drag */
-
+    cursor: move; // drag handle
     &:hover {
       border-color: $color__border--focus;
     }
@@ -288,7 +280,7 @@
 
   .collapse-enter-active,
   .collapse-leave-active {
-    transition: all 0.3s ease-out;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
     max-height: 1000px;
     overflow: hidden;
   }
@@ -297,9 +289,6 @@
   .collapse-leave-to {
     max-height: 0;
     opacity: 0;
-    padding: 0;
-    margin: 0;
-    border: none;
   }
 
   .editorSidebar__blocks {
@@ -323,12 +312,6 @@
     .editorSidebar__button:last-child {
       padding-bottom: 0;
     }
-  }
-
-  .editorSidebar__listItems > div {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
   }
 
   .editorSidebar__button {
@@ -364,7 +347,10 @@
 
     .editorSidebar__buttonLabel {
       width: 100%;
-      line-height: 1;
+      line-height: 1.2;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     &:hover,
@@ -378,9 +364,7 @@
     }
   }
 
-  .editorPreview__content {
-    .editorSidebar__button {
-      width: 100%;
-    }
+  .editorPreview__content .editorSidebar__button {
+    width: 100%;
   }
 </style>
