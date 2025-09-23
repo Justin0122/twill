@@ -172,7 +172,8 @@
         this.collapsedCategories = (collapsed && typeof collapsed === 'object') ? collapsed : {}
         this.reconcileOrder()
       },
-      saveOrder() {
+      saveOrderFromRender() {
+        this.categoryOrder = this.toNames(this.renderOrder)
         const saved = this.storageRead()
         this.storageWrite({ ...saved, order: this.categoryOrder })
       },
