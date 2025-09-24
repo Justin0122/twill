@@ -1,5 +1,6 @@
 <template>
-  <tr class="tablerow">
+  <tr class="tablerow"
+      @click="handleBulkRowClick">
     <td
       v-for="col in columns"
       :key="col.name"
@@ -79,6 +80,18 @@
             transform: 'translateX(-' + this.nestedDepth * 80 + 'px)'
           }
           : ''
+      },
+      handleBulkRowClick(event) {
+        const isBulkColumn = this.columns.some(col => col.name === 'bulk')
+        const isBulkMode = this.bulkIds !== undefined
+
+        if (
+          isBulkColumn &&
+          isBulkMode &&
+          !event.target.closest('.tablecell--bulk input[type="checkbox"]')
+        ) {
+          this.toggleBulk(this.row)
+        }
       }
     }
   }
