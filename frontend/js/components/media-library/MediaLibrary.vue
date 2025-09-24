@@ -316,7 +316,7 @@
       this._onGlobalCtxClose = () => {
         this.closeContextMenu()
       }
-      eventBus.emit('ml:dnd:hover', someId);
+      eventBus.emit('ml:dnd:hover', _onGlobalCtxClose);
     },
     mounted() {
       this._onGlobalDragEnd = () => this._onHoverClear()
@@ -328,10 +328,10 @@
       // close on any scroll (captures inside scrollable panes)
       window.addEventListener('scroll', this.closeContextMenu, true)
     },
-    beforeDestroy() {
-      this.$root.$off('ml:dnd:hover', this._onHoverId)
-      this.$root.$off('ml:dnd:hover:clear', this._onHoverClear)
-      this.$root.$off('ml:ctx:close', this._onGlobalCtxClose)
+    beforeUnmount() {
+      eventBus.off('ml:dnd:hover', this._onHoverId);
+      eventBus.off('ml:dnd:hover:clear', this._onHoverClear);
+      eventBus.off('ml:ctx:close', this._onGlobalCtxClose);
 
       window.removeEventListener('dragend', this._onGlobalDragEnd)
       window.removeEventListener('drop', this._onGlobalDragEnd)
@@ -363,7 +363,7 @@
     },
     methods: {
       onReparentFolder(payload) {
-        this.$emit('moveFolder', payload)
+        eventBus.emit('moveFolder', payload)
       },
       startInlineCreate() {
         this.closeContextMenu()
@@ -387,7 +387,7 @@
           return
         }
         // Emit upwards so the parent does the API call
-        this.$emit('create', {
+        eventBus.emit('create', {
           id: this.node.id ?? null,
           path: this.pathHere(),
           name,
@@ -404,7 +404,7 @@
       // ---------- context menu ----------
       openContextMenu(evt) {
         // close other menus
-        this.$root.$emit('ml:ctx:close')
+        eventBus.emit('ml:ctx:close')
 
         // capture THIS node as the target for actions
         this.contextMenu.meta = {
@@ -465,7 +465,7 @@
         if (this.node.id === 'trash') return
         this.closeContextMenu()
         const { id, path } = this.contextMenu.meta
-        this.$emit('delete', { id, path: path || [] })
+        eventBus.emit('delete', { id, path: path || [] })
       },
       pathHere() {
         const path = []
@@ -478,7 +478,7 @@
         return path
       },
       selectSelf() {
-        this.$emit('select', {
+        eventBus.emit('select', {
           id: this.node.id ?? null,
           path: this.level === 0 ? [] : this.pathHere()
         })
@@ -577,7 +577,7 @@
             this.$root.$emit('ml:dnd:hover:clear')
             this.draggingOver = false
             // optional: toast
-            this.$emit('toast', {
+            eventBus.emit('toast', {
               variant: 'error',
               message: 'Cannot move a folder into itself or its descendant.'
             })
@@ -586,7 +586,7 @@
             return
           }
 
-          this.$emit('moveFolder', { sourceId, targetId })
+          eventBus.emit('moveFolder', { sourceId, targetId })
           this._clearHover(evt)
           return
         }
@@ -603,7 +603,7 @@
           return
         }
         const targetId = this.node.id ?? null
-        this.$emit('move', {
+        eventBus.emit('move', {
           targetPath: this.level === 0 ? [] : this.pathHere(),
           targetId,
           mediaIds: payload.ids,
@@ -660,7 +660,7 @@
         this.isRenaming = false
         if (!next || next === this.node.name) return
         // Emit up with the new name; parent should handle API call.
-        this.$emit('rename', {
+        eventBus.emit('rename', {
           id: this.node.id,
           path: this.pathHere(),
           name: next
@@ -810,12 +810,12 @@
                        :level="level+1"
                        :active-path="activePath"
                        :active-id="activeId"
-                       @select="$emit('select', $event)"
-                       @create="$emit('create', $event)"
-                       @rename="$emit('rename', $event)"
-                       @delete="$emit('delete', $event)"
-                       @move="$emit('move', $event)"
-                       @moveFolder="$emit('moveFolder', $event)"
+                       @select="eventBus.emit('select', $event)"
+                       @create="eventBus.emit('create', $event)"
+                       @rename="eventBus.emit('rename', $event)"
+                       @delete="eventBus.emit('delete', $event)"
+                       @move="eventBus.emit('move', $event)"
+                       @moveFolder="eventBus.emit('moveFolder', $event)"
           />
         </div>
 
@@ -1360,9 +1360,9 @@
           const el = document.elementFromPoint(e.clientX, e.clientY)
           const row = el && el.closest && el.closest('.folder-node__row')
           if (row && row.dataset && row.dataset.id) {
-            this.$root.$emit('ml:dnd:hover', row.dataset.id)
+            eventBus.emit('ml:dnd:hover', row.dataset.id)
           } else {
-            this.$root.$emit('ml:dnd:hover:clear')
+            eventBus.emit('ml:dnd:hover:clear')
           }
         })
       },
