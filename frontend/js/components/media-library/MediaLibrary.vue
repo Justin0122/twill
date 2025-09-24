@@ -316,7 +316,7 @@
       this._onGlobalCtxClose = () => {
         this.closeContextMenu()
       }
-      eventBus.emit('ml:dnd:hover', _onGlobalCtxClose);
+      eventBus.emit('ml:dnd:hover', this._onGlobalCtxClose);
     },
     mounted() {
       this._onGlobalDragEnd = () => this._onHoverClear()
