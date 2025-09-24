@@ -73,7 +73,8 @@ export default {
             }
             globalError(component, error)
           }
-          if (errorCallback && typeof errorCallback === 'function') errorCallback(response)
+          if (errorCallback && typeof errorCallback === 'function')
+            errorCallback(response)
         }
       )
   },
@@ -101,15 +102,20 @@ export default {
     )
   },
 
-  renameFolder (endpoint, id, payload, onSuccess, onError) {
-    axios.patch(`${endpoint}/folders/${id}`, payload, { headers: { Accept: 'application/json' } })
+  renameFolder(endpoint, id, payload, onSuccess, onError) {
+    axios
+      .patch(`${endpoint}/folders/${id}`, payload, {
+        headers: { Accept: 'application/json' }
+      })
       .then(resp => onSuccess && onSuccess(resp))
       .catch(err => onError && onError(err.response || err))
   },
 
   deleteFolder(endpoint, id, callback, errorCallback) {
     axios
-      .delete(`${endpoint}/folders/${id}`, { headers: { Accept: 'application/json' } })
+      .delete(`${endpoint}/folders/${id}`, {
+        headers: { Accept: 'application/json' }
+      })
       .then(resp => callback && callback(resp))
       .catch(err => errorCallback && errorCallback(err.response || err))
   },
@@ -150,15 +156,20 @@ export default {
     )
   },
   reparentFolder(endpoint, body, callback, errorCallback) {
-    axios.post(`${endpoint}/folders/reparent`, body, {
-      headers: { Accept: 'application/json' }
-    }).then(
-      resp => callback && callback(resp),
-      resp => {
-        const error = { message: 'Media library reparent folder error.', value: resp }
-        globalError(component, error)
-        errorCallback && errorCallback(resp)
-      }
-    )
-  },
+    axios
+      .post(`${endpoint}/folders/reparent`, body, {
+        headers: { Accept: 'application/json' }
+      })
+      .then(
+        resp => callback && callback(resp),
+        resp => {
+          const error = {
+            message: 'Media library reparent folder error.',
+            value: resp
+          }
+          globalError(component, error)
+          errorCallback && errorCallback(resp)
+        }
+      )
+  }
 }

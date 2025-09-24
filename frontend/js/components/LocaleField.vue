@@ -1,33 +1,40 @@
 <template>
   <div class="locale">
     <template v-if="languages && languages.length && languages.length > 0">
-      <div class="locale__item" v-for="language in languages" :key="language.value">
+      <div
+        class="locale__item"
+        v-for="language in languages"
+        :key="language.value"
+      >
         <component
-            v-bind:is="`${type}`"
-            v-bind="attributesPerLang(language.value)"
-            v-if="language.value === currentLocale.value || isCustomForm || keepInDom"
-            :data-lang="language.value"
-            :name="`${attributes.name}[${language.value}]`"
-            :fieldName="attributes.name"
-            :locale="language"
-            ref="field"
-            @localize="updateLocale"
-            @change="updateValue(language.value, ...arguments)"
-            @blur="$emit('blur')"
-            @focus="$emit('focus')"
+          v-bind:is="`${type}`"
+          v-bind="attributesPerLang(language.value)"
+          v-if="
+            language.value === currentLocale.value || isCustomForm || keepInDom
+          "
+          :data-lang="language.value"
+          :name="`${attributes.name}[${language.value}]`"
+          :fieldName="attributes.name"
+          :locale="language"
+          ref="field"
+          @localize="updateLocale"
+          @change="updateValue(language.value, ...arguments)"
+          @blur="$emit('blur')"
+          @focus="$emit('focus')"
         >
           <slot></slot>
         </component>
       </div>
     </template>
     <template v-else>
-      <component v-bind:is="`${type}`"
-                 v-bind="attributesNoLang()"
-                 :name="attributes.name"
-                 ref="field"
-                 @change="updateValue(false, ...arguments)"
-                 @blur="$emit('blur')"
-                 @focus="$emit('focus')"
+      <component
+        v-bind:is="`${type}`"
+        v-bind="attributesNoLang()"
+        :name="attributes.name"
+        ref="field"
+        @change="updateValue(false, ...arguments)"
+        @blur="$emit('blur')"
+        @focus="$emit('focus')"
       >
         <slot></slot>
       </component>
@@ -55,19 +62,19 @@
       },
       attributes: {
         type: Object,
-        default: function () {
+        default: function() {
           return {}
         }
       },
       initialValues: {
         type: Object,
-        default: function () {
+        default: function() {
           return {}
         }
       },
       isRequired: {
         type: Boolean,
-        default: function (props) {
+        default: function(props) {
           return props.attributes.required || false
         }
       }
@@ -78,21 +85,25 @@
         languages: state => state.language.all
       })
     },
-    data () {
+    data() {
       return {
         isCustomForm: false
       }
     },
-    mounted () {
+    mounted() {
       this.isCustomForm = this.$root.$refs.customForm !== undefined
     },
     methods: {
-      attributesPerLang: function (lang) {
+      attributesPerLang: function(lang) {
         const language = this.languages.find(l => l.value === lang)
 
         const attributes = cloneDeep(this.attributes)
         // for textfields set initial values using the initialValues prop
-        if (this.initialValues && typeof this.initialValues === 'object' && this.initialValues[lang]) {
+        if (
+          this.initialValues &&
+          typeof this.initialValues === 'object' &&
+          this.initialValues[lang]
+        ) {
           attributes.initialValue = this.initialValues[lang]
         } else if (!attributes.initialValue) {
           attributes.initialValue = ''
@@ -102,28 +113,32 @@
 
         return attributes
       },
-      attributesNoLang: function () {
+      attributesNoLang: function() {
         const attributes = cloneDeep(this.attributes)
         // for textfields set initial values using the initialValue prop
         if (this.initialValue) attributes.initialValue = this.initialValue
         return attributes
       },
-      updateLocale: function (oldValue) {
+      updateLocale: function(oldValue) {
         this.$store.commit(LANGUAGE.SWITCH_LANG, { oldValue })
 
         // auto focus new field
-        this.$nextTick(function () {
-          const currentLanguageItem = this.$el.querySelector('[data-lang="' + this.currentLocale.value + '"]')
+        this.$nextTick(function() {
+          const currentLanguageItem = this.$el.querySelector(
+            '[data-lang="' + this.currentLocale.value + '"]'
+          )
 
           if (currentLanguageItem) {
-            const field = currentLanguageItem.querySelector('input:not([disabled]), textarea:not([disabled]), select:not([disabled])')
+            const field = currentLanguageItem.querySelector(
+              'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
+            )
             if (field) field.focus()
           }
         })
 
         this.$emit('localize', this.currentLocale)
       },
-      updateValue: function (locale, newValue) {
+      updateValue: function(locale, newValue) {
         if (locale) {
           this.$emit('change', {
             locale,

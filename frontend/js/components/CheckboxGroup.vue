@@ -44,7 +44,7 @@
         }
       }
     },
-    data () {
+    data() {
       return {
         hasLocale: false
       }

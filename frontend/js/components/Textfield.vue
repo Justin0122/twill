@@ -1,9 +1,27 @@
 <template>
-  <a17-inputframe :error="error" :note="note" :label="label" :locale="locale" @localize="updateLocale" :size="size" :name="name" :label-for="uniqId" :required="required">
+  <a17-inputframe
+    :error="error"
+    :note="note"
+    :label="label"
+    :locale="locale"
+    @localize="updateLocale"
+    :size="size"
+    :name="name"
+    :label-for="uniqId"
+    :required="required"
+  >
     <div class="input__field" :class="textfieldClasses" :dir="dirLocale">
       <span class="input__prefix" v-if="hasPrefix">{{ prefix }}</span>
-      <textarea v-if="type === 'textarea'" ref="clone" :rows="rows" class="input__clone" disabled="true" v-model="value"></textarea>
-      <textarea v-if="type === 'textarea'"
+      <textarea
+        v-if="type === 'textarea'"
+        ref="clone"
+        :rows="rows"
+        class="input__clone"
+        disabled="true"
+        v-model="value"
+      ></textarea>
+      <textarea
+        v-if="type === 'textarea'"
         ref="input"
         :name="name"
         :id="uniqId"
@@ -18,7 +36,8 @@
         @input="onInput"
         v-model="value"
       ></textarea>
-      <input v-if="type === 'number'"
+      <input
+        v-if="type === 'number'"
         ref="input"
         type="number"
         :placeholder="placeholder"
@@ -38,7 +57,8 @@
         @blur="onBlur"
         @input="onInput"
       />
-      <input v-if="type === 'text'"
+      <input
+        v-if="type === 'text'"
         ref="input"
         type="text"
         :placeholder="placeholder"
@@ -56,7 +76,8 @@
         @blur="onBlur"
         @input="onInput"
       />
-      <input v-if="type === 'email'"
+      <input
+        v-if="type === 'email'"
         ref="input"
         type="email"
         :placeholder="placeholder"
@@ -74,7 +95,8 @@
         @blur="onBlur"
         @input="onInput"
       />
-      <input v-if="type === 'password'"
+      <input
+        v-if="type === 'password'"
         ref="input"
         type="password"
         :placeholder="placeholder"
@@ -91,7 +113,8 @@
         @blur="onBlur"
         @input="onInput"
       />
-      <input v-if="type === 'url'"
+      <input
+        v-if="type === 'url'"
         ref="input"
         type="url"
         :placeholder="placeholder"
@@ -108,7 +131,12 @@
         @blur="onBlur"
         @input="onInput"
       />
-      <span class="input__limit f--tiny" :class="limitClasses" v-if="hasMaxlength">{{ counter }}</span>
+      <span
+        class="input__limit f--tiny"
+        :class="limitClasses"
+        v-if="hasMaxlength"
+        >{{ counter }}</span
+      >
       <span :class="validityClasses" v-if="type === 'email'"></span>
     </div>
   </a17-inputframe>
@@ -125,7 +153,13 @@
 
   export default {
     name: 'A17Textfield',
-    mixins: [randKeyMixin, InputMixin, InputframeMixin, LocaleMixin, FormStoreMixin],
+    mixins: [
+      randKeyMixin,
+      InputMixin,
+      InputframeMixin,
+      LocaleMixin,
+      FormStoreMixin
+    ],
     props: {
       name: {
         type: String,
@@ -168,33 +202,34 @@
       }
     },
     computed: {
-      uniqId: function (value) {
+      uniqId: function(value) {
         return this.name + '-' + this.randKey
       },
-      textfieldClasses: function () {
+      textfieldClasses: function() {
         return {
           'input__field--textarea': this.type === 'textarea',
-          'input__field--small': this.size === 'small' && !this.type === 'textarea',
+          'input__field--small':
+            this.size === 'small' && !this.type === 'textarea',
           's--focus': this.focused,
           's--disabled': this.disabled
         }
       },
-      hasMaxlength: function () {
+      hasMaxlength: function() {
         return this.maxlength > 0
       },
-      hasPrefix: function () {
+      hasPrefix: function() {
         return this.prefix !== ''
       },
-      displayedMaxlength: function () {
+      displayedMaxlength: function() {
         if (this.hasMaxlength) return this.maxlength
         else return false
       },
-      limitClasses: function () {
+      limitClasses: function() {
         return {
-          'input__limit--red': this.counter < (this.maxlength * 0.1)
+          'input__limit--red': this.counter < this.maxlength * 0.1
         }
       },
-      validityClasses: function () {
+      validityClasses: function() {
         return [
           'input__validity',
           this.isFieldValid === true ? 'input__validity--valid' : '',
@@ -202,7 +237,7 @@
         ]
       }
     },
-    data: function () {
+    data: function() {
       return {
         value: this.initialValue,
         lastSavedValue: this.initialValue,
@@ -212,50 +247,53 @@
       }
     },
     watch: {
-      initialValue: function () {
+      initialValue: function() {
         this.updateValue(this.initialValue)
       }
     },
     methods: {
-      updateFromStore: function (newValue) { // called from the formStore mixin
+      updateFromStore: function(newValue) {
+        // called from the formStore mixin
         if (typeof newValue === 'undefined') newValue = ''
 
         if (this.value !== newValue) {
           this.updateValue(newValue)
         }
       },
-      updateValue: function (newValue) {
+      updateValue: function(newValue) {
         this.value = newValue
         this.updateCounter(newValue)
       },
-      updateAndSaveValue: function (newValue) {
+      updateAndSaveValue: function(newValue) {
         this.updateValue(newValue)
         this.lastSavedValue = this.value
         this.saveIntoStore() // see formStore mixin
       },
-      updateCounter: function (newValue) {
-        if (this.maxlength > 0) this.counter = this.maxlength - (newValue ? newValue.toString().length : 0)
+      updateCounter: function(newValue) {
+        if (this.maxlength > 0)
+          this.counter =
+            this.maxlength - (newValue ? newValue.toString().length : 0)
       },
-      onFocus: function (event) {
+      onFocus: function(event) {
         this.focused = true
 
         this.resizeTextarea()
 
         this.$emit('focus')
       },
-      onBlur: function (event) {
+      onBlur: function(event) {
         const newValue = event.target.value
         this.updateAndSaveValue(newValue)
 
         this.focused = false
         this.$emit('blur', newValue)
       },
-      onInput: function (event) {
+      onInput: function(event) {
         this.preventSubmit()
 
         this._onInputInternal(event)
       },
-      _onInputInternal: debounce(function (event) {
+      _onInputInternal: debounce(function(event) {
         const newValue = event.target.value
         this.updateAndSaveValue(newValue)
         this.checkFieldValidity(event.target)
@@ -265,7 +303,7 @@
 
         this.allowSubmit()
       }, 250),
-      resizeTextarea: function () {
+      resizeTextarea: function() {
         if (this.type !== 'textarea') return
 
         const clone = this.$refs.clone
@@ -276,7 +314,7 @@
           this.$refs.input.style.minHeight = `${h + minH}px`
         }
       },
-      checkFieldValidity: function (el) {
+      checkFieldValidity: function(el) {
         // Switch based on the type of the field.
         let pattern = null
         let re = null
@@ -298,40 +336,40 @@
         }
       }
     },
-    mounted: function () {
+    mounted: function() {
       this.updateCounter(this.value)
 
       if (this.type === 'textarea') {
         this.resizeTextarea()
         this.$watch('value', this.resizeTextarea)
 
-        this.$nextTick(function () {
+        this.$nextTick(function() {
           window.addEventListener('resize', this.resizeTextarea)
         })
       }
     },
-    beforeUnmount () {
-      if (this.type === 'textarea') window.removeEventListener('resize', this.resizeTextarea)
+    beforeUnmount() {
+      if (this.type === 'textarea')
+        window.removeEventListener('resize', this.resizeTextarea)
     }
   }
 </script>
 
 <style lang="scss" scoped>
-
   $height_input: 45px;
 
   .input__field {
-    position:relative;
+    position: relative;
     overflow: hidden;
-    padding:0 15px;
+    padding: 0 15px;
 
-    height:$height_input;
-    line-height:$height_input;
+    height: $height_input;
+    line-height: $height_input;
     @include textfield;
     @include defaultState;
     display: flex;
     flex-direction: row;
-    flex-wrap:no-wrap;
+    flex-wrap: no-wrap;
 
     &.s--focus {
       @include focusState;
@@ -345,70 +383,70 @@
       @include disabledState;
     }
 
-    input[type="search"],
-    input[type="number"],
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="url"] {
+    input[type='search'],
+    input[type='number'],
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='url'] {
       @include resetfield;
-      height:$height_input - 2px;
-      line-height:$height_input - 2px;
+      height: $height_input - 2px;
+      line-height: $height_input - 2px;
       flex-grow: 1;
-      color:inherit;
+      color: inherit;
 
       @include placeholder() {
-        color:$color__f--placeholder;
+        color: $color__f--placeholder;
       }
     }
 
     textarea {
       @include resetfield;
-      padding:10px;
-      line-height:inherit;
-      width:100%;
+      padding: 10px;
+      line-height: inherit;
+      width: 100%;
       box-sizing: border-box;
-      display:block;
+      display: block;
       resize: none;
       overflow: hidden;
-      z-index:1;
-      position:relative;
-      color:inherit;
+      z-index: 1;
+      position: relative;
+      color: inherit;
 
       @include placeholder() {
-        color:$color__f--placeholder;
+        color: $color__f--placeholder;
       }
     }
 
     .input__clone {
-      position:absolute;
-      width:100%;
-      pointer-events:none;
-      opacity:0;
+      position: absolute;
+      width: 100%;
+      pointer-events: none;
+      opacity: 0;
       height: auto;
-      z-index:0;
+      z-index: 0;
     }
   }
 
   .input__prefix {
-    height:$height_input - 2px;
-    line-height:$height_input - 2px;
-    user-select:none;
-    color:$color__icons;
+    height: $height_input - 2px;
+    line-height: $height_input - 2px;
+    user-select: none;
+    color: $color__icons;
     pointer-events: none;
     white-space: nowrap;
   }
 
   .input__limit {
-    height:$height_input - 2px;
-    line-height:$height_input - 2px;
-    color:$color__text--light;
+    height: $height_input - 2px;
+    line-height: $height_input - 2px;
+    color: $color__text--light;
     user-select: none;
-    pointer-events:none;
+    pointer-events: none;
   }
 
   .input__limit--red {
-    color:red;
+    color: red;
   }
 
   .input__validity {
@@ -432,41 +470,41 @@
   }
 
   .input__field--textarea {
-    display:block;
-    padding:0;
-    height:auto;
-    line-height:inherit;
+    display: block;
+    padding: 0;
+    height: auto;
+    line-height: inherit;
 
     .input__prefix {
-      display:none;
+      display: none;
     }
 
     .input__limit {
-      position:absolute;
-      right:15px;
-      bottom:0;
+      position: absolute;
+      right: 15px;
+      bottom: 0;
     }
   }
 
   .input__field--small {
-    padding:0 13px;
-    height:$height_input - 10px;
-    line-height:$height_input - 10px;
+    padding: 0 13px;
+    height: $height_input - 10px;
+    line-height: $height_input - 10px;
 
-    input[type="search"],
-    input[type="number"],
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="url"] {
-      height:$height_input - 10px - 2px;
-      line-height:$height_input - 10px - 2px;
+    input[type='search'],
+    input[type='number'],
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='url'] {
+      height: $height_input - 10px - 2px;
+      line-height: $height_input - 10px - 2px;
     }
   }
 
   /* RTL Direction */
   .input__field--textarea[dir='rtl'] .input__limit {
-    left:15px;
-    right:auto;
+    left: 15px;
+    right: auto;
   }
 </style>

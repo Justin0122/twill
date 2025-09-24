@@ -46,11 +46,11 @@
       }
     },
     computed: {
-      buttonClasses: function () {
+      buttonClasses: function() {
         const classes = ['button', this.size ? `button--${this.size}` : '']
 
         if (this.variant) {
-          this.variant.split(' ').forEach((val) => {
+          this.variant.split(' ').forEach(val => {
             classes.push(`button--${val}`)
           })
         }
@@ -63,14 +63,14 @@
       }
     },
     methods: {
-      onClick: function (event) {
+      onClick: function(event) {
         this.$emit('click')
       }
     },
-    render: function () {
+    render: function() {
       const elOpts = {
         class: this.buttonClasses,
-        onClick: (event) => {
+        onClick: event => {
           this.onClick(event)
         }
       }
@@ -107,7 +107,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   $height_btn: 40px;
   $height_small_btn: 35px;
 
@@ -119,7 +118,8 @@
     height: $height_btn;
     line-height: $height_btn - 2px;
     text-align: center;
-    transition: color .2s linear, border-color .2s linear, background-color .2s linear;
+    transition: color 0.2s linear, border-color 0.2s linear,
+      background-color 0.2s linear;
     text-decoration: none;
 
     &:disabled {
@@ -153,7 +153,7 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
     }
   }
 
@@ -173,15 +173,15 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
       pointer-events: none;
     }
   }
 
   .button--editor {
-    text-transform:uppercase;
+    text-transform: uppercase;
     @include font-tiny-btn;
-    font-weight:600;
+    font-weight: 600;
     padding: 0 15px;
 
     :deep(.icon) {
@@ -216,10 +216,12 @@
 
   .button--aslink {
     background: transparent;
-    color:$color__link;
+    color: $color__link;
 
     &:hover {
-      span { @include bordered($color__link, false); }
+      span {
+        @include bordered($color__link, false);
+      }
     }
   }
 
@@ -230,7 +232,9 @@
     color: $color__link-light;
 
     &:hover {
-      span { @include bordered($color__link-light, false); }
+      span {
+        @include bordered($color__link-light, false);
+      }
     }
   }
 
@@ -249,7 +253,7 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
       pointer-events: none;
     }
   }
@@ -270,23 +274,23 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
       pointer-events: none;
     }
   }
 
   .button--dropdown {
     border: 1px solid $color__border--hover;
-    background:$color__background;
-    padding-left:15px;
-    padding-right:15px + 4px + 20px;
+    background: $color__background;
+    padding-left: 15px;
+    padding-right: 15px + 4px + 20px;
 
     &:after {
-      top:50%;
-      right:15px;
-      content:'';
+      top: 50%;
+      right: 15px;
+      content: '';
       position: absolute;
-      display:block;
+      display: block;
       width: 0;
       height: 0;
       margin-top: -1px;
@@ -339,14 +343,15 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
       pointer-events: none;
     }
   }
 
   .button--outline,
   .button--tertiary {
-    transition: color .1s linear, border-color .1s linear, background-color .1s linear;
+    transition: color 0.1s linear, border-color 0.1s linear,
+      background-color 0.1s linear;
     border: 1px solid $color__button_outline;
     background: transparent;
     color: $color__text;
@@ -365,7 +370,7 @@
     }
 
     &:disabled {
-      opacity: .5;
+      opacity: 0.5;
       pointer-events: none;
     }
   }
@@ -384,7 +389,7 @@
     @include monospaced-figures('off'); // dont use monospaced figures here
 
     :deep(.icon) {
-      transition: color .25s linear;
+      transition: color 0.25s linear;
     }
 
     &:focus,
@@ -401,8 +406,8 @@
       // vertical-align: top;
       // height: 100%;
       display: block;
-      margin-left:auto;
-      margin-right:auto;
+      margin-left: auto;
+      margin-right: auto;
       // margin: 0 auto;
       color: $color__icons;
     }
@@ -416,7 +421,6 @@
 
   /* ---- Icon variants -----*/
   .button--greyed {
-
     &.button--icon {
       color: $color__button_greyed;
       background: $color__button_greyed--bg;
@@ -424,7 +428,6 @@
       :deep(.icon) {
         color: $color__button_greyed;
       }
-
     }
   }
 

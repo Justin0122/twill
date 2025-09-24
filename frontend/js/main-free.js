@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import store from '@/store'
 
 // General shared behaviors
@@ -27,7 +27,7 @@ const app = createApp({
     'a17-fieldset': a17Fieldset,
     'a17-browser': a17Browser
   },
-  created: function () {
+  created: function() {
     openMediaLibrary(this)
   }
 })

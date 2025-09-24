@@ -18,7 +18,7 @@ const vueSearchApp = {
       default: 60
     }
   },
-  data: function () {
+  data: function() {
     return {
       open: false,
       opened: false,
@@ -26,19 +26,21 @@ const vueSearchApp = {
     }
   },
   computed: {
-    positionStyle: function () {
+    positionStyle: function() {
       return {
         top: this.top + 'px'
       }
     }
   },
   methods: {
-    afterAnimate: function () {
+    afterAnimate: function() {
       this.opened = true
     },
-    toggleSearch: function () {
+    toggleSearch: function() {
       this.open = !this.open
-      this.top = this.topSpacing - (window.pageYOffset || document.documentElement.scrollTop)
+      this.top =
+        this.topSpacing -
+        (window.pageYOffset || document.documentElement.scrollTop)
 
       if (this.open) {
         document.addEventListener('keydown', this.handleKeyDown, false)
@@ -47,8 +49,9 @@ const vueSearchApp = {
         document.removeEventListener('keydown', this.handleKeyDown, false)
       }
     },
-    handleKeyDown: function (event) {
-      if (event.keyCode && event.keyCode === 27) { // esc key
+    handleKeyDown: function(event) {
+      if (event.keyCode && event.keyCode === 27) {
+        // esc key
         this.toggleSearch()
       }
     }
@@ -60,5 +63,7 @@ const app = createApp(vueSearchApp)
 // configuration
 app.use(A17Config)
 
-const A17SearchApp = document.getElementById(idSearch) ? app.mount('#searchApp') : false
+const A17SearchApp = document.getElementById(idSearch)
+  ? app.mount('#searchApp')
+  : false
 export default A17SearchApp

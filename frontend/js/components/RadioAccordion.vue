@@ -6,7 +6,12 @@
     <template v-slot:accordion__value>
       <div>{{ currentLabel }}</div>
     </template>
-    <a17-radiogroup :name="name" :radios="radios" @change="changeValue" :initialValue="currentValue"></a17-radiogroup>
+    <a17-radiogroup
+      :name="name"
+      :radios="radios"
+      @change="changeValue"
+      :initialValue="currentValue"
+    ></a17-radiogroup>
   </a17-accordion>
 </template>
 
@@ -33,30 +38,32 @@
         default: ''
       },
       radios: {
-        default: function () { return [] }
+        default: function() {
+          return []
+        }
       }
     },
-    data: function () {
+    data: function() {
       return {
         currentValue: this.value
       }
     },
     computed: {
-      currentLabel: function () {
+      currentLabel: function() {
         const selectRadios = this.radios.filter(this.isSameValue)
         if (selectRadios.length) return selectRadios[0].label
         else return ''
       }
     },
     methods: {
-      isSameValue: function (radio) {
+      isSameValue: function(radio) {
         return radio.value === this.currentValue
       },
-      changeValue: function (newValue) {
+      changeValue: function(newValue) {
         this.currentValue = newValue
         this.$emit('change', newValue)
       },
-      notifyOpen: function (newValue) {
+      notifyOpen: function(newValue) {
         this.$emit('open', newValue, this.$options.name)
       }
     }

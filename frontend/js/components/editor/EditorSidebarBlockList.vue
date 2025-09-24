@@ -1,19 +1,21 @@
 <template>
   <div class="editorSidebar__listItems">
     <!-- eslint-disable vue/no-mutating-props -->
-    <draggable class="editorSidebar__blocks"
-               :class="editorSidebarClasses"
-               :modelValue="blocks"
-               @update:modelValue="blocks = $event"
-               :options="{
-                    group: {
-                      name: 'editorBlocks',
-                      pull: 'clone',
-                      put: false
-                    },
-                    handle: '.editorSidebar__button'
-                    }"
-               @change="saveOrderFromRender">
+    <draggable
+      class="editorSidebar__blocks"
+      :class="editorSidebarClasses"
+      :modelValue="blocks"
+      @update:modelValue="blocks = $event"
+      :options="{
+        group: {
+          name: 'editorBlocks',
+          pull: 'clone',
+          put: false
+        },
+        handle: '.editorSidebar__button'
+      }"
+      @change="saveOrderFromRender"
+    >
       <!--eslint-enable-->
       <div
         v-for="cat in renderOrder"
@@ -30,7 +32,7 @@
           <span
             class="editorSidebar__categoryIcon"
             :class="{ 'is-open': !isCollapsed(cat.name) }"
-          >▼</span
+            >▼</span
           >
         </button>
 
@@ -58,8 +60,8 @@
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
                 <span class="editorSidebar__buttonLabel">{{
-                    block.title
-                  }}</span>
+                  block.title
+                }}</span>
               </div>
             </draggable>
           </div>
@@ -157,13 +159,13 @@
       this.reconcileOrder()
     },
     methods: {
-      iconSymbol: function (icon) {
+      iconSymbol: function(icon) {
         // Future block editor icons will have two variations: small and large.
         // Small formats will be used by default in the dropdown, and large
         // formats (named with `-lg` suffix) will be used in the sidebar.
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
-      hasLgIconVariation: function (icon) {
+      hasLgIconVariation: function(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
       },
 
@@ -214,7 +216,8 @@
       loadLayout() {
         const { order = [], collapsed = {} } = this.storageRead()
         this.categoryOrder = Array.isArray(order) ? order : []
-        this.collapsedCategories = collapsed && typeof collapsed === 'object' ? collapsed : {}
+        this.collapsedCategories =
+          collapsed && typeof collapsed === 'object' ? collapsed : {}
         this.hydrated = true
       },
       saveOrderFromRender() {

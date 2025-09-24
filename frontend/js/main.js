@@ -1,7 +1,7 @@
 // import global style
 import 'styles/app.scss'
 // General behaviors
-import { createApp } from "vue"
+import { createApp } from 'vue'
 import navToggle from '@/behaviors/navToggle'
 import showEnvLine from '@/behaviors/showEnvLine'
 import logoutButton from '@/behaviors/logoutButton'
@@ -11,7 +11,7 @@ import merge from 'lodash/merge'
 import Alpine from 'alpinejs'
 import mask from '@alpinejs/mask'
 // Plugins
-import A17Config from "@/plugins/A17Config";
+import A17Config from '@/plugins/A17Config'
 
 const A17Init = function() {
   navToggle()

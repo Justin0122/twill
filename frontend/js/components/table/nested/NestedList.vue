@@ -47,7 +47,11 @@
 
 <script>
   import { VueDraggableNext } from 'vue-draggable-next'
-  import { DatatableMixin, DraggableMixin, NestedDraggableMixin } from '@/mixins/index'
+  import {
+    DatatableMixin,
+    DraggableMixin,
+    NestedDraggableMixin
+  } from '@/mixins/index'
   import { DATATABLE } from '@/store/mutations'
 
   import NestedItem from './NestedItem'
@@ -69,29 +73,31 @@
         default: () => []
       }
     },
-    data: function () {
+    data: function() {
       return {
         handle: '.tablecell__handle'
       }
     },
     computed: {
-      styleDepth: function () {
+      styleDepth: function() {
         return {
           marginLeft: this.depth === 0 ? '0px' : '60px'
         }
       },
       rows: {
-        get () {
+        get() {
           // return this.items
-          return this.parentId > -1 ? this.items : this.$store.state.datatable.data
+          return this.parentId > -1
+            ? this.items
+            : this.$store.state.datatable.data
         },
-        set (value) {
+        set(value) {
           const data = {
             parentId: this.parentId,
             val: value
           }
 
-          const isChangingParents = (this.rows.length !== data.val.length)
+          const isChangingParents = this.rows.length !== data.val.length
 
           if (this.parentId > -1) {
             this.$store.commit(DATATABLE.UPDATE_DATATABLE_NESTED, data)
@@ -101,13 +107,18 @@
           this.saveNewTree(isChangingParents)
         }
       },
-      nestedDropAreaClasses: function () {
+      nestedDropAreaClasses: function() {
         return [
           this.rows.length === 0 ? 'nested__dropArea--empty' : '',
-          this.depth ? `nested__dropArea--depth nested__dropArea--depth${Math.min(10, this.depth)}` : ''
+          this.depth
+            ? `nested__dropArea--depth nested__dropArea--depth${Math.min(
+                10,
+                this.depth
+              )}`
+            : ''
         ]
       },
-      draggableOptions: function () {
+      draggableOptions: function() {
         return {
           ...this.dragOptions,
           fallbackTolerance: 5,
@@ -141,7 +152,7 @@
 
 <style lang="scss" scoped>
   .nested-datatable__item {
-    border: 1px solid #F2F2F2;
+    border: 1px solid #f2f2f2;
     // padding:10px 0 0 10px;
     margin-top: -1px;
 
@@ -195,8 +206,8 @@
       content: '';
       display: block;
       height: 6px;
-      border-left: 1px solid #D9D9D9;
-      border-bottom: 1px solid #D9D9D9;
+      border-left: 1px solid #d9d9d9;
+      border-bottom: 1px solid #d9d9d9;
       position: absolute;
       top: calc(50% - 3px);
       left: 20px;
@@ -223,7 +234,6 @@
       }
     }
   }
-
 </style>
 
 <style lang="scss">

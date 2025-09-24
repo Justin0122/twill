@@ -3,52 +3,92 @@
     <div class="block__header" @dblclick.prevent="toggleExpand()">
       <span v-if="withHandle" class="block__handle"></span>
       <div class="block__toggle">
-        <a17-dropdown :ref="moveDropdown" class="f--small" position="bottom-left" v-if="withMoveDropdown && withActions" :maxHeight="270">
-          <span class="block__counter f--tiny" @click="$refs[moveDropdown].toggle()">{{ index + 1 }}</span>
+        <a17-dropdown
+          :ref="moveDropdown"
+          class="f--small"
+          position="bottom-left"
+          v-if="withMoveDropdown && withActions"
+          :maxHeight="270"
+        >
+          <span
+            class="block__counter f--tiny"
+            @click="$refs[moveDropdown].toggle()"
+            >{{ index + 1 }}</span
+          >
           <template v-slot:dropdown__content>
-            <div><slot name="dropdown-numbers"/></div>
+            <div><slot name="dropdown-numbers" /></div>
           </template>
         </a17-dropdown>
-        <span class="block__counter f--tiny" v-else-if="withActions">{{ index + 1 }}</span>
+        <span class="block__counter f--tiny" v-else-if="withActions">{{
+          index + 1
+        }}</span>
         <span class="block__title">{{ blockTitle }}</span>
       </div>
       <div class="block__actions" v-if="withActions">
-        <slot name="block-actions"/>
-        <a17-dropdown :ref="addDropdown" position="bottom-right" :maxHeight="430" @open="hover = true" @close="hover = false" v-if="withAddDropdown">
-          <a17-button variant="icon" data-action @click="$refs[addDropdown].toggle()"><span v-svg symbol="add"></span>
+        <slot name="block-actions" />
+        <a17-dropdown
+          :ref="addDropdown"
+          position="bottom-right"
+          :maxHeight="430"
+          @open="hover = true"
+          @close="hover = false"
+          v-if="withAddDropdown"
+        >
+          <a17-button
+            variant="icon"
+            data-action
+            @click="$refs[addDropdown].toggle()"
+            ><span v-svg symbol="add"></span>
           </a17-button>
           <template v-slot:dropdown__content>
-            <div><slot name="dropdown-add"/></div>
+            <div><slot name="dropdown-add" /></div>
           </template>
         </a17-dropdown>
 
-        <a17-button variant="icon" data-action @click="toggleExpand()" :aria-expanded="visible ? 'true' : 'false'"><span
-          v-svg symbol="expand"></span></a17-button>
+        <a17-button
+          variant="icon"
+          data-action
+          @click="toggleExpand()"
+          :aria-expanded="visible ? 'true' : 'false'"
+          ><span v-svg symbol="expand"></span
+        ></a17-button>
 
-        <a17-dropdown :ref="actionsDropdown" position="bottom-right" @open="hover = true" @close="hover = false">
-          <a17-button variant="icon" @click="$refs[actionsDropdown].toggle()"><span v-svg symbol="more-dots"></span>
+        <a17-dropdown
+          :ref="actionsDropdown"
+          position="bottom-right"
+          @open="hover = true"
+          @close="hover = false"
+        >
+          <a17-button variant="icon" @click="$refs[actionsDropdown].toggle()"
+            ><span v-svg symbol="more-dots"></span>
           </a17-button>
           <template v-slot:dropdown__content>
-            <div><slot name="dropdown-action"/></div>
+            <div><slot name="dropdown-action" /></div>
           </template>
         </a17-dropdown>
       </div>
     </div>
     <div class="block__content" v-if="visible">
-      <component v-bind:is="`${block.type}`" v-bind="block.attributes" :name="componentName(block.id)" :key="`form_${block.type}_${block.id}`">
+      <component
+        v-bind:is="`${block.type}`"
+        v-bind="block.attributes"
+        :name="componentName(block.id)"
+        :key="`form_${block.type}_${block.id}`"
+      >
         <!-- dynamic components -->
       </component>
       <!-- Block validation input frame, to display errors -->
-      <a17-inputframe size="small" label="" :name="`block.${block.id}`"></a17-inputframe>
+      <a17-inputframe
+        size="small"
+        label=""
+        :name="`block.${block.id}`"
+      ></a17-inputframe>
     </div>
   </div>
 </template>
 
 <script>
-  import { mapGetters,mapState } from 'vuex'
-
-  import a17VueFilters from '@/utils/filters.js'
-
+  import { mapGetters, mapState } from 'vuex'
   export default {
     name: 'A17BlockEditorItem',
     props: {
@@ -77,7 +117,7 @@
         default: true
       }
     },
-    data () {
+    data() {
       return {
         visible: false,
         hover: false,
@@ -85,9 +125,8 @@
         withAddDropdown: true
       }
     },
-    filters: a17VueFilters,
     computed: {
-      titleFieldValue: function () {
+      titleFieldValue: function() {
         const fieldValue = this.blockFieldValue(this.block.titleField)
         if (!fieldValue) return null
 
@@ -97,7 +136,7 @@
 
         return fieldValue
       },
-      blockTitle: function () {
+      blockTitle: function() {
         const title = this.block.title || ''
         const suffix = this.titleFieldValue || ''
         const separator = title && suffix ? ' — ' : ''
@@ -114,59 +153,57 @@
         cleanup.innerHTML = fullTitle
         return cleanup.innerText
       },
-      blockClasses () {
+      blockClasses() {
         return [
           this.visible ? 'block--open' : '',
           this.hover ? 'block--focus' : '',
           this.size ? `block--${this.size}` : ''
         ]
       },
-      moveDropdown () {
+      moveDropdown() {
         return `moveBlock${this.index}Dropdown`
       },
-      actionsDropdown () {
+      actionsDropdown() {
         return `action${this.block.id}Dropdown`
       },
-      addDropdown () {
+      addDropdown() {
         return `add${this.block.id}Dropdown`
       },
       ...mapState({
         currentLocale: state => state.language.active
       }),
-      ...mapGetters([
-        'fieldValueByName'
-      ])
+      ...mapGetters(['fieldValueByName'])
     },
     watch: {
-      opened () {
+      opened() {
         this.visible = this.opened
       }
     },
-    created () {
+    created() {
       if (this.block.ui && this.block.ui.isNew) {
         this.toggleExpand()
       }
     },
     methods: {
-      toggleExpand () {
+      toggleExpand() {
         this.visible = !this.visible
       },
-      componentName (id) {
+      componentName(id) {
         return 'blocks[' + id + ']'
       },
-      blockFieldName: function (fieldName) {
+      blockFieldName: function(fieldName) {
         if (!fieldName) return ''
 
         return `blocks[${this.block.id}][${fieldName}]`
       },
-      blockFieldValue: function (fieldName) {
+      blockFieldValue: function(fieldName) {
         if (!fieldName) return null
 
         const blockFieldName = this.blockFieldName(fieldName)
         return this.fieldValueByName(blockFieldName)
       }
     },
-    beforeMount () {
+    beforeMount() {
       if (!this.$slots['dropdown-numbers']) this.withMoveDropdown = false
       if (!this.$slots['dropdown-add']) this.withAddDropdown = false
     }
@@ -382,7 +419,6 @@
       display: none;
     }
   }
-
 </style>
 
 <style lang="scss">

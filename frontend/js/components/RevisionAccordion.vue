@@ -1,18 +1,33 @@
 <template>
   <a17-accordion :open="open" @toggleVisibility="notifyOpen">
     <template v-slot:accordion__title>
-      <span><slot></slot> <span class="f--small f--note">({{ revisions.length }})</span></span>
+      <span
+        ><slot></slot>
+        <span class="f--small f--note">({{ revisions.length }})</span></span
+      >
     </template>
     <template v-slot:accordion__value>
-      <div>{{ $trans('publisher.last-edit') }} <timeago :auto-update="1" :datetime="new Date(revisions[0].datetime)"></timeago></div>
+      <div>
+        {{ $trans('publisher.last-edit') }}
+        <timeago
+          :auto-update="1"
+          :datetime="new Date(revisions[0].datetime)"
+        ></timeago>
+      </div>
     </template>
     <div class="revaccordion__scroller">
       <ul class="revaccordion__list">
-        <li class="revaccordion__item" v-for="revision in revisions" :key="revision.id">
+        <li
+          class="revaccordion__item"
+          v-for="revision in revisions"
+          :key="revision.id"
+        >
           <a href="#" @click.prevent="openPreview(revision.id)">
             <span class="revaccordion__author">{{ revision.author }}</span>
             <span class="revaccordion__datetime">
-              <span class="tag" v-if="revision.label">{{  revision.label }}</span>
+              <span class="tag" v-if="revision.label">{{
+                revision.label
+              }}</span>
               {{ formatDate(revision.datetime) }}
             </span>
           </a>
@@ -36,35 +51,35 @@
     mixins: [VisibilityMixin],
     props: {
       revisions: {
-        default: function () {
+        default: function() {
           return []
         }
       }
     },
     methods: {
       formatDate,
-      notifyOpen: function (newValue) {
+      notifyOpen: function(newValue) {
         this.$emit('open', newValue, this.$options.name)
       },
-      openPreview: function (id) {
-        if (this.$root.$refs.preview) this.$root.$refs.preview.open(parseInt(id))
+      openPreview: function(id) {
+        if (this.$root.$refs.preview)
+          this.$root.$refs.preview.open(parseInt(id))
       }
     }
   }
 </script>
 
 <style lang="scss" scoped>
-
   .revaccordion__scroller {
-    height:100%;
-    overflow:hidden;
+    height: 100%;
+    overflow: hidden;
     overflow-y: auto;
-    max-height:165px;
-    margin:-12px -20px;
+    max-height: 165px;
+    margin: -12px -20px;
   }
 
   .revaccordion__list {
-    padding:12px 20px;
+    padding: 12px 20px;
   }
 
   // .revaccordion__item {
@@ -73,17 +88,17 @@
   .revaccordion__item a {
     display: flex;
     flex-direction: row;
-    flex-wrap:no-wrap;
-    color:$color__text--light;
-    padding:7.5px 20px;
-    margin-left:-20px;
-    margin-right:-20px;
-    text-decoration:none;
+    flex-wrap: no-wrap;
+    color: $color__text--light;
+    padding: 7.5px 20px;
+    margin-left: -20px;
+    margin-right: -20px;
+    text-decoration: none;
 
     &:focus,
     &:hover {
-      color:$color__text;
-      background:$color__light;
+      color: $color__text;
+      background: $color__light;
     }
   }
 
@@ -93,11 +108,10 @@
   }
 
   .revaccordion__datetime {
-    padding-left:10px;
-    color:$color__link;
+    padding-left: 10px;
+    color: $color__link;
     white-space: nowrap;
-    overflow:hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
-
 </style>

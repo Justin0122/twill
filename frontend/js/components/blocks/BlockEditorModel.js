@@ -14,11 +14,13 @@ export default {
     }
   },
   computed: {
-    blockIndex () {
+    blockIndex() {
       return this.block ? this.getBlockIndex(this.block, this.editorName) : 0
     },
-    isActive () {
-      return this.block && Object.keys(this.activeBlock).length > 0 ? this.block.id === this.activeBlock.id : false
+    isActive() {
+      return this.block && Object.keys(this.activeBlock).length > 0
+        ? this.block.id === this.activeBlock.id
+        : false
     },
     ...mapState({
       activeBlock: state => state.blocks.active
@@ -28,7 +30,7 @@ export default {
     })
   },
   methods: {
-    add (block, index = -1) {
+    add(block, index = -1) {
       this.$store.commit(BLOCKS.ADD_BLOCK, {
         editorName: this.editorName,
         block: {
@@ -41,19 +43,19 @@ export default {
         index
       })
     },
-    edit (index = this.blockIndex) {
+    edit(index = this.blockIndex) {
       this.$store.commit(BLOCKS.ACTIVATE_BLOCK, {
         editorName: this.editorName,
         index
       })
     },
-    unEdit () {
+    unEdit() {
       this.$store.commit(BLOCKS.ACTIVATE_BLOCK, {
         editorName: this.editorName,
         index: -1
       })
     },
-    move (newIndex) {
+    move(newIndex) {
       if (this.blockIndex === newIndex) return
       this.$store.commit(BLOCKS.MOVE_BLOCK, {
         editorName: this.editorName,
@@ -61,7 +63,7 @@ export default {
         newIndex
       })
     },
-    duplicate () {
+    duplicate() {
       const block = Object.assign({}, this.block)
       this.$store.commit(BLOCKS.DUPLICATE_BLOCK, {
         editorName: this.editorName,
@@ -70,14 +72,14 @@ export default {
         id: this.setBlockID()
       })
     },
-    remove () {
+    remove() {
       this.unEdit()
       this.$store.commit(BLOCKS.DELETE_BLOCK, {
         editorName: this.editorName,
         index: this.blockIndex
       })
     },
-    cloneBlock () {
+    cloneBlock() {
       this.$store.dispatch(ACTIONS.DUPLICATE_BLOCK, {
         editorName: this.editorName,
         futureIndex: this.blockIndex + 1,
@@ -85,11 +87,11 @@ export default {
         id: Date.now() + Math.floor(Math.random() * 1000)
       })
     },
-    setBlockID () {
+    setBlockID() {
       return Date.now() + Math.floor(Math.random() * 1000)
     }
   },
-  render () {
+  render() {
     return this.$slots.default({
       block: this.block,
       blockIndex: this.blockIndex,

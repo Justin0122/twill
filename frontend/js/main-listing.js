@@ -51,7 +51,7 @@ const app = createApp({
   },
   mixins: [FormatPermalinkMixin],
   computed: {
-    hasBulkIds: function () {
+    hasBulkIds: function() {
       return this.bulkIds.length > 0
     },
     ...mapState({
@@ -61,7 +61,7 @@ const app = createApp({
     })
   },
   methods: {
-    create: function () {
+    create: function() {
       if (this.$refs.editionModal) {
         this.$store.commit(MODALEDITION.UPDATE_MODAL_ACTION, '')
         this.$store.commit(MODALEDITION.UPDATE_MODAL_MODE, 'create')
@@ -69,48 +69,59 @@ const app = createApp({
         this.$refs.editionModal.open()
       }
     },
-    reloadDatas: function () {
+    reloadDatas: function() {
       // reload datas
       this.$store.dispatch(ACTIONS.GET_DATATABLE)
     },
-    clearFiltersAndReloadDatas: function () {
+    clearFiltersAndReloadDatas: function() {
       this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
       this.$store.commit(DATATABLE.CLEAR_DATATABLE_FILTER)
 
-      Object.keys(this.$refs).filter(k => {
-        return k.indexOf('filterDropdown[') === 0
-      }).map(k => {
-        return this.$refs[k].updateValue()
-      })
+      Object.keys(this.$refs)
+        .filter(k => {
+          return k.indexOf('filterDropdown[') === 0
+        })
+        .map(k => {
+          return this.$refs[k].updateValue()
+        })
 
       this.reloadDatas()
     },
-    filterListing: function (formData) {
+    filterListing: function(formData) {
       const self = this
       this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
-      this.$store.commit(DATATABLE.UPDATE_DATATABLE_FILTER, formData || { search: '' })
+      this.$store.commit(
+        DATATABLE.UPDATE_DATATABLE_FILTER,
+        formData || { search: '' }
+      )
 
-      this.$nextTick(function () {
+      this.$nextTick(function() {
         self.reloadDatas()
       })
     }
   },
-  mounted: function () {
+  mounted: function() {
     if (window[process.env.VUE_APP_NAME].openCreate) this.create()
   },
-  created: function () {
+  created: function() {
     openMediaLibrary(this)
 
     let reload = false
     const pageOffset = getStorage(this.localStorageKey + '_page-offset')
     if (pageOffset) {
-      this.$store.commit(DATATABLE.UPDATE_DATATABLE_OFFSET, parseInt(pageOffset))
+      this.$store.commit(
+        DATATABLE.UPDATE_DATATABLE_OFFSET,
+        parseInt(pageOffset)
+      )
       reload = true
     }
 
     const columnsVisible = getStorage(this.localStorageKey + '_columns-visible')
     if (columnsVisible) {
-      this.$store.commit(DATATABLE.UPDATE_DATATABLE_VISIBLITY, JSON.parse(columnsVisible))
+      this.$store.commit(
+        DATATABLE.UPDATE_DATATABLE_VISIBLITY,
+        JSON.parse(columnsVisible)
+      )
       reload = true
     }
 

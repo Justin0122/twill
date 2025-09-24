@@ -51,16 +51,17 @@ const state = {
 
 // getters
 const getters = {
-  previewsById: state => (id) => state.previews[id] ? state.previews[id] : '',
+  previewsById: state => id => (state.previews[id] ? state.previews[id] : ''),
   blocks: state => editorName => state.blocks[editorName] || [],
   availableBlocks: state => editorName => state.available[editorName] || [],
-  blockIndex: (state, getters) => (block, editorName) => getters.blocks(editorName).findIndex(b => b.id === block.id)
+  blockIndex: (state, getters) => (block, editorName) =>
+    getters.blocks(editorName).findIndex(b => b.id === block.id)
 }
 
 const setBlockID = () => Date.now() + Math.floor(Math.random() * 1000)
 
 const mutations = {
-  [BLOCKS.ADD_BLOCK] (state, { block, index, editorName }) {
+  [BLOCKS.ADD_BLOCK](state, { block, index, editorName }) {
     const updated = state.blocks[editorName] || []
     const newBlock = { ...block, id: setBlockID(), name: editorName }
 
@@ -74,55 +75,55 @@ const mutations = {
       updated.push(newBlock) // or add a new blocks at the end of the list
     }
 
-    Vue.set(state.blocks, editorName, updated)
+    state.blocks[editorName] = updated
   },
-  [BLOCKS.MOVE_BLOCK] (state, { editorName, newIndex, oldIndex }) {
+  [BLOCKS.MOVE_BLOCK](state, { editorName, newIndex, oldIndex }) {
     const updated = state.blocks[editorName] || []
 
     if (newIndex >= updated.length) {
       let k = newIndex - updated.length
-      while ((k--) + 1) {
+      while (k-- + 1) {
         updated.push(undefined)
       }
     }
 
     updated.splice(newIndex, 0, updated.splice(oldIndex, 1)[0])
 
-    Vue.set(state.blocks, editorName, updated)
+    state.blocks[editorName] = updated
   },
-  [BLOCKS.DELETE_BLOCK] (state, { editorName, index }) {
+  [BLOCKS.DELETE_BLOCK](state, { editorName, index }) {
     const id = state.blocks[editorName][index].id
     const updated = state.blocks[editorName] || []
 
     if (id) {
-      Vue.delete(state.previews, id)
+      delete state.previews[id]
     }
 
     updated.splice(index, 1)
 
-    Vue.set(state.blocks, editorName, updated)
+    state.blocks[editorName] = updated
   },
-  [BLOCKS.DUPLICATE_BLOCK] (state, { editorName, index, block, id }) {
+  [BLOCKS.DUPLICATE_BLOCK](state, { editorName, index, block, id }) {
     const updated = state.blocks[editorName] || []
 
     updated.splice(index, 0, { ...block, id, name: editorName })
 
-    Vue.set(state.blocks, editorName, updated)
+    state.blocks[editorName] = updated
   },
-  [BLOCKS.REORDER_BLOCKS] (state, { editorName, value }) {
+  [BLOCKS.REORDER_BLOCKS](state, { editorName, value }) {
     state.blocks[editorName] = value
   },
-  [BLOCKS.ACTIVATE_BLOCK] (state, { editorName, index }) {
+  [BLOCKS.ACTIVATE_BLOCK](state, { editorName, index }) {
     if (state.blocks[editorName] && state.blocks[editorName][index]) {
       state.active = { ...state.blocks[editorName][index] }
     } else {
       state.active = {}
     }
   },
-  [BLOCKS.ADD_BLOCK_PREVIEW] (state, data) {
+  [BLOCKS.ADD_BLOCK_PREVIEW](state, data) {
     state.previews[data.id] = data.html
   },
-  [BLOCKS.UPDATE_PREVIEW_LOADING] (state, loading) {
+  [BLOCKS.UPDATE_PREVIEW_LOADING](state, loading) {
     state.loading = !state.loading
   }
 }
@@ -154,15 +155,21 @@ const getBlockPreview = (block, commit, rootState, callback) => {
 
           if (callback && typeof callback === 'function') callback()
         },
-        errorResponse => { }
+        errorResponse => {}
       )
     }
   }
 }
 
 const actions = {
-  [ACTIONS.GET_PREVIEW] ({ commit, state, rootState }, { editorName, index = -1 }) {
-    let block = state.blocks[editorName] && index >= 0 ? { ...state.blocks[editorName][index] } : {}
+  [ACTIONS.GET_PREVIEW](
+    { commit, state, rootState },
+    { editorName, index = -1 }
+  ) {
+    let block =
+      state.blocks[editorName] && index >= 0
+        ? { ...state.blocks[editorName][index] }
+        : {}
 
     // refresh preview of the active block
     if (state.active && state.active.hasOwnProperty('id') && index === -1) {
@@ -171,24 +178,40 @@ const actions = {
 
     getBlockPreview(block, commit, rootState)
   },
-  [ACTIONS.GET_ALL_PREVIEWS] ({ commit, state, rootState }, { editorName }) {
-    if (state.blocks[editorName] && state.blocks[editorName].length > 0 && !state.loading) {
+  [ACTIONS.GET_ALL_PREVIEWS]({ commit, state, rootState }, { editorName }) {
+    if (
+      state.blocks[editorName] &&
+      state.blocks[editorName].length > 0 &&
+      !state.loading
+    ) {
       commit(BLOCKS.UPDATE_PREVIEW_LOADING, true)
       let loadedPreview = 0
       const previewToload = state.blocks[editorName].length
 
-      Object.values(state.blocks[editorName]).forEach((block) => {
+      Object.values(state.blocks[editorName]).forEach(block => {
         getBlockPreview(block, commit, rootState, () => {
           loadedPreview++
-          if (loadedPreview === previewToload) commit(BLOCKS.UPDATE_PREVIEW_LOADING, true)
+          if (loadedPreview === previewToload)
+            commit(BLOCKS.UPDATE_PREVIEW_LOADING, true)
         })
       })
     }
   },
-  async [ACTIONS.DUPLICATE_BLOCK] ({ commit, state, rootState }, { editorName, futureIndex, block, id }) {
-    commit(BLOCKS.DUPLICATE_BLOCK, { editorName, index: futureIndex, block, id })
+  async [ACTIONS.DUPLICATE_BLOCK](
+    { commit, state, rootState },
+    { editorName, futureIndex, block, id }
+  ) {
+    commit(BLOCKS.DUPLICATE_BLOCK, {
+      editorName,
+      index: futureIndex,
+      block,
+      id
+    })
   },
-  async [ACTIONS.MOVE_BLOCK_TO_EDITOR] ({ commit, dispatch }, { editorName, index, block, futureIndex, id }) {
+  async [ACTIONS.MOVE_BLOCK_TO_EDITOR](
+    { commit, dispatch },
+    { editorName, index, block, futureIndex, id }
+  ) {
     await dispatch(ACTIONS.DUPLICATE_BLOCK, {
       editorName,
       futureIndex,

@@ -3,25 +3,30 @@
     <div class="languageManager__switcher">
       <a17-langswitcher :in-modal="true" :all-published="!controlPublication" />
     </div>
-    <a17-dropdown class="languageManager__dropdown"
-                  ref="languageManagerDropdown"
-                  position="bottom-right"
-                  :clickable="true"
-                  v-if="controlPublication"
+    <a17-dropdown
+      class="languageManager__dropdown"
+      ref="languageManagerDropdown"
+      position="bottom-right"
+      :clickable="true"
+      v-if="controlPublication"
     >
-      <button class="languageManager__button"
-              type="button"
-              @click="$refs.languageManagerDropdown.toggle()">
-        {{currentValue.length }} {{ $trans('lang-manager.published') }} <span v-svg symbol="dropdown_module"></span>
+      <button
+        class="languageManager__button"
+        type="button"
+        @click="$refs.languageManagerDropdown.toggle()"
+      >
+        {{ currentValue.length }} {{ $trans('lang-manager.published') }}
+        <span v-svg symbol="dropdown_module"></span>
       </button>
       <template v-slot:dropdown__content>
         <div class="languageManager__dropdown-content">
-          <a17-checkboxgroup name="langManager"
-                             :options="languages"
-                             :selected="currentValue"
-                             :min="1"
-                             @change="changeValue"
-                             />
+          <a17-checkboxgroup
+            name="langManager"
+            :options="languages"
+            :selected="currentValue"
+            :min="1"
+            @change="changeValue"
+          />
         </div>
       </template>
     </a17-dropdown>
@@ -29,7 +34,7 @@
 </template>
 
 <script>
-  import { mapGetters,mapState } from 'vuex'
+  import { mapGetters, mapState } from 'vuex'
 
   import LocaleMixin from '@/mixins/locale'
   import VisibilityMixin from '@/mixins/toggleVisibility'
@@ -49,16 +54,18 @@
         default: true
       },
       value: {
-        default: function () { return [] }
+        default: function() {
+          return []
+        }
       }
     },
     computed: {
       currentValue: {
-        get () {
+        get() {
           const values = []
 
           if (this.publishedLanguages.length) {
-            this.publishedLanguages.forEach(function (item) {
+            this.publishedLanguages.forEach(function(item) {
               values.push(item.value)
             })
           }
@@ -69,12 +76,10 @@
       ...mapState({
         languages: state => state.language.all
       }),
-      ...mapGetters([
-        'publishedLanguages'
-      ])
+      ...mapGetters(['publishedLanguages'])
     },
     methods: {
-      changeValue: function (newValue) {
+      changeValue: function(newValue) {
         this.$store.commit(LANGUAGE.PUBLISH_LANG, newValue)
       }
     }
@@ -82,7 +87,6 @@
 </script>
 
 <style lang="scss" scoped>
-
   .languageManager {
     margin: 0 -20px;
     background-color: $color__light;

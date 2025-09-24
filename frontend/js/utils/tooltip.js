@@ -33,10 +33,10 @@ export default class Tooltip {
     const events =
       typeof options.trigger === 'string'
         ? options.trigger
-          .split(' ')
-          .filter(
-            trigger => ['click', 'hover', 'focus'].indexOf(trigger) !== -1
-          )
+            .split(' ')
+            .filter(
+              trigger => ['click', 'hover', 'focus'].indexOf(trigger) !== -1
+            )
         : []
 
     // set initial state

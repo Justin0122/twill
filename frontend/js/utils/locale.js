@@ -14,7 +14,24 @@ import { Slovenian } from 'flatpickr/dist/l10n/sl.js'
 import { Spanish } from 'flatpickr/dist/l10n/es.js'
 import { Turkish } from 'flatpickr/dist/l10n/tr.js'
 import { Ukrainian } from 'flatpickr/dist/l10n/uk.js'
-import { enUS, ar, bs, cs, de, es, fr, it, nl, pl, pt, ru, sl, tr, uk, zhCN } from 'date-fns/locale'
+import {
+  enUS,
+  ar,
+  bs,
+  cs,
+  de,
+  es,
+  fr,
+  it,
+  nl,
+  pl,
+  pt,
+  ru,
+  sl,
+  tr,
+  uk,
+  zhCN
+} from 'date-fns/locale'
 
 export const locales = {
   en: {

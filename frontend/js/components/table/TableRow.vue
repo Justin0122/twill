@@ -1,6 +1,5 @@
 <template>
-  <tr class="tablerow"
-      @click="handleBulkRowClick">
+  <tr class="tablerow" @click="handleBulkRowClick">
     <td
       v-for="col in columns"
       :key="col.name"
@@ -75,10 +74,10 @@
         return this.columns.find(col => col.name === 'nested') &&
           col.name === 'draggable'
           ? {
-            'webkit-transform':
-              'translateX(-' + this.nestedDepth * 80 + 'px)',
-            transform: 'translateX(-' + this.nestedDepth * 80 + 'px)'
-          }
+              'webkit-transform':
+                'translateX(-' + this.nestedDepth * 80 + 'px)',
+              transform: 'translateX(-' + this.nestedDepth * 80 + 'px)'
+            }
           : ''
       },
       handleBulkRowClick(event) {

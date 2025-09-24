@@ -6,26 +6,43 @@
     @close="close"
   >
     <template v-slot:overlay__header v-if="editorNames.length > 1">
-      <a17-dropdown ref="editorDropdown" position="bottom-left" :maxWidth="400" :maxHeight="300">
-            <a17-button class="editorDropdown__trigger" @click="$refs.editorDropdown.toggle()">
-              {{ currentEditorLabel }} <span v-svg symbol="dropdown_module"></span>
-            </a17-button>
-            <template v-slot:dropdown__content>
-              <div>
-                <button type="button" class="editorDropdown" @click="updateEditorName(editorName.value)" v-for="editorName in editorNames" :key="editorName.value">
-                  {{ editorName.label }}
-                </button>
-              </div>
-            </template>
-          </a17-dropdown>
+      <a17-dropdown
+        ref="editorDropdown"
+        position="bottom-left"
+        :maxWidth="400"
+        :maxHeight="300"
+      >
+        <a17-button
+          class="editorDropdown__trigger"
+          @click="$refs.editorDropdown.toggle()"
+        >
+          {{ currentEditorLabel }} <span v-svg symbol="dropdown_module"></span>
+        </a17-button>
+        <template v-slot:dropdown__content>
+          <div>
+            <button
+              type="button"
+              class="editorDropdown"
+              @click="updateEditorName(editorName.value)"
+              v-for="editorName in editorNames"
+              :key="editorName.value"
+            >
+              {{ editorName.label }}
+            </button>
+          </div>
+        </template>
+      </a17-dropdown>
     </template>
-    <a17-blocks-list :editor-name="editorName" v-slot="{
-      availableBlocks,
-      hasBlockActive,
-      savedBlocks,
-      editorNames,
-      moveBlock
-    }">
+    <a17-blocks-list
+      :editor-name="editorName"
+      v-slot="{
+        availableBlocks,
+        hasBlockActive,
+        savedBlocks,
+        editorNames,
+        moveBlock
+      }"
+    >
       <div class="editor">
         <a17-button
           v-if="revisions.length"
@@ -112,7 +129,7 @@
 </template>
 
 <script>
-  import { mapGetters,mapState } from 'vuex'
+  import { mapGetters, mapState } from 'vuex'
 
   import A17BlocksList from '@/components/blocks/BlocksList'
   import A17EditorPreview from '@/components/editor/EditorPreview.vue'
@@ -138,7 +155,7 @@
         default: true
       }
     },
-    data () {
+    data() {
       return {
         editorName: null,
         editorOpen: false,
@@ -146,22 +163,24 @@
       }
     },
     computed: {
-      currentEditorLabel () {
-        const current = this.editorNames && this.editorNames.find(editorName => editorName.value === this.editorName)
+      currentEditorLabel() {
+        const current =
+          this.editorNames &&
+          this.editorNames.find(
+            editorName => editorName.value === this.editorName
+          )
         return current && current.label
       },
       ...mapState({
         revisions: state => state.revision.all,
         editorNamesBase: state => state.blocks.editorNames
       }),
-      ...mapGetters([
-        'blocks'
-      ]),
+      ...mapGetters(['blocks']),
       editorNames() {
         return this.editorNamesBase.filter(editor => editor.nested === false)
       }
     },
-    provide () {
+    provide() {
       return {
         sandbox: this.previewSandbox
       }
@@ -176,19 +195,19 @@
         }
       },
       // EditorName functions
-      initEditorName () {
+      initEditorName() {
         if (!this.editorName) {
-          const editorName = (this.editorNames[0] && this.editorNames[0].value)
+          const editorName = this.editorNames[0] && this.editorNames[0].value
           this.updateEditorName(editorName)
         }
       },
-      updateEditorName (editorName) {
+      updateEditorName(editorName) {
         if (this.editorName !== editorName) {
           this.editorName = editorName
         }
       },
       // Editor state functions
-      open (index, editorName = false) {
+      open(index, editorName = false) {
         if (editorName) {
           this.updateEditorName(editorName)
         }
@@ -197,14 +216,14 @@
 
         this.$refs.overlay.open()
       },
-      close () {
+      close() {
         this.editorOpen = false
       },
-      resize () {
+      resize() {
         window.addEventListener('mousemove', this.resizeSidebar, false)
         window.addEventListener('mouseup', this.stopResizeSidebar, false)
       },
-      resizeSidebar (event) {
+      resizeSidebar(event) {
         const sidebar = this.$refs.sidebar
         const windowWidth = window.innerWidth
         if (sidebar) {
@@ -212,7 +231,7 @@
             ((event.clientX - sidebar.offsetLeft) / windowWidth) * 100 + '%'
         }
       },
-      stopResizeSidebar () {
+      stopResizeSidebar() {
         window.removeEventListener('mousemove', this.resizeSidebar, false)
         window.removeEventListener('mouseup', this.stopResizeSidebar, false)
 
@@ -220,11 +239,11 @@
         this.$refs.previews.resizeAllIframes()
       },
       // Open Revision modal
-      openPreview () {
+      openPreview() {
         if (this.$root.$refs.preview) this.$root.$refs.preview.open()
       }
     },
-    created () {
+    created() {
       this.initEditorName()
     }
   }
