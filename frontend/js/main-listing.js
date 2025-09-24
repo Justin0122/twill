@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import store from '@/store'
 import { DATATABLE, MODALEDITION, FORM } from '@/store/mutations'
 import ACTIONS from '@/store/actions'
@@ -38,23 +38,7 @@ import { getStorage } from '@/utils/localeStorage.js'
 // mixins
 import { FormatPermalinkMixin } from '@/mixins'
 
-// configuration
-Vue.use(A17Config)
-Vue.use(A17Notif)
-
-store.registerModule('datatable', datatable)
-store.registerModule('language', language)
-store.registerModule('form', form)
-store.registerModule('modalEdition', modalEdition)
-store.registerModule('attributes', attributes)
-
-registerCustomComponents()
-
-/* eslint-disable no-new */
-/* eslint no-unused-vars: "off" */
-window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
-  store, // inject store to all children
-  el: '#app',
+const app = createApp({
   components: {
     'a17-fieldset': a17Fieldset,
     'a17-filter': a17Filter,
@@ -67,7 +51,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
   },
   mixins: [FormatPermalinkMixin],
   computed: {
-    hasBulkIds: function() {
+    hasBulkIds: function () {
       return this.bulkIds.length > 0
     },
     ...mapState({
@@ -77,7 +61,7 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
     })
   },
   methods: {
-    create: function() {
+    create: function () {
       if (this.$refs.editionModal) {
         this.$store.commit(MODALEDITION.UPDATE_MODAL_ACTION, '')
         this.$store.commit(MODALEDITION.UPDATE_MODAL_MODE, 'create')
@@ -85,59 +69,48 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
         this.$refs.editionModal.open()
       }
     },
-    reloadDatas: function() {
+    reloadDatas: function () {
       // reload datas
       this.$store.dispatch(ACTIONS.GET_DATATABLE)
     },
-    clearFiltersAndReloadDatas: function() {
+    clearFiltersAndReloadDatas: function () {
       this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
       this.$store.commit(DATATABLE.CLEAR_DATATABLE_FILTER)
 
-      Object.keys(this.$refs)
-        .filter(k => {
-          return k.indexOf('filterDropdown[') === 0
-        })
-        .map(k => {
-          return this.$refs[k].updateValue()
-        })
+      Object.keys(this.$refs).filter(k => {
+        return k.indexOf('filterDropdown[') === 0
+      }).map(k => {
+        return this.$refs[k].updateValue()
+      })
 
       this.reloadDatas()
     },
-    filterListing: function(formData) {
+    filterListing: function (formData) {
       const self = this
       this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
-      this.$store.commit(
-        DATATABLE.UPDATE_DATATABLE_FILTER,
-        formData || { search: '' }
-      )
+      this.$store.commit(DATATABLE.UPDATE_DATATABLE_FILTER, formData || { search: '' })
 
-      this.$nextTick(function() {
+      this.$nextTick(function () {
         self.reloadDatas()
       })
     }
   },
-  mounted: function() {
+  mounted: function () {
     if (window[process.env.VUE_APP_NAME].openCreate) this.create()
   },
-  created: function() {
-    openMediaLibrary()
+  created: function () {
+    openMediaLibrary(this)
 
     let reload = false
     const pageOffset = getStorage(this.localStorageKey + '_page-offset')
     if (pageOffset) {
-      this.$store.commit(
-        DATATABLE.UPDATE_DATATABLE_OFFSET,
-        parseInt(pageOffset)
-      )
+      this.$store.commit(DATATABLE.UPDATE_DATATABLE_OFFSET, parseInt(pageOffset))
       reload = true
     }
 
     const columnsVisible = getStorage(this.localStorageKey + '_columns-visible')
     if (columnsVisible) {
-      this.$store.commit(
-        DATATABLE.UPDATE_DATATABLE_VISIBLITY,
-        JSON.parse(columnsVisible)
-      )
+      this.$store.commit(DATATABLE.UPDATE_DATATABLE_VISIBLITY, JSON.parse(columnsVisible))
       reload = true
     }
 
@@ -146,6 +119,25 @@ window[process.env.VUE_APP_NAME].vm = window.vm = new Vue({
     }
   }
 })
+
+store.registerModule('datatable', datatable)
+store.registerModule('language', language)
+store.registerModule('form', form)
+store.registerModule('modalEdition', modalEdition)
+store.registerModule('attributes', attributes)
+
+app.use(store)
+// configuration
+app.use(A17Config)
+app.use(A17Notif)
+
+registerCustomComponents(app)
+
+app.mount('#app')
+
+/* eslint-disable no-new */
+/* eslint no-unused-vars: "off" */
+window[process.env.VUE_APP_NAME].vm = window.vm = app
 
 // DOM Ready general actions
 document.addEventListener('DOMContentLoaded', main)

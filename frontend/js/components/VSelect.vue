@@ -1,49 +1,38 @@
 <template>
   <div class="vselectOuter">
-    <a17-inputframe
-      :error="error"
-      :label="label"
-      :note="note"
-      :size="size"
-      :name="name"
-      :label-for="uniqId"
-      :required="required"
-      :add-new="addNew"
-    >
+    <a17-inputframe :error="error" :label="label" :note="note" :size="size" :name="name" :label-for="uniqId"
+                    :required="required" :add-new="addNew">
       <div class="vselect" :class="vselectClasses">
         <div class="vselect__field">
-          <input type="hidden" :name="name" :id="uniqId" :value="inputValue" />
+          <input type="hidden" :name="name" :id="uniqId" :value="inputValue"/>
           <v-select
-            :multiple="multiple"
-            :placeholder="placeholder"
-            :value="value"
-            :options="currentOptions"
-            :searchable="searchable"
-            :selectable="selectable"
-            :clearSearchOnSelect="clearSearchOnSelect"
-            :clearable="clearable"
-            :label="optionsLabel"
-            :taggable="taggable"
-            :pushTags="pushTags"
-            :transition="transition"
-            :requiredValue="required"
-            :maxHeight="maxHeight"
-            :disabled="disabled"
-            @input="updateValue"
-            @search="getOptions"
+              :multiple="multiple"
+              :placeholder="placeholder"
+              :model-value="value"
+              :options="currentOptions"
+              :searchable="searchable"
+              :selectable="selectable"
+              :clearSearchOnSelect="clearSearchOnSelect"
+              :clearable="clearable"
+              :label="optionsLabel"
+              :taggable="taggable"
+              :pushTags="pushTags"
+              :transition="transition"
+              :requiredValue="required"
+              :maxHeight="maxHeight"
+              :disabled="disabled"
+              @update:modelValue="updateValue"
+              @search="getOptions"
           >
-            <span slot="no-options">{{ emptyText }}</span>
+            <template v-slot:no-options>
+              <span>{{ emptyText }}</span>
+            </template>
           </v-select>
         </div>
       </div>
     </a17-inputframe>
     <template v-if="addNew">
-      <a17-modal-add
-        ref="addModal"
-        :name="name"
-        :form-create="addNew"
-        :modal-title="'Add new ' + label"
-      >
+      <a17-modal-add ref="addModal" :name="name" :form-create="addNew" :modal-title="'Add new ' + label">
         <slot name="addModal"></slot>
       </a17-modal-add>
     </template>
@@ -61,6 +50,7 @@
   import randKeyMixin from '@/mixins/randKey'
   export default {
     name: 'A17VueSelect',
+    emits: ['change'],
     mixins: [randKeyMixin, InputframeMixin, FormStoreMixin, AttributesMixin],
     props: {
       placeholder: {
@@ -83,13 +73,11 @@
         type: Boolean,
         default: false
       },
-      taggable: {
-        // Enable/disable creating options from searchInput.
+      taggable: { // Enable/disable creating options from searchInput.
         type: Boolean,
         default: false
       },
-      pushTags: {
-        // When true, newly created tags will be added to the options list.
+      pushTags: { // When true, newly created tags will be added to the options list.
         type: Boolean,
         default: false
       },
@@ -103,7 +91,7 @@
       },
       selectable: {
         type: Function,
-        default: option => option.selectable ?? true
+        default: option => option.selectable ?? true,
       },
       clearSearchOnSelect: {
         type: Boolean,
@@ -113,17 +101,16 @@
         default: null
       },
       emptyText: {
-        default() {
-          return this.$trans('select.empty-text', 'Sorry, no matching options.')
+        default () {
+          return window.$trans('select.empty-text', 'Sorry, no matching options.')
         }
       },
       options: {
-        default: function() {
+        default: function () {
           return []
         }
       },
-      optionsLabel: {
-        // label in vueselect
+      optionsLabel: { // label in vueselect
         type: String,
         default: 'label'
       },
@@ -139,8 +126,7 @@
         type: Boolean,
         default: false
       },
-      maxHeight: {
-        // max-height of the dropdown menu
+      maxHeight: { // max-height of the dropdown menu
         type: String,
         default: '400px'
       }
@@ -148,7 +134,7 @@
     components: {
       'v-select': extendedVSelect
     },
-    data: function() {
+    data: function () {
       return {
         value: this.selected,
         currentOptions: this.options,
@@ -156,24 +142,22 @@
       }
     },
     watch: {
-      options: function(options) {
+      options: function (options) {
         this.currentOptions = this.options
       }
     },
     computed: {
-      uniqId: function(value) {
+      uniqId: function (value) {
         return this.name + '-' + this.randKey
       },
       inputValue: {
-        get: function() {
+        get: function () {
           if (this.value) {
-            if (!this.multiple) {
-              // single selects
+            if (!this.multiple) { // single selects
               if (typeof this.value === 'object') {
                 return this.value.value
               }
-            } else {
-              // multiple selects
+            } else { // multiple selects
               if (Array.isArray(this.value)) {
                 if (typeof this.value[0] === 'object') {
                   return this.value.map(e => e.value)
@@ -186,7 +170,7 @@
             return ''
           }
         },
-        set: function(value) {
+        set: function (value) {
           if (Array.isArray(value)) {
             if (this.taggable) {
               this.value = value
@@ -217,7 +201,7 @@
           }
         }
       },
-      vselectClasses: function() {
+      vselectClasses: function () {
         return [
           this.value ? 'vselect--has-value' : '',
           this.multiple ? 'vselect--multiple' : 'vselect--single',
@@ -228,22 +212,21 @@
       }
     },
     methods: {
-      updateFromStore: function(newValue) {
-        // called from the formStore mixin
+      updateFromStore: function (newValue) { // called from the formStore mixin
         this.inputValue = newValue
       },
-      isAjax: function() {
+      isAjax: function () {
         return this.ajaxUrl !== ''
       },
-      updateValue: function(value) {
+      updateValue: function (value) {
         // Filter out duplicate values
         if (this.multiple) {
           // For multiple selection
-          this.value = [...new Set(value)]
+          this.value = [...new Set(value)];
         } else {
           // For single selection
           if (!value) {
-            const allOption = this.options.find(o => o.value === 'all')
+            const allOption = this.options.find((o) => o.value === 'all');
             this.value = allOption ?? undefined
           } else {
             this.value = value
@@ -254,7 +237,7 @@
         this.saveIntoStore()
         this.$emit('change', value)
       },
-      getOptions: debounce(function(search, loading) {
+      getOptions: debounce(function (search, loading) {
         if (!this.isAjax()) return true
         loading(true)
         this.$http.get(this.ajaxUrl, { params: { q: search } }).then(

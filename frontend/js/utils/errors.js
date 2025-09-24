@@ -13,9 +13,11 @@ export function globalError(
   const statusCode =
     error?.value?.response?.status ?? error?.response?.status ?? null
 
+  // eslint-disable-next-line no-console
   console.error(errorMessage)
 
   if (error?.value && error.value?.response) {
+    // eslint-disable-next-line no-console
     console.error(error.value.response?.data)
   }
 

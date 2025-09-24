@@ -51,6 +51,7 @@
 
   export default {
     name: 'A17MediaMetadata',
+    emits: ['change'],
     props: {
       media: {
         type: Object,

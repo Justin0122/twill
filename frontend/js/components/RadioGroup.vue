@@ -34,6 +34,7 @@
   export default {
     name: 'A17CheckboxGroup',
     mixins: [randKeyMixin, InputframeMixin, FormStoreMixin],
+    emits: ['change'],
     props: {
       radioClass: {
         type: String,

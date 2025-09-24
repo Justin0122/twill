@@ -2,50 +2,27 @@
   <div class="multiselectorPermissions">
     <div class="multiselectorPermissions__filter" v-if="searchable">
       <a17-filter @submit="submitFilter" :full-width="true">
-        <div
-          slot="additional-actions"
-          v-if="groups.length && listUser"
-          class="multiselectorPermissions__groups"
-        >
-          <a17-dropdown
-            class="multiselectorPermissions__dd"
-            ref="groupDropdown"
-            position="bottom-right"
-            :clickable="true"
-          >
-            <button
-              class="multiselectorPermissions__button"
-              @click="$refs.groupDropdown.toggle()"
-              type="button"
-            >
-              Groups
-            </button>
-            <div slot="dropdown__content">
-              <a17-checkboxgroup
-                name="permissionsGroups"
-                :selected="activeGroups"
-                :options="groups"
-                @change="updateUserPermission"
-              />
-            </div>
-          </a17-dropdown>
-        </div>
+        <template v-slot:additional-actions>
+          <div v-if="groups.length && listUser" class="multiselectorPermissions__groups">
+            <a17-dropdown class="multiselectorPermissions__dd" ref="groupDropdown"
+                          position="bottom-right" :clickable="true">
+              <button class="multiselectorPermissions__button" @click="$refs.groupDropdown.toggle()" type="button">Groups</button>
+              <template v-slot:dropdown__content>
+                <div>
+                  <a17-checkboxgroup name="permissionsGroups" :selected="activeGroups" :options="groups" @change="updateUserPermission" />
+                </div>
+              </template>
+            </a17-dropdown>
+          </div>
+        </template>
       </a17-filter>
     </div>
     <div class="multiselectorPermissions__items">
       <slot />
-      <div
-        class="multiselectorPermissions__empty"
-        v-if="empty"
-        :style="emptyStyle"
-      >
+      <div class="multiselectorPermissions__empty" v-if="empty" :style="emptyStyle">
         <h4>{{ emptyMessage }}</h4>
       </div>
-      <div
-        class="multiselectorPermissions__empty"
-        v-if="allHidden"
-        :style="emptyStyle"
-      >
+      <div class="multiselectorPermissions__empty" v-if="allHidden" :style="emptyStyle">
         <h4>{{ allHiddenMessage }}</h4>
       </div>
     </div>
@@ -53,7 +30,7 @@
 </template>
 
 <script>
-  import { mapGetters, mapState } from 'vuex'
+  import { mapGetters,mapState } from 'vuex'
 
   import { FORM } from '@/store/mutations'
 
@@ -82,7 +59,7 @@
         default: 'Use the search box to find items'
       }
     },
-    data: function() {
+    data: function () {
       return {
         empty: false,
         allHidden: false,
@@ -91,29 +68,27 @@
       }
     },
     computed: {
-      emptyStyle: function() {
+      emptyStyle: function () {
         return { height: this.emptyHeight + 'px' }
       },
-      ...mapGetters(['fieldsByName']),
+      ...mapGetters([
+        'fieldsByName'
+      ]),
       ...mapState({
         groups: state => state.permissions.groups,
         groupUserMapping: state => state.permissions.groupUserMapping
       })
     },
-    mounted() {
+    mounted () {
       if (!this.listUser) {
-        const allItems = this.$el.querySelectorAll(
-          '[data-singleselect-permissions-field]'
-        )
+        const allItems = this.$el.querySelectorAll('[data-singleselect-permissions-field]')
         const filterClass = 'multiselectorPermissions__item--hidden'
 
         if (allItems.length) {
           let hiddenItemsCount = 0
 
-          allItems.forEach(itemEl => {
-            const fieldName = itemEl.getAttribute(
-              'data-singleselect-permissions-field'
-            )
+          allItems.forEach((itemEl) => {
+            const fieldName = itemEl.getAttribute('data-singleselect-permissions-field')
             const fieldValue = this.fieldsByName(fieldName)
             const permission = fieldValue.length ? fieldValue[0].value : ''
 
@@ -130,24 +105,17 @@
       }
     },
     methods: {
-      submitFilter(formData) {
-        const allItems = this.$el.querySelectorAll(
-          '[data-singleselect-permissions-filterable]'
-        )
+      submitFilter (formData) {
+        const allItems = this.$el.querySelectorAll('[data-singleselect-permissions-filterable]')
         const filterClass = 'multiselectorPermissions__item--hidden'
 
         if (allItems.length) {
-          this.emptyHeight = Math.max(
-            120,
-            allItems[0].parentElement.offsetHeight
-          )
+          this.emptyHeight = Math.max(120, allItems[0].parentElement.offsetHeight)
           this.empty = true
           this.allHidden = false
 
-          allItems.forEach(itemEl => {
-            const filterValue = itemEl.getAttribute(
-              'data-singleselect-permissions-filterable'
-            )
+          allItems.forEach((itemEl) => {
+            const filterValue = itemEl.getAttribute('data-singleselect-permissions-filterable')
 
             if (formData.search) {
               const query = formData.search
@@ -164,27 +132,24 @@
           })
         }
       },
-      setUserPermission(fieldName) {
+      setUserPermission (fieldName) {
         const field = {}
         field.name = fieldName
         field.value = 'view-item'
         this.$store.commit(FORM.UPDATE_FORM_FIELD, field)
       },
-      updateUserPermission(selectedGroups) {
+      updateUserPermission (selectedGroups) {
         this.activeGroups = selectedGroups
 
-        selectedGroups.forEach(selectedGroup => {
+        selectedGroups.forEach((selectedGroup) => {
           if (this.groupUserMapping[selectedGroup]) {
-            this.groupUserMapping[selectedGroup].forEach(userId => {
+            this.groupUserMapping[selectedGroup].forEach((userId) => {
               // If the user's permission is <= view, it will be updated
               const fieldName = `user_${userId}_permission`
               const currentPermission = this.fieldsByName(fieldName)
 
               if (currentPermission.length) {
-                if (
-                  currentPermission[0].value === '' ||
-                  currentPermission[0].value === 'view-item'
-                ) {
+                if (currentPermission[0].value === '' || currentPermission[0].value === 'view-item') {
                   this.setUserPermission(fieldName)
                 }
               } else {
@@ -207,9 +172,9 @@
   }
 
   .multiselectorPermissions__filter {
-    background: $color__border--light;
-    margin-left: -20px;
-    margin-right: -20px;
+    background:$color__border--light;
+    margin-left:-20px;
+    margin-right:-20px;
     padding-left: 20px;
     padding-right: 20px;
 
@@ -248,7 +213,7 @@
     }
 
     &.multiselectorPermissions__item--hidden {
-      display: none;
+      display : none;
     }
   }
 
@@ -279,7 +244,7 @@
     border: 1px solid $color__fborder;
     background-color: $color__background;
     border-radius: 2px;
-    color: $color__text--light;
+    color:$color__text--light;
     height: $nativeSelectHeight;
     min-width: 120px;
     text-align: left;
@@ -291,8 +256,8 @@
     }
 
     &::after {
-      content: '';
-      display: inline-block;
+      content:'';
+      display:inline-block;
       width: 0;
       height: 0;
       margin-top: -1px;
@@ -307,7 +272,7 @@
 
     &:focus,
     &:hover {
-      color: $color__text;
+      color:$color__text;
 
       &::after {
         border-color: $color__text transparent transparent;

@@ -1,70 +1,22 @@
 <template>
-  <form
-    class="filter"
-    :class="{
-      'filter--opened': opened,
-      'filter--single': !withNavigation,
-      'filter--full': !withNavigation && fullWidth,
-      'filter--withHiddenFilters': withHiddenFilters
-    }"
-    @submit.prevent="submitFilter"
-    ref="form"
-  >
+  <form class="filter" :class="{ 'filter--opened' : opened, 'filter--single' : !withNavigation, 'filter--full' : !withNavigation && fullWidth, 'filter--withHiddenFilters' : withHiddenFilters }" @submit.prevent="submitFilter" ref="form">
     <div class="filter__inner">
       <div class="filter__navigation"><slot name="navigation"></slot></div>
 
       <div class="filter__search">
-        <input
-          type="search"
-          class="form__input form__input--small"
-          name="search"
-          :value="searchValue"
-          :placeholder="placeholder"
-          @input="onSearchInput"
-        />
-        <a17-button
-          class="filter__toggle"
-          variant="ghost"
-          @click="toggleFilter"
-          v-if="withHiddenFilters"
-          :aria-expanded="opened ? 'true' : 'false'"
-          >{{ $trans('filter.toggle-label', 'Filter') }}
-          <span v-svg symbol="dropdown_module"></span
-        ></a17-button>
+        <input type="search" class="form__input form__input--small" name="search" :value="searchValue" :placeholder="placeholder" @input="onSearchInput" />
+        <a17-button class="filter__toggle" variant="ghost" @click="toggleFilter" v-if="withHiddenFilters" :aria-expanded="opened ?  'true' : 'false'" >{{ $trans('filter.toggle-label', 'Filter') }} <span v-svg symbol="dropdown_module"></span></a17-button>
         <slot name="additional-actions"></slot>
         <!-- Fix for Safari: the hidden submit button enables form submission by pressing Enter... -->
-        <button class="visually-hidden" aria-hidden="true" type="submit">
-          {{ $trans('filter.apply-btn', 'Apply') }}
-        </button>
+        <button class="visually-hidden" aria-hidden="true" type="submit">{{ $trans('filter.apply-btn', 'Apply') }}</button>
       </div>
     </div>
-    <transition
-      :css="false"
-      :duration="275"
-      @before-enter="beforeEnter"
-      @enter="enter"
-      @before-leave="beforeLeave"
-      @leave="leave"
-    >
-      <div
-        class="filter__more"
-        v-show="opened"
-        v-if="withHiddenFilters"
-        :aria-hidden="!opened ? true : null"
-        ref="more"
-      >
+    <transition :css='false' :duration="275" @before-enter="beforeEnter" @enter="enter" @before-leave="beforeLeave" @leave="leave">
+      <div class="filter__more" v-show="opened" v-if="withHiddenFilters" :aria-hidden="!opened ? true : null" ref="more">
         <div class="filter__moreInner" ref="moreInner">
           <slot name="hidden-filters"></slot>
-          <a17-button variant="ghost" type="submit">{{
-            $trans('filter.apply-btn', 'Apply')
-          }}</a17-button>
-          <a17-button
-            v-if="clearOption"
-            variant="ghost"
-            type="button"
-            @click="clear"
-            >{{ $trans('filter.clear-btn', 'Clear') }}</a17-button
-          >
+          <a17-button variant="ghost" type="submit">{{ $trans('filter.apply-btn', 'Apply') }}</a17-button>
+          <a17-button v-if="clearOption" variant="ghost" type="button" @click="clear">{{ $trans('filter.clear-btn', 'Clear') }}</a17-button>
         </div>
       </div>
     </transition>
@@ -78,6 +30,7 @@
 
   export default {
     name: 'A17Filter',
+    emits: ['submit', 'clear'],
     props: {
       initialSearchValue: {
         type: String,
@@ -85,8 +38,8 @@
       },
       placeholder: {
         type: String,
-        default() {
-          return this.$trans('filter.search-placeholder', 'Search')
+        default () {
+          return window.$trans('filter.search-placeholder', 'Search')
         }
       },
       closed: {
@@ -102,7 +55,7 @@
         default: false
       }
     },
-    data: function() {
+    data: function () {
       return {
         openable: !this.closed,
         open: false,
@@ -113,28 +66,28 @@
       }
     },
     computed: {
-      opened: function() {
+      opened: function () {
         return this.open && this.openable
       }
     },
     watch: {
-      closed: function() {
+      closed: function () {
         this.openable = !this.closed
       },
-      initialSearchValue: function() {
+      initialSearchValue: function () {
         this.searchValue = this.initialSearchValue
       }
     },
     methods: {
-      getHeight: function() {
+      getHeight: function () {
         // Retrieve height from more inner container
         return this.$refs.moreInner.clientHeight
       },
-      beforeEnter: function(el) {
+      beforeEnter: function (el) {
         el.style.height = '0px'
         el.style.overflow = 'hidden'
       },
-      enter: function(el, done) {
+      enter: function (el, done) {
         // Reset height.
         this.resetHeight()
 
@@ -151,7 +104,7 @@
         // Add resize event.
         window.addEventListener('resize', this._resize, false)
       },
-      beforeLeave: function(el) {
+      beforeLeave: function (el) {
         // Delete timeout if exists.
         if (this.transitionTimeout) {
           clearTimeout(this.transitionTimeout)
@@ -166,18 +119,18 @@
         // Remove resize event.
         window.removeEventListener('resize', this._resize)
       },
-      leave: function(el, done) {
+      leave: function (el, done) {
         el.style.height = '0px'
       },
-      toggleFilter: function() {
+      toggleFilter: function () {
         this.openable = true
         this.open = !this.open
       },
-      submitFilter: function() {
+      submitFilter: function () {
         const formData = FormDataAsObj(this.$refs.form)
         this.$emit('submit', formData)
       },
-      onSearchInput: function(event) {
+      onSearchInput: function (event) {
         this.searchValue = event.target.value
         this.debouncedEmitSearch()
       },
@@ -185,18 +138,18 @@
         const formData = FormDataAsObj(this.$refs.form)
         this.$emit('submit', formData)
       },
-      clear: function() {
+      clear: function () {
         this.searchValue = ''
         this.$emit('clear')
       },
-      resetHeight: function() {
+      resetHeight: function () {
         // Return if ref is not set.
         if (!this.$refs.more) return
 
         // Set height to the container.
         this.$refs.more.style.height = this.getHeight() + 'px'
       },
-      _resize: debounce(function() {
+      _resize: debounce(function () {
         this.resetHeight()
       }, 50)
     },
@@ -211,39 +164,37 @@
 </script>
 
 <style lang="scss" scoped>
+
   .filter__inner {
     display: flex;
     justify-content: space-between;
   }
 
   .filter__search {
-    padding: 20px 0;
+    padding:20px 0;
     white-space: nowrap;
 
     input {
-      display: inline-block;
-      width: 20vw;
-      max-width: 300px;
+      display:inline-block;
+      width:20vw;
+      max-width:300px;
     }
 
     .icon {
-      position: relative;
-      top: -2px;
-      margin-left: 9px;
+      position:relative;
+      top:-2px;
+      margin-left:9px;
     }
 
-    div {
-      display: inline-block;
+    :slotted(div) {
+      display:inline-block;
 
-      button:not(.button--validate),
-      a {
+      button:not(.button--validate), a{
         vertical-align: middle;
       }
 
-      input,
-      button,
-      a {
-        margin-left: 15px;
+      input, button, a {
+        margin-left:15px;
       }
     }
   }
@@ -252,14 +203,14 @@
   @include breakpoint(xsmall) {
     .filter--withHiddenFilters {
       .filter__inner {
-        display: block;
+        display:block;
       }
 
       .filter__search {
-        display: flex;
+        display:flex;
 
         input {
-          flex-grow: 1;
+          flex-grow:1;
         }
       }
     }
@@ -267,11 +218,11 @@
 
   .filter--full {
     .filter__search {
-      display: flex;
+      display:flex;
       width: 100%;
 
       > div {
-        display: flex;
+        display:flex;
         flex-direction: row-reverse;
       }
     }
@@ -284,7 +235,7 @@
 
   .filter__moreInner {
     padding: 20px 0 0 0;
-    border-top: 1px solid $color__border;
+    border-top:1px solid $color__border;
 
     button {
       margin-right: 10px;
@@ -301,11 +252,11 @@
 
   .filter__toggle {
     position: relative;
-    padding-right: 20px + 20px !important;
+    padding-right:  20px + 20px !important;
     margin-left: 15px !important;
 
     .icon {
-      transition: all 0.2s linear;
+      transition: all .2s linear;
       transform: rotate(0deg);
       position: absolute;
       right: 20px;
@@ -329,6 +280,7 @@
 </style>
 
 <style lang="scss">
+
   .filter {
     .filter__moreInner {
       .input {

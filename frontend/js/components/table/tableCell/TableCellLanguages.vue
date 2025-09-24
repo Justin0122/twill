@@ -26,6 +26,7 @@
 
   export default {
     name: 'A17TableCellLanguages',
+    emits: ['editInPlace'],
     mixins: [TableCellMixin],
     props: {
       languages: {

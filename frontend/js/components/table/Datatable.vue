@@ -1,48 +1,28 @@
 <template>
   <div class="datatable" v-sticky data-sticky-id="thead" data-sticky-offset="0">
+
     <!-- Sticky table head -->
     <div class="datatable__sticky" data-sticky-top="thead">
       <div class="datatable__stickyHead" data-sticky-target="thead">
         <div class="container">
           <div class="datatable__stickyInner">
             <div class="datatable__setup">
-              <a17-dropdown
-                class="datatable__setupDropdown"
-                v-if="hideableColumns.length"
-                ref="setupDropdown"
-                position="bottom-right"
-                :title="$trans('listing.columns.show')"
-                :clickable="true"
-                :offset="-10"
-              >
-                <button
-                  class="datatable__setupButton"
-                  @click="$refs.setupDropdown.toggle()"
-                >
-                  <span v-svg symbol="preferences"></span>
-                </button>
-                <div slot="dropdown__content">
-                  <a17-checkboxgroup
-                    name="visibleColumns"
-                    :options="checkboxesColumns"
-                    :selected="visibleColumnsNames"
-                    @change="updateActiveColumns"
-                    :min="2"
-                  />
-                </div>
+              <a17-dropdown class="datatable__setupDropdown" v-if="hideableColumns.length" ref="setupDropdown"
+                            position="bottom-right" :title="$trans('listing.columns.show')" :clickable="true" :offset="-10">
+                <button class="datatable__setupButton" @click="$refs.setupDropdown.toggle()">
+                  <span v-svg symbol="preferences"></span></button>
+                <template v-slot:dropdown__content>
+                  <div>
+                    <a17-checkboxgroup name="visibleColumns" :options="checkboxesColumns" :selected="visibleColumnsNames"
+                                       @change="updateActiveColumns" :min="2"/>
+                  </div>
+                </template>
               </a17-dropdown>
             </div>
             <div class="datatable__stickyTable">
-              <a17-table
-                :columnsWidth="columnsWidth"
-                :xScroll="xScroll"
-                @scroll="updateScroll"
-              >
+              <a17-table :columnsWidth="columnsWidth" :xScroll="xScroll" @scroll="updateScroll">
                 <thead>
-                  <a17-tablehead
-                    :columns="visibleColumns"
-                    @sortColumn="updateSort"
-                  />
+                <a17-tablehead :columns="visibleColumns" @sortColumn="updateSort"/>
                 </thead>
               </a17-table>
             </div>
@@ -56,35 +36,24 @@
       <div class="datatable__table" :class="isEmptyDatable">
         <a17-table :xScroll="xScroll" @scroll="updateScroll">
           <thead>
-            <a17-tablehead :columns="visibleColumns" ref="thead" />
+          <a17-tablehead :columns="visibleColumns" ref="thead"/>
           </thead>
           <template v-if="draggable">
-            <draggable
-              class="datatable__drag"
-              :tag="'tbody'"
-              v-model="rows"
-              v-bind="dragOptions"
-            >
-              <template v-for="(row, index) in rows">
-                <a17-tablerow
-                  :row="row"
-                  :index="index"
-                  :columns="visibleColumns"
-                  :key="row.id"
-                />
+            <draggable class="datatable__drag" v-bind="dragOptions" :tag="'tbody'" v-model="rows">
+              <!-- eslint-disable vue/no-v-for-template-key -->
+              <template v-for="(row, index) in rows" :key="row.id">
+                <a17-tablerow :row="row" :index="index" :columns="visibleColumns"/>
               </template>
+              <!-- eslint-enable -->
             </draggable>
           </template>
 
           <tbody v-else>
-            <template v-for="(row, index) in rows">
-              <a17-tablerow
-                :row="row"
-                :index="index"
-                :columns="visibleColumns"
-                :key="row.id"
-              />
-            </template>
+          <!-- eslint-disable vue/no-v-for-template-key -->
+          <template v-for="(row, index) in rows" :key="row.id">
+            <a17-tablerow :row="row" :index="index" :columns="visibleColumns"/>
+          </template>
+          <!-- eslint-enable -->
           </tbody>
         </a17-table>
 
@@ -93,19 +62,9 @@
             <h4>{{ emptyMessage }}</h4>
           </div>
         </template>
-        <a17-paginate
-          v-if="maxPage > 1 || (initialMaxPage > maxPage && !isEmpty)"
-          :max="maxPage"
-          :value="page"
-          :offset="offset"
-          :availableOffsets="[
-            initialOffset,
-            initialOffset * 3,
-            initialOffset * 6
-          ]"
-          @changePage="updatePage"
-          @changeOffset="updateOffset"
-        />
+        <a17-paginate v-if="maxPage > 1 || initialMaxPage > maxPage && !isEmpty" :max="maxPage" :value="page"
+                      :offset="offset" :availableOffsets="[initialOffset,initialOffset*3,initialOffset*6]"
+                      @changePage="updatePage" @changeOffset="updateOffset"/>
       </div>
     </div>
     <a17-spinner v-if="loading">Loading&hellip;</a17-spinner>
@@ -114,7 +73,7 @@
 
 <script>
   import debounce from 'lodash/debounce'
-  import draggable from 'vuedraggable'
+  import { VueDraggableNext } from 'vue-draggable-next'
   import { mapState } from 'vuex'
 
   import a17Spinner from '@/components/Spinner.vue'
@@ -135,10 +94,10 @@
       'a17-tablerow': a17Tablerow,
       'a17-paginate': a17Paginate,
       'a17-spinner': a17Spinner,
-      draggable
+      draggable: VueDraggableNext
     },
     mixins: [DatatableMixin, DraggableMixin],
-    data: function() {
+    data: function () {
       return {
         handle: '.tablecell__handle',
         reorderable: !this.draggable,
@@ -147,11 +106,11 @@
       }
     },
     computed: {
-      checkboxesColumns: function() {
+      checkboxesColumns: function () {
         const checkboxes = []
 
         if (this.hideableColumns.length) {
-          this.hideableColumns.forEach(function(column) {
+          this.hideableColumns.forEach(function (column) {
             checkboxes.push({
               value: column.name,
               label: column.label
@@ -171,7 +130,7 @@
       })
     },
     methods: {
-      getColumnWidth: function() {
+      getColumnWidth: function () {
         const self = this
         const newColumnsWidth = []
         const tds = self.$refs.thead.$el.children
@@ -182,22 +141,22 @@
 
         self.columnsWidth = newColumnsWidth
       },
-      updateScroll: function(newValue) {
+      updateScroll: function (newValue) {
         this.xScroll = newValue
       },
-      resize: debounce(function() {
+      resize: debounce(function () {
         this.getColumnWidth()
       }, 100),
-      initEvents: function() {
+      initEvents: function () {
         const self = this
         window.addEventListener('resize', () => self.resize())
         self.resize()
       },
-      disposeEvents: function() {
+      disposeEvents: function () {
         const self = this
         window.removeEventListener('resize', self.resize())
       },
-      updateSort: function(column) {
+      updateSort: function (column) {
         if (!column.sortable) return
 
         // The listing should not be reordable if it is sorted
@@ -212,14 +171,14 @@
         // reload datas
         this.$store.dispatch(ACTIONS.GET_DATATABLE)
       },
-      updateOffset: function(value) {
+      updateOffset: function (value) {
         this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
         this.$store.commit(DATATABLE.UPDATE_DATATABLE_OFFSET, value)
 
         // reload datas
         this.$store.dispatch(ACTIONS.GET_DATATABLE)
       },
-      updatePage: function(value) {
+      updatePage: function (value) {
         if (value !== this.page) {
           this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, value)
 
@@ -227,10 +186,10 @@
           this.$store.dispatch(ACTIONS.GET_DATATABLE)
         }
       },
-      updateActiveColumns: function(values) {
+      updateActiveColumns: function (values) {
         this.$store.commit(DATATABLE.UPDATE_DATATABLE_VISIBLITY, values)
 
-        this.$nextTick(function() {
+        this.$nextTick(function () {
           this.getColumnWidth()
         })
 
@@ -239,18 +198,18 @@
       }
     },
     watch: {
-      loading: function() {
-        this.$nextTick(function() {
+      loading: function () {
+        this.$nextTick(function () {
           this.getColumnWidth()
         })
       }
     },
-    beforeMount: function() {
-      function findBulkColumn(column) {
+    beforeMount: function () {
+      function findBulkColumn (column) {
         return column.name === 'bulk'
       }
 
-      function findDraggableColumn(column) {
+      function findDraggableColumn (column) {
         return column.name === 'draggable'
       }
 
@@ -285,16 +244,17 @@
         }
       }
     },
-    mounted: function() {
+    mounted: function () {
       this.initEvents()
     },
-    beforeDestroy: function() {
+    beforeDestroy: function () {
       this.disposeEvents()
     }
   }
 </script>
 
 <style lang="scss" scoped>
+
   table {
     width: 100%;
   }
@@ -311,11 +271,7 @@
   .datatable__setupDropdown {
     float: right;
     padding: 18px 20px 16px 15px;
-    background: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 1) 25%
-    );
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 25%);
   }
 
   .datatable__setupButton {
@@ -376,11 +332,7 @@
         border-bottom: 1px solid rgba($color__black, 0.05);
 
         .datatable__setupDropdown {
-          background: linear-gradient(
-            to right,
-            rgba($color__border--light, 0) 0%,
-            $color__border--light 25%
-          );
+          background: linear-gradient(to right, rgba($color__border--light, 0) 0%, $color__border--light 25%);
         }
       }
     }

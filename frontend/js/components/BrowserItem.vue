@@ -49,6 +49,7 @@
 <script>
   export default {
     name: 'A17BrowserItem',
+    emits: ['delete'],
     props: {
       name: {
         type: String,

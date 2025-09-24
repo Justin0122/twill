@@ -6,45 +6,37 @@
           class="f--small"
           position="bottom-left"
           ref="blockDropdown"
-          :maxHeight="270"
-        >
-          <span
-            class="editorSidebar__counter f--tiny"
-            @click="toggleBlockDropdown"
-            >{{ blockIndex + 1 }}</span
-          >
-          <div slot="dropdown__content">
-            <button
-              type="button"
-              v-for="n in blocksLength"
-              @click="moveBlock(n - 1)"
-              :key="n"
-            >
-              {{ n }}
-            </button>
-          </div>
+          :maxHeight="270">
+            <span class="editorSidebar__counter f--tiny"
+                  @click="toggleBlockDropdown">{{ blockIndex + 1 }}</span>
+          <template v-slot:dropdown__content>
+            <div>
+              <button type="button"
+                      v-for="n in blocksLength"
+                      @click="moveBlock(n - 1)"
+                      :key="n">
+                {{ n }}
+              </button>
+            </div>
+          </template>
         </a17-dropdown>
         {{ block.title }}
       </div>
       <span>
-        <a
-          href="#"
-          class="f--small f--note f--underlined"
-          @click.prevent="deleteBlock"
-          >{{ $trans('editor.delete') }}</a
-        >
-      </span>
+          <a href="#"
+             class="f--small f--note f--underlined"
+             @click.prevent="deleteBlock">{{ $trans('editor.delete') }}</a>
+        </span>
     </div>
     <div class="editorSidebar__body">
-      <a17-inputframe label="" :name="`block.${block.id}`" />
-      <template>
-        <component
-          :name="`blocks[${block.id}]`"
-          v-bind:is="`${block.type}`"
-          v-bind="setBlockAttributes(block.attributes)"
-          key="`editor_${block.type}_${block.id}`"
-        />
-      </template>
+      <a17-inputframe label=""
+                      :name="`block.${block.id}`"/>
+
+      <component v-bind="setBlockAttributes(block.attributes)"
+                 :name="`blocks[${block.id}]`"
+                 v-bind:is="`${block.type}`"
+                 key="`editor_${block.type}_${block.id}`"/>
+
     </div>
   </div>
 </template>
@@ -56,7 +48,7 @@
     name: 'A17EditorSidebarBlockItem',
     mixins: [BlockEditorItemMixin],
     methods: {
-      setBlockAttributes(attributes) {
+      setBlockAttributes (attributes) {
         return {
           keepAlive: true,
           ...attributes
@@ -97,6 +89,7 @@
     ::v-deep(.input:first-child) {
       margin-top: 35px;
     }
+
 
     ::v-deep(.blocks:first-child) {
       margin-top: 35px;

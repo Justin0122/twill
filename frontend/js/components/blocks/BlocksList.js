@@ -11,24 +11,18 @@ export default {
     }
   },
   computed: {
-    availableBlocks() {
+    availableBlocks () {
       const splitted = this.editorName.split('|')
       const editorName = splitted[splitted.length - 1]
       return this.getAvailableBlocks(editorName)
     },
-    savedBlocks() {
+    savedBlocks () {
       return this.blocks(this.editorName)
     },
-    allSavedBlocks() {
-      return (
-        this.used &&
-        Object.keys(this.used).reduce(
-          (acc, editorName) => acc.concat(this.used[editorName]),
-          []
-        )
-      )
+    allSavedBlocks () {
+      return this.used && Object.keys(this.used).reduce((acc, editorName) => acc.concat(this.used[editorName]), [])
     },
-    hasBlockActive() {
+    hasBlockActive () {
       return Object.keys(this.activeBlock).length > 0
     },
     ...mapState({
@@ -42,13 +36,13 @@ export default {
     })
   },
   methods: {
-    reorderBlocks(value) {
+    reorderBlocks (value) {
       this.$store.commit(BLOCKS.REORDER_BLOCKS, {
         editorName: this.editorName,
         value
       })
     },
-    addBlock(block, editorName, index = -1) {
+    addBlock (block, editorName, index = -1) {
       this.$store.commit(BLOCKS.ADD_BLOCK, {
         editorName,
         block: {
@@ -58,14 +52,14 @@ export default {
         index
       })
     },
-    moveBlock({ oldIndex, newIndex }) {
+    moveBlock ({ oldIndex, newIndex }) {
       this.$store.commit(BLOCKS.MOVE_BLOCK, {
         editorName: this.editorName,
         oldIndex,
         newIndex
       })
     },
-    moveBlockToEditor(block, editorName, index, futureIndex) {
+    moveBlockToEditor (block, editorName, index, futureIndex) {
       this.$store.dispatch(ACTIONS.MOVE_BLOCK_TO_EDITOR, {
         block,
         editorName,
@@ -74,7 +68,7 @@ export default {
         id: Date.now() + Math.floor(Math.random() * 1000)
       })
     },
-    cloneBlock({ block, index }) {
+    cloneBlock ({ block, index }) {
       this.$store.dispatch(ACTIONS.DUPLICATE_BLOCK, {
         editorName: this.editorName,
         futureIndex: index,
@@ -83,8 +77,8 @@ export default {
       })
     }
   },
-  render() {
-    return this.$scopedSlots.default({
+  render () {
+    return this.$slots.default({
       availableBlocks: this.availableBlocks,
       savedBlocks: this.savedBlocks,
       reorderBlocks: this.reorderBlocks,

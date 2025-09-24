@@ -2,16 +2,16 @@ import a17Notification from '@/components/Notification.vue'
 import { NOTIFICATION } from '@/store/mutations'
 
 const A17Notif = {
-  install(Vue, opts) {
-    Vue.mixin({
+  install (app, opts) {
+    app.mixin({
       methods: {
-        notif: function(notifObj) {
+        notif: function (notifObj) {
           this.$store.commit(NOTIFICATION.SET_NOTIF, notifObj)
         }
       }
     })
 
-    Vue.component('a17-notif', a17Notification)
+    app.component('a17-notif', a17Notification)
   }
 }
 

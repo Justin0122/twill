@@ -2,58 +2,17 @@
   <div class="modalValidation">
     <a17-inputframe>
       <template v-if="mode === 'create'">
-        <a17-button
-          type="submit"
-          name="create"
-          variant="validate"
-          :disabled="isDisabled"
-          >{{ $trans('modal.create.button', 'Create') }}</a17-button
-        >
-        <a17-button
-          type="submit"
-          name="create-another"
-          v-on:click.native="$event.currentTarget.focus()"
-          v-if="!isDisabled"
-          variant="aslink-grey"
-          ><span>{{
-            $trans('modal.create.create-another', 'Create and add another')
-          }}</span></a17-button
-        >
+        <a17-button type="submit" name="create" variant="validate" :disabled="isDisabled">{{ $trans('modal.create.button', 'Create') }}</a17-button>
+        <a17-button type="submit" name="create-another" v-on:click="$event.currentTarget.focus()" v-if="!isDisabled" variant="aslink-grey"><span>{{ $trans('modal.create.create-another', 'Create and add another') }}</span></a17-button>
       </template>
-      <a17-button
-        type="submit"
-        name="update"
-        v-else-if="mode === 'update'"
-        variant="validate"
-        :disabled="isDisabled"
-        >{{ $trans('modal.update.button', 'Update') }}</a17-button
-      >
-      <a17-button
-        type="submit"
-        name="done"
-        v-else
-        variant="validate"
-        :disabled="isDisabled"
-        >{{ $trans('modal.done.button', 'Done') }}</a17-button
-      >
+      <a17-button type="submit" name="update" v-else-if="mode === 'update'" variant="validate" :disabled="isDisabled">{{ $trans('modal.update.button', 'Update') }}</a17-button>
+      <a17-button type="submit" name="done" v-else variant="validate" :disabled="isDisabled">{{ $trans('modal.done.button', 'Done') }}</a17-button>
     </a17-inputframe>
-    <label
-      v-if="activePublishState"
-      :for="publishedName"
-      class="switcher__button"
-      :class="switcherClasses"
-    >
+    <label v-if="activePublishState" :for="publishedName" class="switcher__button" :class="switcherClasses">
       <span v-if="isChecked" class="switcher__label">{{ textEnabled }}</span>
       <span v-if="!isChecked" class="switcher__label">{{ textDisabled }}</span>
 
-      <input
-        type="checkbox"
-        :disabled="disabled"
-        v-model="published"
-        :name="publishedName"
-        :id="publishedName"
-        :value="1"
-      />
+      <input type="checkbox" :disabled="disabled" v-model="published" :name="publishedName" :id="publishedName" :value="1"/>
       <span class="switcher__switcher"></span>
     </label>
   </div>
@@ -64,6 +23,7 @@
 
   export default {
     name: 'A17ModalValidationButtons',
+    emits: ['disable'],
     props: {
       publishedName: {
         type: String,
@@ -98,7 +58,7 @@
         default: 'Draft'
       }
     },
-    data: function() {
+    data: function () {
       return {
         fields: false,
         isDisabled: this.isDisable,
@@ -106,7 +66,7 @@
       }
     },
     watch: {
-      published: function(value) {
+      published: function (value) {
         this.$store.commit(FORM.UPDATE_FORM_FIELD, {
           name: 'published',
           value
@@ -114,46 +74,46 @@
       }
     },
     computed: {
-      switcherClasses: function() {
-        return [this.isChecked ? 'switcher--active' : '']
+      switcherClasses: function () {
+        return [
+          this.isChecked ? 'switcher--active' : ''
+        ]
       },
-      isChecked: function() {
+      isChecked: function () {
         return this.published
       },
       checkedValue: {
-        get: function() {
+        get: function () {
           return this.published
         },
-        set: function(value) {
+        set: function (value) {
           this.published = value
         }
       }
     },
     methods: {
-      addListeners() {
+      addListeners () {
         this.$nextTick(() => {
-          this.fields.forEach(field => {
+          this.fields.forEach((field) => {
             field.removeEventListener('input', this.disable)
           })
-          this.fields = [
-            ...this.$parent.$el.querySelectorAll('input, textarea, select')
-          ]
-          this.fields.forEach(field => {
+          this.fields = [...this.$parent.$el.querySelectorAll('input, textarea, select')]
+          this.fields.forEach((field) => {
             field.addEventListener('input', () => {
               this.disable()
             })
           })
         })
       },
-      disable: function() {
+      disable: function () {
         if (!this.fields) {
           this.isDisabled = true
           this.$emit('disable', true)
           return
         }
 
-        const requiredFields = this.fields.filter(field => {
-          return field.getAttribute('required')
+        const requiredFields = this.fields.filter((field) => {
+          return field.hasAttribute('required')
         })
 
         // There are no required fields, so buttons are enabled
@@ -164,7 +124,7 @@
         }
 
         // If all required fields must have a value
-        const filtered = requiredFields.filter(function(field) {
+        const filtered = requiredFields.filter(function (field) {
           return field.value.length > 0
         })
 
@@ -178,12 +138,10 @@
         this.$emit('disable', true)
       }
     },
-    mounted: function() {
+    mounted: function () {
       const self = this
 
-      this.fields = [
-        ...this.$parent.$el.querySelectorAll('input, textarea, select')
-      ]
+      this.fields = [...this.$parent.$el.querySelectorAll('input, textarea, select')]
 
       // check disable state on init
       self.disable()
@@ -192,12 +150,12 @@
 
       this.addListeners()
     },
-    beforeDestroy: function() {
+    beforeUnmount: function () {
       const self = this
 
       if (!this.fields.length) return
 
-      this.fields.forEach(function(field) {
+      this.fields.forEach(function (field) {
         field.removeEventListener('input', self.disable)
       })
     }
@@ -205,6 +163,7 @@
 </script>
 
 <style lang="scss" scoped>
+
   .modalValidation {
     display: flex;
     justify-content: space-between;
@@ -226,7 +185,7 @@
     background: $color__button_disabled-bg;
 
     cursor: pointer;
-    transition: background-color 0.25s linear, color 0.25s linear;
+    transition: background-color .25s linear, color .25s linear;
 
     input {
       position: absolute;
@@ -250,7 +209,7 @@
     // Big rounded thing
     &::after,
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       display: block;
       height: 18px;
@@ -259,7 +218,7 @@
       left: 0;
       top: -3px;
       transform: translateX(0);
-      transition: all 0.25s $bezier__bounce;
+      transition: all .25s $bezier__bounce;
     }
 
     // Big rounded thing you want to click

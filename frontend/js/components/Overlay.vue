@@ -6,12 +6,7 @@
         <span class="overlay__header-slot" v-if="$slots['overlay__header']">
           <slot name="overlay__header"></slot>
         </span>
-        <button class="overlay__close" type="button" @click="hide">
-          <span v-svg symbol="close_modal"></span
-          ><span class="overlay__closeLabel">{{
-            $trans('overlay.close')
-          }}</span>
-        </button>
+        <button class="overlay__close" type="button" @click="hide"><span v-svg symbol="close_modal"></span><span class="overlay__closeLabel">{{ $trans('overlay.close') }}</span></button>
       </header>
       <div class="overlay__content" v-if="active" v-show="!hidden">
         <slot></slot>
@@ -31,6 +26,7 @@
 
   export default {
     name: 'A17Overlay',
+    emits: ['open', 'close', 'esc-key'],
     props: {
       title: {
         type: String,
@@ -38,8 +34,8 @@
       },
       revisionTitle: {
         type: String,
-        default: function() {
-          return this.$trans('previewer.revision-history')
+        default: function () {
+          return window.$trans('previewer.revision-history')
         }
       },
       forceClose: {
@@ -59,7 +55,7 @@
         default: () => []
       }
     },
-    data: function() {
+    data: function () {
       return {
         active: false,
         hidden: true,
@@ -67,20 +63,17 @@
       }
     },
     computed: {
-      toggleClasses() {
-        const customClasses =
-          typeof this.customClasses === 'string'
-            ? [this.customClasses]
-            : this.customClasses
+      toggleClasses () {
+        const customClasses = typeof this.customClasses === 'string' ? [this.customClasses] : this.customClasses
         return [htmlOverlayClass].concat(customClasses)
       },
-      activeRevision: function() {
+      activeRevision: function () {
         return Object.keys(this.currentRevision).length
       },
-      overlayTitle: function() {
+      overlayTitle: function () {
         return this.activeRevision ? this.revisionTitle : this.title
       },
-      overlayClasses: function() {
+      overlayClasses: function () {
         return {
           'overlay--active': this.active,
           'overlay--hidden': this.hidden
@@ -91,7 +84,7 @@
       })
     },
     methods: {
-      open: function() {
+      open: function () {
         if (this.active && !this.hidden) {
           return
         }
@@ -104,13 +97,13 @@
         window.addEventListener('keyup', this.keyPressed)
         this.$emit('open')
       },
-      mask: function() {
+      mask: function () {
         this.toggleClasses.forEach(klass => html.classList.remove(klass))
 
         window.removeEventListener('keyup', this.keyPressed)
         this.$emit('close')
       },
-      hide: function() {
+      hide: function () {
         if (!this.active) return
         if (this.locked) return
 
@@ -122,14 +115,14 @@
         this.hidden = true
         this.mask()
       },
-      close: function(onClose) {
+      close: function (onClose) {
         if (!this.active) return
         if (this.locked) return
 
         this.active = false
         this.mask()
       },
-      keyPressed: function(event) {
+      keyPressed: function (event) {
         if (event.which === 27 || event.keyCode === 27) {
           // Lets not close the overlay if we already have a modal opened on top of the overlay
           if (html.classList.contains(htmlModalClass)) return
@@ -138,7 +131,7 @@
         }
       }
     },
-    beforeDestroy: function() {
+    beforeUnmount: function () {
       if (this.$el.parentNode) {
         if (this.active) window.removeEventListener('keyup', this.keyPressed)
         this.$el.parentNode.removeChild(this.$el)
@@ -148,15 +141,16 @@
 </script>
 
 <style lang="scss" scoped>
-  $height__header: 60px;
+
+  $height__header:60px;
 
   .overlay {
-    position: fixed;
+    position:fixed;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0,0,0,.4);
     z-index: $zindex__overlay;
 
     display: flex;
@@ -177,11 +171,11 @@
   }
 
   .overlay__window {
-    background: $color__background;
+    background:$color__background;
     min-width: 50vw;
     position: relative;
-    border-radius: 2px;
-    display: flex;
+    border-radius:2px;
+    display:flex;
     flex-flow: column nowrap;
     width: 100%;
     height: 100%;
@@ -189,20 +183,20 @@
   }
 
   .overlay__content {
-    overflow: hidden;
+    overflow:hidden;
     flex-grow: 1;
-    height: 100%;
+    height:100%;
   }
 
   .overlay__header {
     background: $color__overlay--header;
-    color: $color__background;
-    padding: 0 20px;
-    height: $height__header;
-    line-height: $height__header;
-    position: relative;
-    font-weight: 600;
-    text-align: center;
+    color:$color__background;
+    padding:0 20px;
+    height:$height__header;
+    line-height:$height__header;
+    position:relative;
+    font-weight:600;
+    text-align:center;
     width: 100%;
     display: flex;
     flex-flow: row nowrap;
@@ -213,38 +207,37 @@
 
   .overlay__close {
     @include btn-reset;
-    position: absolute;
-    left: 0;
-    top: 0;
-    background: transparent;
-    height: $height__header;
-    color: $color__text--light;
-    padding: #{calc(($height__header - 16px) / 2)} 20px;
-    text-align: left;
+    position:absolute;
+    left:0;
+    top:0;
+    background:transparent;
+    height:$height__header;
+    color:$color__text--light;
+    padding:#{calc(($height__header - 16px) / 2)} 20px;
+    text-align:left;
 
     &:hover,
     &:focus {
-      color: $color__background;
+      color:$color__background;
     }
   }
 
   .overlay__closeLabel {
-    position: relative;
-    margin-left: 10px;
-    top: -2px;
+    position:relative;
+    margin-left:10px;
+    top:-2px;
   }
 
   .overlay__content {
-    padding: 0;
+    padding:0;
     display: flex;
 
     > button {
-      margin-bottom: 20px;
+      margin-bottom:20px;
     }
   }
 
-  .overlay--active {
-    // centered into the page
+  .overlay--active { // centered into the page
     opacity: 1;
     visibility: visible;
     transition: opacity 0.35s;
@@ -253,4 +246,5 @@
   .overlay--hidden {
     display: none;
   }
+
 </style>

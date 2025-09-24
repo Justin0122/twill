@@ -43,6 +43,7 @@
 
   export default {
     name: 'a17FileItem',
+    emits: ['delete'],
     props: {
       name: {
         type: String,

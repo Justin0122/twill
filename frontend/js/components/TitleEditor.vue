@@ -1,61 +1,39 @@
 <template>
   <div class="titleEditor" :class="titleEditorClasses">
     <div class="titleEditor__preview">
-      <h2
-        class="titleEditor__title"
-        :class="{ 'titleEditor__title-only': !permalink }"
-      >
-        <a
-          v-if="editableTitle"
-          @click.prevent="$refs.editModal.open()"
-          href="#"
-          class="titleEditor__title-wrapper"
-        >
-          <a17-avatar v-if="thumbnail" :name="title" :thumbnail="thumbnail" />
+      <h2 class="titleEditor__title" :class="{ 'titleEditor__title-only' : !permalink }">
+        <a v-if="editableTitle" @click.prevent="$refs.editModal.open()" href="#" class="titleEditor__title-wrapper">
+          <a17-avatar
+            v-if="thumbnail"
+            :name="title"
+            :thumbnail="thumbnail"
+          />
           <span class="titleEditor__title">
-            <span class="f--underlined--o">{{ title }}</span>
-            <span v-svg symbol="edit"></span>
+            <span class="f--underlined--o">{{ title }}</span> <span v-svg symbol="edit"></span>
           </span>
         </a>
         <span v-else class="titleEditor__title-wrapper">
-          <a17-avatar v-if="thumbnail" :name="title" :thumbnail="thumbnail" />
+          <a17-avatar
+            v-if="thumbnail"
+            :name="title"
+            :thumbnail="thumbnail"
+          />
           <span class="titleEditor__title">
             {{ customTitle ? customTitle : title }}
           </span>
         </span>
       </h2>
-      <a
-        v-if="(permalink || customPermalink) && !showModal"
-        :href="fullUrl"
-        target="_blank"
-        class="titleEditor__permalink f--small"
-      >
-        <span class="f--note f--external f--underlined--o">{{
-          visibleUrl | prettierUrl
-        }}</span>
+      <a v-if="(permalink || customPermalink) && !showModal" :href="fullUrl" target="_blank" class="titleEditor__permalink f--small">
+        <span class="f--note f--external f--underlined--o">{{ prettierUrl(visibleUrl) }}</span>
       </a>
-      <span
-        v-if="showModal"
-        class="titleEditor__permalink f--small f--note f--external f--underlined--o"
-        >{{ visibleUrl | prettierUrl }}</span
-      >
+      <span v-if="showModal" class="titleEditor__permalink f--small f--note f--external f--underlined--o">{{ prettierUrl(visibleUrl) }}</span>
 
       <!-- Editing modal -->
-      <a17-modal
-        class="modal--form"
-        ref="editModal"
-        :title="modalTitle"
-        :forceLock="disabled"
-      >
-        <a17-langmanager
-          :control-publication="controlLanguagesPublication"
-        ></a17-langmanager>
+      <a17-modal class="modal--form" ref="editModal" :title="modalTitle" :forceLock="disabled">
+        <a17-langmanager :control-publication="controlLanguagesPublication"></a17-langmanager>
         <form action="#" @submit.prevent="update" ref="modalForm">
           <slot name="modal-form"></slot>
-          <a17-modal-validation
-            :mode="mode"
-            @disable="lockModal"
-          ></a17-modal-validation>
+          <a17-modal-validation :mode="mode" @disable="lockModal"></a17-modal-validation>
         </form>
       </a17-modal>
     </div>
@@ -64,14 +42,14 @@
 </template>
 
 <script>
-  import { mapGetters, mapState } from 'vuex'
+  import { mapGetters,mapState } from 'vuex'
 
   import A17Avatar from '@/components/Avatar.vue'
   import langManager from '@/components/LangManager.vue'
   import a17ModalValidationButtons from '@/components/modals/ModalValidationButtons.vue'
   import InputframeMixin from '@/mixins/inputFrame'
   import LocaleMixin from '@/mixins/locale'
-  import a17VueFilters from '@/utils/filters.js'
+  import { prettierUrl } from '@/utils/filters.js'
 
   export default {
     name: 'A17TitleEditor',
@@ -84,8 +62,8 @@
     props: {
       modalTitle: {
         type: String,
-        default: function() {
-          return this.$trans('modal.update.title')
+        default: function () {
+          return window.$trans('modal.update.title')
         }
       },
       warningMessage: {
@@ -128,74 +106,47 @@
         default: ''
       }
     },
-    data: function() {
+    data: function () {
       return {
         disabled: false
       }
     },
-    mounted: function() {
+    mounted: function () {
       this.showModal && this.$refs.editModal.open()
     },
     computed: {
-      titleEditorClasses: function() {
+      titleEditorClasses: function () {
         return {
-          'titleEditor--error': this.error || this.title === this.warningMessage
+          'titleEditor--error': this.error || (this.title === this.warningMessage)
         }
       },
-      mode: function() {
+      mode: function () {
         if (this.showModal) return 'done'
         return this.title.length > 0 ? 'update' : 'create'
       },
-      fullUrl: function() {
-        return (
-          this.customlink ||
-          this.baseUrl
-            .replace('{language}', this.currentLocale.value)
-            .replace('{preview}/', this.published ? '' : 'admin-preview/') +
-          this.permalink
-        )
+      fullUrl: function () {
+        return this.customlink || this.baseUrl
+          .replace('{language}', this.currentLocale.value)
+          .replace('{preview}/', this.published ? '' : 'admin-preview/') + this.permalink
       },
-      visibleUrl: function() {
-        return (
-          this.customlink ||
-          this.baseUrl
-            .replace('{language}', this.currentLocale.value)
-            .replace('{preview}/', '') + this.permalink
-        )
+      visibleUrl: function () {
+        return this.customlink || this.baseUrl
+          .replace('{language}', this.currentLocale.value)
+          .replace('{preview}/', '') + this.permalink
       },
-      title: function() {
+      title: function () {
         // Get the title from the store
-        const title = this.fieldValueByName(this.name)
-          ? this.fieldValueByName(this.name)
-          : ''
-        const titleValue =
-          typeof title === 'string' ? title : title[this.currentLocale.value]
+        const title = this.fieldValueByName(this.name) ? this.fieldValueByName(this.name) : ''
+        const titleValue = typeof title === 'string' ? title : title[this.currentLocale.value]
         return titleValue || this.warningMessage
       },
-      customlink: function() {
-        const localizedCustomPermalink =
-          this.localizedCustomPermalink.length > 0
-            ? JSON.parse(this.localizedCustomPermalink)
-            : {}
-        return Object.keys(localizedCustomPermalink).length > 0
-          ? localizedCustomPermalink[this.currentLocale.value]
-          : this.customPermalink
-            ? this.customPermalink
-            : false
+      customlink: function () {
+        const localizedCustomPermalink = this.localizedCustomPermalink.length > 0 ? JSON.parse(this.localizedCustomPermalink) : {}
+        return Object.keys(localizedCustomPermalink).length > 0 ? localizedCustomPermalink[this.currentLocale.value] : (this.customPermalink ? this.customPermalink : false)
       },
-      permalink: function() {
-        const localizedPermalinkbase =
-          this.localizedPermalinkbase.length > 0
-            ? JSON.parse(this.localizedPermalinkbase)
-            : {}
-        return Object.keys(localizedPermalinkbase).length > 0
-          ? this.currentLocale.value in localizedPermalinkbase
-            ? localizedPermalinkbase[this.currentLocale.value].concat(
-              '/',
-              this.fieldValueByName('slug')[this.currentLocale.value]
-            )
-            : this.fieldValueByName('slug')[this.currentLocale.value]
-          : this.fieldValueByName('slug')[this.currentLocale.value]
+      permalink: function () {
+        const localizedPermalinkbase = this.localizedPermalinkbase.length > 0 ? JSON.parse(this.localizedPermalinkbase) : {}
+        return Object.keys(localizedPermalinkbase).length > 0 ? ((this.currentLocale.value in localizedPermalinkbase) ? localizedPermalinkbase[this.currentLocale.value].concat('/', this.fieldValueByName('slug')[this.currentLocale.value]) : this.fieldValueByName('slug')[this.currentLocale.value]) : this.fieldValueByName('slug')[this.currentLocale.value]
       },
       ...mapState({
         baseUrl: state => state.form.baseUrl,
@@ -204,14 +155,16 @@
         fields: state => state.form.fields,
         published: state => state.publication.published
       }),
-      ...mapGetters(['fieldValueByName'])
+      ...mapGetters([
+        'fieldValueByName'
+      ])
     },
     filters: a17VueFilters,
     methods: {
-      update: function() {
+      update: function () {
         this.$refs.editModal.hide()
       },
-      lockModal: function(newValue) {
+      lockModal: function (newValue) {
         this.disabled = newValue
       }
     }
@@ -219,6 +172,7 @@
 </script>
 
 <style lang="scss" scoped>
+
   .titleEditor {
     margin-bottom: 20px;
 
@@ -261,7 +215,7 @@
   .titleEditor--error .titleEditor__title {
     .f--underlined--o,
     .icon {
-      color: $color__error;
+      color:$color__error;
     }
 
     &:hover {

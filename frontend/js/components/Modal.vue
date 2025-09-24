@@ -1,23 +1,10 @@
 <template>
-  <div
-    class="modal"
-    :class="modalClasses"
-    @mousedown="hide"
-    @touchend.prevent="hide"
-  >
+  <div class="modal" :class="modalClasses" @mousedown="hide" @touchend.prevent="hide">
     <transition name="fade_scale_modal">
-      <div
-        class="modal__window"
-        @mousedown.stop
-        @touchend.stop
-        v-if="active"
-        v-show="!hidden"
-      >
+      <div class="modal__window" @mousedown.stop @touchend.stop v-if="active" v-show="!hidden">
         <header class="modal__header" v-if="modalTitle">
           {{ modalTitle }}
-          <button class="modal__close" type="button" @click="hide">
-            <span v-svg symbol="close_modal"></span>
-          </button>
+          <button class="modal__close" type="button" @click="hide"><span v-svg symbol="close_modal"></span></button>
         </header>
 
         <div class="modal__content">
@@ -38,6 +25,7 @@
 
   export default {
     name: 'A17Modal',
+    emits: ['open', 'close', 'esc-key'],
     props: {
       title: {
         type: String,
@@ -56,7 +44,7 @@
         default: false
       }
     },
-    data: function() {
+    data: function () {
       return {
         active: false,
         hidden: true,
@@ -66,10 +54,10 @@
       }
     },
     computed: {
-      modalTitle: function() {
+      modalTitle: function () {
         return this.title !== '' ? this.title : this.browserTitle
       },
-      modalClasses: function() {
+      modalClasses: function () {
         return {
           'modal--active': this.active,
           'modal--hidden': this.hidden,
@@ -83,12 +71,12 @@
       })
     },
     watch: {
-      forceLock: function() {
+      forceLock: function () {
         this.locked = this.forceLock
       }
     },
     methods: {
-      open: function(focusable = true) {
+      open: function (focusable = true) {
         if (this.active && !this.hidden) {
           return
         }
@@ -101,19 +89,15 @@
         this.bindKeyboard()
 
         // auto focus first field
-        this.$nextTick(function() {
+        this.$nextTick(function () {
           if (focusable) {
-            const focusableSelector =
-              'textarea, input:not([type="hidden"]), select, button[type="submit"]'
+            const focusableSelector = 'textarea, input:not([type="hidden"]), select, button[type="submit"]'
             const focusableNodes = this.$el.querySelectorAll(focusableSelector)
-            const allFocusableNodes = this.$el.querySelectorAll(
-              focusableSelector + ', a, button[type="button"]'
-            )
+            const allFocusableNodes = this.$el.querySelectorAll(focusableSelector + ', a, button[type="button"]')
 
             // Trap focus inside the modal
             this.firstFocusableEl = this.$el.querySelector('.modal__close')
-            this.lastFocusableEl =
-              allFocusableNodes[allFocusableNodes.length - 1]
+            this.lastFocusableEl = allFocusableNodes[allFocusableNodes.length - 1]
 
             // init focus
             if (focusableNodes.length) focusableNodes[0].focus()
@@ -121,12 +105,12 @@
           this.$emit('open')
         })
       },
-      mask: function() {
+      mask: function () {
         html.classList.remove(htmlClass)
         this.unbindKeyboard()
         this.$emit('close')
       },
-      hide: function() {
+      hide: function () {
         if (!this.active) return
         if (this.locked) return
 
@@ -138,7 +122,7 @@
         this.hidden = true
         this.mask()
       },
-      close: function(onClose) {
+      close: function (onClose) {
         if (!this.active) return
         if (this.locked) return
 
@@ -146,21 +130,21 @@
         this.$emit('close')
         this.mask()
       },
-      bindKeyboard: function() {
+      bindKeyboard: function () {
         window.addEventListener('keyup', this.keyPressed)
         document.addEventListener('keydown', this.keyDown, false)
       },
-      unbindKeyboard: function() {
+      unbindKeyboard: function () {
         window.removeEventListener('keyup', this.keyPressed)
         document.removeEventListener('keydown', this.keyDown)
       },
-      keyPressed: function(event) {
+      keyPressed: function (event) {
         if (event.which === 27 || event.keyCode === 27) {
           this.hide()
           this.$emit('esc-key')
         }
       },
-      keyDown: function(event) {
+      keyDown: function (event) {
         // tab
         if (event.keyCode && event.keyCode === 9) {
           if (event.shiftKey) {
@@ -179,7 +163,7 @@
         }
       }
     },
-    beforeDestroy: function() {
+    beforeUnmount: function () {
       if (this.$el.parentNode) {
         if (this.active) this.unbindKeyboard()
         this.$el.parentNode.removeChild(this.$el)
@@ -189,13 +173,14 @@
 </script>
 
 <style lang="scss" scoped>
+
   .modal {
-    position: fixed;
+    position:fixed;
     top: 0;
     right: 0;
     height: 0;
     left: 0;
-    background: rgba(0, 0, 0, 0.66);
+    background: rgba(0,0,0,.66);
     z-index: $zindex__modal;
 
     display: flex;
@@ -213,56 +198,56 @@
   }
 
   .modal__window {
-    background: $color__background;
+    background:$color__background;
     width: calc(100vw - 40px);
-    max-width: 650px;
+    max-width:650px;
     position: relative;
-    border-radius: 2px;
-    display: flex;
+    border-radius:2px;
+    display:flex;
     flex-flow: column nowrap;
-    margin: auto;
+    margin:auto;
   }
 
   .modal__content {
-    overflow: hidden;
+    overflow:hidden;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: 100%;
+    max-height:100%;
   }
 
   .modal__header {
-    border-top-left-radius: 2px;
-    border-top-right-radius: 2px;
+    border-top-left-radius:2px;
+    border-top-right-radius:2px;
     background: $color__modal--header;
-    padding: 0 20px;
-    height: 50px;
-    line-height: 50px;
-    position: relative;
-    font-weight: 600;
+    padding:0 20px;
+    height:50px;
+    line-height:50px;
+    position:relative;
+    font-weight:600;
   }
 
   .modal__close {
     @include btn-reset;
-    position: absolute;
-    right: 5px;
-    top: 2px;
-    background: transparent;
-    height: 16px + 30px;
-    width: 16px + 30px;
-    color: $color__icons;
-    padding: 15px;
+    position:absolute;
+    right:5px;
+    top:2px;
+    background:transparent;
+    height:16px + 30px;
+    width:16px + 30px;
+    color:$color__icons;
+    padding:15px;
 
     &:hover,
     &:focus {
-      color: $color__text;
+      color:$color__text;
     }
   }
 
   .modal__content {
-    padding: 0 20px;
+    padding:0 20px;
 
     > button {
-      margin-bottom: 20px;
+      margin-bottom:20px;
     }
   }
 
@@ -283,6 +268,7 @@
       @include breakpoint(xsmall) {
         border-radius: 0;
       }
+
     }
 
     @include breakpoint(small) {
@@ -298,6 +284,7 @@
 
   /* Modal Medium Size */
   .modal--medium {
+
     .modal__window {
       width: calc(100vw - 40px);
       max-width: 830px;
@@ -314,11 +301,12 @@
 
   /* Modal Tiny Size */
   .modal--tiny {
+
     .modal__window {
       width: calc(100vw - 40px);
       max-width: 350px;
       height: auto;
-      margin-bottom: 40vh;
+      margin-bottom:40vh;
     }
 
     .modal__content {
@@ -327,29 +315,29 @@
     }
 
     .modal__header {
-      display: none;
+      display:none;
     }
   }
 
   /* Modal with form */
   .modal--form {
     .modal__content {
-      padding-bottom: 20px;
+      padding-bottom:20px;
     }
   }
 
   /* Modal with strating Intro */
   .modal--withintro {
     .modal__content {
-      padding-top: 20px;
+      padding-top:20px;
     }
   }
 
   /* Modal used for the browser */
   .modal--browser {
     .modal__content {
-      padding-left: 0;
-      padding-right: 0;
+      padding-left:0;
+      padding-right:0;
     }
   }
 
@@ -359,11 +347,10 @@
   }
 
   /* Active Modal */
-  .modal--active {
-    // centered into the page
+  .modal--active { // centered into the page
     opacity: 1;
     visibility: visible;
-    height: 100%;
+    height:100%;
     transition: opacity 0.35s;
   }
 

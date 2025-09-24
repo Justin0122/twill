@@ -22,6 +22,7 @@
 
   export default {
     name: 'A17Uploader',
+    emits: ['clear', 'loaded'],
     props: {
       type: {
         type: Object,
@@ -36,7 +37,7 @@
         default: null
       }
     },
-    data: function() {
+    data: function () {
       return {
         loadingMedias: [],
         unique_folder_name: null,
@@ -44,10 +45,10 @@
       }
     },
     computed: {
-      uploaderConfig: function() {
+      uploaderConfig: function () {
         return this.type.uploaderConfig
       },
-      uploaderValidation: function() {
+      uploaderValidation: function () {
         const extensions = this.uploaderConfig.allowedExtensions
         let acceptFiles = '*/*'
         if (extensions.length > 0) {
@@ -61,13 +62,15 @@
       }
     },
     methods: {
-      initUploader: function() {
+      initUploader: function () {
         const buttonEl = this.$refs.uploaderBrowseButton
         const sharedConfig = {
           debug: true,
           maxConnections: 5,
           button: buttonEl,
-          retry: { enableAuto: false },
+          retry: {
+            enableAuto: false
+          },
           callbacks: {
             onSubmit: this._onSubmitCallback.bind(this),
             onProgress: this._onProgressCallback.bind(this),
@@ -77,39 +80,72 @@
             onStatusChange: this._onStatusChangeCallback.bind(this),
             onTotalProgress: this._onTotalProgressCallback.bind(this)
           },
-          text: { fileInputTitle: 'Browse...' },
+          text: {
+            fileInputTitle: 'Browse...'
+          },
           messages: {
-            retryFailTooManyItemsError:
-              'Retry failed - you have reached your file limit.',
+            // Todo: need to translate this in uploaderConfig
+            retryFailTooManyItemsError: 'Retry failed - you have reached your file limit.',
             sizeError: '{file} is too large, maximum file size is {sizeLimit}.',
-            tooManyItemsError:
-              'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
-            typeError:
-              '{file} has an invalid extension. Valid extension(s): {extensions}.'
+            tooManyItemsError: 'Too many items ({netItems}) would be uploaded. Item limit is {itemLimit}.',
+            typeError: '{file} has an invalid extension. Valid extension(s): {extensions}.'
           }
         }
 
-        this._uploader =
-          this.uploaderConfig.endpointType === 's3'
-            ? new FineUploaderS3({
+        this._uploader = this.uploaderConfig.endpointType === 's3'
+          ? new FineUploaderS3({
+            options: {
+              ...sharedConfig,
+              validation: {
+                ...this.uploaderValidation
+              },
+              objectProperties: {
+                key: id => {
+                  return this.unique_folder_name + '/' + sanitizeFilename(this._uploader.methods.getName(id))
+                },
+                region: this.uploaderConfig.endpointRegion,
+                bucket: this.uploaderConfig.endpointBucket,
+                acl: this.uploaderConfig.acl
+              },
+              request: {
+                endpoint: this.uploaderConfig.endpoint,
+                accessKey: this.uploaderConfig.accessKey
+              },
+              signature: {
+                endpoint: this.uploaderConfig.signatureEndpoint,
+                version: 4,
+                customHeaders: {
+                  'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                }
+              },
+              uploadSuccess: {
+                endpoint: this.uploaderConfig.successEndpoint,
+                customHeaders: {
+                  'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
+                }
+              }
+            }
+          })
+          : this.uploaderConfig.endpointType === 'azure'
+            ? new FineUploaderAzure({
               options: {
                 ...sharedConfig,
-                validation: { ...this.uploaderValidation },
-                objectProperties: {
-                  key: id => {
-                    return (
-                      this.unique_folder_name +
-                      '/' +
-                      sanitizeFilename(this._uploader.methods.getName(id))
-                    )
-                  },
-                  region: this.uploaderConfig.endpointRegion,
-                  bucket: this.uploaderConfig.endpointBucket,
-                  acl: this.uploaderConfig.acl
+                validation: {
+                  ...this.uploaderValidation
+                },
+                cors: {
+                  expected: true,
+                  sendCredentials: true
+                },
+                blobProperties: {
+                  name: id => {
+                    return new Promise((resolve) => {
+                      resolve(this.unique_folder_name + '/' + sanitizeFilename(this._uploader.methods.getName(id)))
+                    })
+                  }
                 },
                 request: {
-                  endpoint: this.uploaderConfig.endpoint,
-                  accessKey: this.uploaderConfig.accessKey
+                  endpoint: this.uploaderConfig.endpoint
                 },
                 signature: {
                   endpoint: this.uploaderConfig.signatureEndpoint,
@@ -126,86 +162,52 @@
                 }
               }
             })
-            : this.uploaderConfig.endpointType === 'azure'
-              ? new FineUploaderAzure({
-                options: {
-                  ...sharedConfig,
-                  validation: { ...this.uploaderValidation },
-                  cors: { expected: true, sendCredentials: true },
-                  blobProperties: {
-                    name: id => {
-                      return new Promise(resolve => {
-                        resolve(
-                          this.unique_folder_name +
-                            '/' +
-                            sanitizeFilename(this._uploader.methods.getName(id))
-                        )
-                      })
-                    }
-                  },
-                  request: { endpoint: this.uploaderConfig.endpoint },
-                  signature: {
-                    endpoint: this.uploaderConfig.signatureEndpoint,
-                    version: 4,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
-                  },
-                  uploadSuccess: {
-                    endpoint: this.uploaderConfig.successEndpoint,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
+            : new FineUploaderTraditional({
+              options: {
+                ...sharedConfig,
+                validation: {
+                  ...this.uploaderValidation,
+                  sizeLimit: this.uploaderConfig.filesizeLimit * 1048576 // mb to bytes
+                },
+                request: {
+                  endpoint: this.uploaderConfig.endpoint,
+                  customHeaders: {
+                    'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
                   }
                 }
-              })
-              : new FineUploaderTraditional({
-                options: {
-                  ...sharedConfig,
-                  validation: {
-                    ...this.uploaderValidation,
-                    sizeLimit: this.uploaderConfig.filesizeLimit * 1048576 // mb to bytes
-                  },
-                  request: {
-                    endpoint: this.uploaderConfig.endpoint,
-                    customHeaders: {
-                      'X-CSRF-TOKEN': this.uploaderConfig.csrfToken
-                    }
-                  }
-                }
-              })
+              }
+            })
       },
-      replaceMedia: function(id) {
+      replaceMedia: function (id) {
         this.media_to_replace_id = id
-        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll(
-          '[name = "qqfile"]'
-        )
+        const qqinputs = this.$refs.uploaderBrowseButton.querySelectorAll('[name = "qqfile"]')
         qqinputs[Array.from(qqinputs).length - 1].click()
       },
-      loadingProgress: function(media) {
+      loadingProgress: function (media) {
         this.$store.commit(MEDIA_LIBRARY.PROGRESS_UPLOAD_MEDIA, media)
       },
-      loadingFinished: function(loadingMedia, savedMedia) {
+      loadingFinished: function (loadingMedia, savedMedia) {
+        // add the saved image to the main image list
         this.$emit('loaded', savedMedia)
         this.$store.commit(MEDIA_LIBRARY.DONE_UPLOAD_MEDIA, loadingMedia)
       },
-      loadingError: function(media) {
+      loadingError: function (media) {
         this.$store.commit(MEDIA_LIBRARY.ERROR_UPLOAD_MEDIA, media)
       },
-      uploadProgress: function(uploadProgress) {
+      uploadProgress: function (uploadProgress) {
         this.$store.commit(MEDIA_LIBRARY.PROGRESS_UPLOAD, uploadProgress)
       },
-      _onCompleteCallback(id, name, responseJSON) {
-        const index = this.loadingMedias.findIndex(
-          m => m.id === this._uploader.methods.getUuid(id)
-        )
+      _onCompleteCallback (id, name, responseJSON, xhr) {
+        const index = this.loadingMedias.findIndex((m) => m.id === this._uploader.methods.getUuid(id))
+
         if (responseJSON.success) {
           this.loadingFinished(this.loadingMedias[index], responseJSON.media)
         } else {
           this.loadingError(this.loadingMedias[index])
         }
       },
-      _onAllCompleteCallback() {
+      _onAllCompleteCallback (succeeded, failed) {
+        // reset folder name for next upload session
         this.unique_folder_name = null
         this.uploadProgress(0)
       },
@@ -281,39 +283,32 @@
           replacementId: this.media_to_replace_id
         }
 
-        // reset for next file
-        this.media_to_replace_id = null
+        if (this.type.value === 'file') {
+          this.media_to_replace_id = null
+        }
 
         this.loadingMedias.push(media)
         this.loadingProgress(media)
       },
-      _onProgressCallback(id, name, uploadedBytes, totalBytes) {
-        const index = this.loadingMedias.findIndex(
-          m => m.id === this._uploader.methods.getUuid(id)
-        )
+      _onProgressCallback (id, name, uploadedBytes, totalBytes) {
+        const index = this.loadingMedias.findIndex((m) => m.id === this._uploader.methods.getUuid(id))
 
         if (index >= 0) {
           const media = this.loadingMedias[index]
-          media.progress = (uploadedBytes / totalBytes) * 100 || 0
+          media.progress = uploadedBytes / totalBytes * 100 || 0
           media.error = false
           this.loadingProgress(media)
         }
       },
-      _onErrorCallback(id, name, errorReason) {
-        const index = id
-          ? this.loadingMedias.findIndex(
-            m => m.id === this._uploader.methods.getUuid(id)
-          )
-          : -1
+      _onErrorCallback (id, name, errorReason, xhr) {
+        const index = id ? this.loadingMedias.findIndex((m) => m.id === this._uploader.methods.getUuid(id)) : -1
 
         if (index >= 0) {
           this.loadingMedias[index].errorMessage = errorReason
           this.loadingError(this.loadingMedias[index])
         } else {
           const media = {
-            id: id
-              ? this._uploader.methods.getUuid(id)
-              : Math.floor(Math.random() * 1000),
+            id: id ? this._uploader.methods.getUuid(id) : Math.floor(Math.random() * 1000),
             name: sanitizeFilename(name),
             progress: 0,
             error: true,
@@ -325,9 +320,9 @@
           this.loadingError(this.loadingMedias[this.loadingMedias.length - 1])
         }
       },
-      _onStatusChangeCallback(id, oldStatus, newStatus) {
+      _onStatusChangeCallback (id, oldStatus, newStatus) {
         if (newStatus === 'retrying upload') {
-          const index = this.loadingMedias.findIndex(function(m) {
+          const index = this.loadingMedias.findIndex(function (m) {
             return m.id === id
           })
           if (index >= 0) {
@@ -338,27 +333,26 @@
           }
         }
       },
-      _onTotalProgressCallback(totalUploadedBytes, totalBytes) {
-        const uploadProgress = Math.floor(
-          (totalUploadedBytes / totalBytes) * 100
-        )
+      _onTotalProgressCallback (totalUploadedBytes, totalBytes) {
+        const uploadProgress = Math.floor(totalUploadedBytes / totalBytes * 100)
         this.uploadProgress(uploadProgress)
       },
-      _onDropError(errorCode, errorData) {
+      _onDropError (errorCode, errorData) {
+        // eslint-disable-next-line no-console
         console.error(errorCode, errorData)
       },
-      _onProcessingDroppedFilesComplete(files) {
+      _onProcessingDroppedFilesComplete (files) {
         this._uploader.methods.addFiles(files)
       }
     },
     watch: {
-      type: function() {
+      type: function () {
         if (this._uploader) {
           this.initUploader()
         }
       }
     },
-    mounted() {
+    mounted () {
       // Init uploader
       this.initUploader()
 
@@ -370,19 +364,18 @@
         allowMultipleItems: true,
         callbacks: {
           dropError: this._onDropError.bind(this),
-          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(
-            this
-          )
+          processingDroppedFilesComplete: this._onProcessingDroppedFilesComplete.bind(this)
         }
       })
     },
-    beforeDestroy() {
+    beforeUnmount () {
       this._qqDropzone && this._qqDropzone.dispose()
     }
   }
 </script>
 
 <style lang="scss" scoped>
+
   $height_small_btn: 35px;
 
   .uploader {
@@ -407,21 +400,22 @@
       color: $color__text--light;
       padding: 0 20px;
       text-align: center;
-      transition: color 0.2s linear, border-color 0.2s linear,
-        background-color 0.2s linear;
+      transition: color .2s linear, border-color .2s linear, background-color .2s linear;
 
       &.qq-upload-button-hover,
       &:hover {
         border-color: $color__text;
         color: $color__text;
       }
+
       &.qq-upload-button-focus,
       &:focus {
         border-color: $color__text;
         color: $color__text;
       }
+
       &:disabled {
-        opacity: 0.5;
+        opacity: .5;
         pointer-events: none;
       }
     }

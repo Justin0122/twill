@@ -44,6 +44,11 @@
         }
       }
     },
+    data () {
+      return {
+        hasLocale: false
+      }
+    },
     mixins: [InputframeMixin, CheckboxMixin, FormStoreMixin],
     computed: {
       checkboxClasses: function() {

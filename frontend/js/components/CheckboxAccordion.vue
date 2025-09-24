@@ -1,14 +1,12 @@
 <template>
   <a17-accordion :open="open" @toggleVisibility="notifyOpen">
-    <span slot="accordion__title"><slot></slot></span>
-    <div slot="accordion__value">{{ currentLabel }}</div>
-    <a17-checkboxgroup
-      :name="name"
-      :options="options"
-      @change="changeValue"
-      :selected="currentValue"
-      :min="1"
-    ></a17-checkboxgroup>
+    <template v-slot:accordion__title>
+      <span><slot></slot></span>
+    </template>
+    <template v-slot:accordion__value>
+      <div>{{ currentLabel }}</div>
+    </template>
+    <a17-checkboxgroup :name="name" :options="options" @change="changeValue" :selected="currentValue" :min="1"></a17-checkboxgroup>
   </a17-accordion>
 </template>
 
@@ -24,11 +22,10 @@
       'a17-accordion': a17Accordion
     },
     mixins: [VisibilityMixin],
+    emits: ['open'],
     props: {
       value: {
-        default: function() {
-          return []
-        }
+        default: function () { return [] }
       },
       title: {
         type: String,
@@ -39,36 +36,30 @@
         default: ''
       },
       options: {
-        default: function() {
-          return []
-        }
+        default: function () { return [] }
       }
     },
-    data: function() {
+    data: function () {
       return {
         currentValue: this.value
       }
     },
     watch: {
-      value: function(newValue) {
+      value: function (newValue) {
         this.currentValue = newValue
       }
     },
     computed: {
-      currentLabel: function() {
-        return (
-          this.currentValue.length +
-          ' ' +
-          this.$trans('publisher.languages-published')
-        )
+      currentLabel: function () {
+        return this.currentValue.length + ' ' + this.$trans('publisher.languages-published')
       }
     },
     methods: {
-      changeValue: function(newValue) {
+      changeValue: function (newValue) {
         this.currentValue = newValue
         this.$store.commit(LANGUAGE.PUBLISH_LANG, newValue)
       },
-      notifyOpen: function(newValue) {
+      notifyOpen: function (newValue) {
         this.$emit('open', newValue, this.$options.name)
       }
     }

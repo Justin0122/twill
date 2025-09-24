@@ -3,119 +3,61 @@
     <div class="buckets__page-title">
       <div class="container buckets__page-title-content">
         <h2>
-          <slot />
+          <slot/>
         </h2>
         <div class="buckets__page-title-actions">
-          <a17-button variant="validate" @click="save">{{
-            $trans('buckets.publish')
-          }}</a17-button>
-          <a17-button
-            v-for="link in extraActions"
-            :key="link.url"
-            el="a"
-            :href="link.url"
-            :download="link.download || ''"
-            :target="link.target || ''"
-            :rel="link.rel || ''"
-            variant="secondary"
-            >{{ link.label }}</a17-button
-          >
+          <a17-button variant="validate" @click="save">{{ $trans('buckets.publish') }}</a17-button>
+          <a17-button v-for="link in extraActions" :key="link.url" el="a" :href="link.url" :download="link.download || ''" :target="link.target || ''" :rel="link.rel || ''" variant="secondary">{{ link.label }}</a17-button>
         </div>
       </div>
     </div>
     <div class="container">
       <div class=" wrapper">
         <div class="buckets__container col--even">
-          <a17-fieldset
-            class="buckets__fieldset"
-            :title="title"
-            :activeToggle="false"
-          >
+          <a17-fieldset class="buckets__fieldset" :title="title" :activeToggle="false">
             <div class="buckets__header">
               <div class="buckets__sources">
-                <a17-vselect
-                  v-if="!singleSource"
-                  class="sources__select"
-                  name="sources"
-                  :selected="currentSource"
-                  :options="dataSources"
-                  :required="true"
-                  @change="changeDataSource"
-                />
+                <a17-vselect v-if="!singleSource" class="sources__select" name="sources" :selected="currentSource"
+                             :options="dataSources" :required="true" @change="changeDataSource"/>
               </div>
               <div class="buckets__filter">
-                <a17-filter @submit="filterBucketsData" />
+                <a17-filter @submit="filterBucketsData"/>
               </div>
             </div>
             <table v-if="source.items.length > 0" class="buckets__list">
               <tbody>
-                <a17-bucket-item-source
-                  v-for="item in source.items"
-                  :key="item.id"
-                  :item="item"
-                  :singleBucket="singleBucket"
-                  :buckets="buckets"
-                  v-on:add-to-bucket="addToBucket"
-                />
+              <a17-bucket-item-source v-for="item in source.items" :key="item.id" :item="item"
+                                      :singleBucket="singleBucket" :buckets="buckets" v-on:add-to-bucket="addToBucket"/>
               </tbody>
             </table>
             <div v-else class="buckets__empty">
               <h4>{{ emptySource }}</h4>
             </div>
-            <a17-paginate
-              :max="max"
-              :value="page"
-              :offset="offset"
-              :availableOffsets="availableOffsets"
-              @changePage="updatePage"
-              @changeOffset="updateOffset"
-            />
+            <a17-paginate :max="max" :value="page" :offset="offset" :availableOffsets="availableOffsets"
+                          @changePage="updatePage" @changeOffset="updateOffset"/>
           </a17-fieldset>
         </div>
         <div class="buckets__container col--even">
-          <a17-fieldset
-            v-for="(bucket, index) in buckets"
-            :class="'buckets__fieldset buckets__fieldset--' + (index + 1)"
-            :key="bucket.id"
-            :name="'bucket_' + bucket.id"
-            :activeToggle="false"
-          >
-            <h3 slot="header" class="buckets__fieldset__header">
-              <span
-                ><span v-if="buckets.length > 1" class="buckets__number">{{
-                  index + 1
-                }}</span>
-                {{ bucket.name }}</span
-              >
-              <span class="buckets__size-infos"
-                >{{ bucket.children.length }} / {{ bucket.max }}</span
-              >
-            </h3>
-            <draggable
-              v-if="bucket.children.length > 0"
-              class="buckets__list buckets__draggable"
-              v-bind="dragOptions"
-              @change="sortBucket($event, index)"
-              :value="bucket.children"
-              :tag="'table'"
-            >
-              <transition-group name="fade_scale_list" tag="tbody">
-                <a17-bucket-item
-                  v-for="(child, index) in bucket.children"
-                  :key="`${child.id}_${index}`"
-                  :item="child"
-                  :restricted="restricted"
-                  :draggable="bucket.children.length > 1"
-                  :singleBucket="singleBucket"
-                  :singleSource="singleSource"
-                  :bucket="bucket.id"
-                  :buckets="buckets"
-                  v-on:add-to-bucket="addToBucket"
-                  v-on:remove-from-bucket="deleteFromBucket"
-                  v-on:toggle-featured-in-bucket="toggleFeaturedInBucket"
-                  :withToggleFeatured="bucket.withToggleFeatured"
-                  :toggleFeaturedLabels="bucket.toggleFeaturedLabels"
-                />
+          <a17-fieldset v-for="(bucket, index) in buckets" :class="'buckets__fieldset buckets__fieldset--'+(index+1)"
+                        :key="bucket.id" :name="'bucket_'+bucket.id" :activeToggle="false">
+            <template v-slot:header>
+              <h3 class="buckets__fieldset__header">
+                <span><span v-if="buckets.length > 1"
+                            class="buckets__number">{{ (index + 1) }}</span> {{ bucket.name }}</span> <span
+                class="buckets__size-infos">{{ bucket.children.length }} / {{ bucket.max }}</span>
+              </h3>
+            </template>
+            <draggable v-if="bucket.children.length > 0" class="buckets__list buckets__draggable" v-bind="dragOptions"
+                       @change="sortBucket($event, index)" :model-value="bucket.children" :tag="'table'">
+              <transition-group name="fade_scale_list" tag='tbody'>
+                <a17-bucket-item v-for="(child, index) in bucket.children" :key="`${child.id}_${index}`" :item="child"
+                                 :restricted="restricted" :draggable="bucket.children.length > 1"
+                                 :singleBucket="singleBucket" :singleSource="singleSource" :bucket="bucket.id"
+                                 :buckets="buckets" v-on:add-to-bucket="addToBucket"
+                                 v-on:remove-from-bucket="deleteFromBucket"
+                                 v-on:toggle-featured-in-bucket="toggleFeaturedInBucket"
+                                 :withToggleFeatured="bucket.withToggleFeatured"
+                                 :toggleFeaturedLabels="bucket.toggleFeaturedLabels"/>
               </transition-group>
             </draggable>
             <div v-else class="buckets__empty">
@@ -125,26 +67,20 @@
         </div>
       </div>
     </div>
-    <a17-modal
-      class="modal--tiny modal--form modal--withintro"
-      ref="overrideBucket"
-      title="Override Bucket"
-    >
+    <a17-modal class="modal--tiny modal--form modal--withintro" ref="overrideBucket" title="Override Bucket">
       <p class="modal--tiny-title"><strong>Are you sure ?</strong></p>
       <p v-html="overrideBucketText"></p>
       <a17-inputframe>
         <a17-button variant="validate" @click="override">Override</a17-button>
-        <a17-button variant="aslink" @click="$refs.overrideBucket.close()"
-          ><span>Cancel</span></a17-button
-        >
+        <a17-button variant="aslink" @click="$refs.overrideBucket.close()"><span>Cancel</span></a17-button>
       </a17-inputframe>
     </a17-modal>
   </div>
 </template>
 
 <script>
-  import draggable from 'vuedraggable'
-  import { mapGetters, mapState } from 'vuex'
+  import { VueDraggableNext } from 'vue-draggable-next'
+  import { mapGetters,mapState } from 'vuex'
 
   import Fieldset from '@/components/Fieldset.vue'
   import Filter from '@/components/Filter'
@@ -186,9 +122,7 @@
       // Optionnal additionnal actions showing up after the Publish button
       extraActions: {
         type: Array,
-        default: function() {
-          return []
-        }
+        default: function () { return [] }
       }
     },
     components: {
@@ -198,9 +132,9 @@
       'a17-paginate': Paginate,
       'a17-filter': Filter,
       'a17-vselect': VSelect,
-      draggable
+      draggable: VueDraggableNext
     },
-    data: function() {
+    data: function () {
       return {
         currentBucketID: '',
         currentItem: '',
@@ -217,14 +151,16 @@
         offset: state => state.buckets.offset,
         max: state => state.buckets.maxPage
       }),
-      ...mapGetters(['currentSource']),
-      singleBucket: function() {
+      ...mapGetters([
+        'currentSource'
+      ]),
+      singleBucket: function () {
         return this.buckets.length === 1
       },
-      singleSource: function() {
+      singleSource: function () {
         return this.dataSources.length === 1
       },
-      overrideBucketText: function() {
+      overrideBucketText: function () {
         const bucket = this.buckets.find(b => b.id === this.currentBucketID)
         let bucketName = ''
         let bucketSize = ''
@@ -232,17 +168,11 @@
           bucketName = bucket.name
           bucketSize = bucket.max
         }
-        return (
-          'Bucket <em>"' +
-          bucketName +
-          '"</em> has a strict limit of ' +
-          bucketSize +
-          ' items. Do you want to override the first item of this bucket ?'
-        )
+        return 'Bucket <em>"' + bucketName + '"</em> has a strict limit of ' + bucketSize + ' items. Do you want to override the first item of this bucket ?'
       }
     },
     methods: {
-      addToBucket: function(item, bucket) {
+      addToBucket: function (item, bucket) {
         const index = this.buckets.findIndex(b => b.id === bucket)
 
         if (!item && index === -1) return
@@ -265,23 +195,17 @@
         } else if (this.overridableMax || this.overrideItem) {
           this.checkRestriced(item)
           this.$store.commit(BUCKETS.ADD_TO_BUCKET, data)
-          this.$store.commit(BUCKETS.DELETE_FROM_BUCKET, {
-            index,
-            itemIndex: 0
-          })
+          this.$store.commit(BUCKETS.DELETE_FROM_BUCKET, { index, itemIndex: 0 })
           this.overrideItem = false
         } else {
           this.$refs.overrideBucket.open()
         }
       },
-      deleteFromBucket: function(item, bucket) {
+      deleteFromBucket: function (item, bucket) {
         const bucketIndex = this.buckets.findIndex(b => b.id === bucket)
         if (bucketIndex === -1) return
 
-        const itemIndex = this.buckets[bucketIndex].children.findIndex(
-          c =>
-            c.id === item.id && c.content_type.value === item.content_type.value
-        )
+        const itemIndex = this.buckets[bucketIndex].children.findIndex(c => c.id === item.id && c.content_type.value === item.content_type.value)
 
         if (itemIndex === -1) return
 
@@ -291,14 +215,11 @@
         }
         this.$store.commit(BUCKETS.DELETE_FROM_BUCKET, data)
       },
-      toggleFeaturedInBucket: function(item, bucket) {
+      toggleFeaturedInBucket: function (item, bucket) {
         const bucketIndex = this.buckets.findIndex(b => b.id === bucket)
         if (bucketIndex === -1) return
 
-        const itemIndex = this.buckets[bucketIndex].children.findIndex(
-          c =>
-            c.id === item.id && c.content_type.value === item.content_type.value
-        )
+        const itemIndex = this.buckets[bucketIndex].children.findIndex(c => c.id === item.id && c.content_type.value === item.content_type.value)
 
         if (itemIndex === -1) return
 
@@ -309,22 +230,19 @@
 
         this.$store.commit(BUCKETS.TOGGLE_FEATURED_IN_BUCKET, data)
       },
-      checkRestriced: function(item) {
+      checkRestriced: function (item) {
         // Remove item from each bucket if option restricted to one bucket is active
         if (this.restricted) {
-          this.buckets.forEach(bucket => {
-            bucket.children.forEach(child => {
-              if (
-                child.id === item.id &&
-                child.content_type.value === item.content_type.value
-              ) {
+          this.buckets.forEach((bucket) => {
+            bucket.children.forEach((child) => {
+              if (child.id === item.id && child.content_type.value === item.content_type.value) {
                 this.deleteFromBucket(item, bucket.id)
               }
             })
           })
         }
       },
-      sortBucket: function(evt, index) {
+      sortBucket: function (evt, index) {
         const data = {
           bucketIndex: index,
           oldIndex: evt.moved.oldIndex,
@@ -332,38 +250,35 @@
         }
         this.$store.commit(BUCKETS.REORDER_BUCKET_LIST, data)
       },
-      changeDataSource: function(value) {
+      changeDataSource: function (value) {
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATASOURCE, value)
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATA_PAGE, 1)
         this.$store.dispatch(ACTIONS.GET_BUCKETS)
       },
-      filterBucketsData: function(formData) {
+      filterBucketsData: function (formData) {
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATA_PAGE, 1)
-        this.$store.commit(
-          BUCKETS.UPDATE_BUCKETS_FILTER,
-          formData || { search: '' }
-        )
+        this.$store.commit(BUCKETS.UPDATE_BUCKETS_FILTER, formData || { search: '' })
         // reload datas
         this.$store.dispatch(ACTIONS.GET_BUCKETS)
       },
-      updateOffset: function(value) {
+      updateOffset: function (value) {
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATA_PAGE, 1)
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATA_OFFSET, value)
 
         // reload datas
         this.$store.dispatch(ACTIONS.GET_BUCKETS)
       },
-      updatePage: function(value) {
+      updatePage: function (value) {
         this.$store.commit(BUCKETS.UPDATE_BUCKETS_DATA_PAGE, value)
         // reload datas
         this.$store.dispatch(ACTIONS.GET_BUCKETS)
       },
-      override: function() {
+      override: function () {
         this.overrideItem = true
         this.addToBucket(this.currentItem, this.currentBucketID)
         this.$refs.overrideBucket.close()
       },
-      save: function() {
+      save: function () {
         this.$store.dispatch(ACTIONS.SAVE_BUCKETS)
       }
     }
@@ -371,6 +286,7 @@
 </script>
 
 <style lang="scss" scoped>
+
   .buckets {
     padding-bottom: 80px;
   }
@@ -420,6 +336,7 @@
   }
 
   .buckets__header {
+
     display: flex;
     align-items: center;
 
@@ -464,6 +381,7 @@
 </style>
 
 <style lang="scss">
+
   .buckets__item {
     position: relative;
     display: flex;
@@ -488,6 +406,7 @@
     }
 
     .buckets__itemThumbnail {
+
       @include breakpoint(xsmall) {
         display: none;
       }
@@ -563,6 +482,7 @@
       display: flex;
 
       .item__dropdown {
+
         .item__dropdown__content {
           min-width: 250px;
 
@@ -591,7 +511,9 @@
         &.selected {
           opacity: 0.4;
         }
+
       }
+
     }
 
     &.single.selected > * {
@@ -605,6 +527,7 @@
 </style>
 
 <style lang="scss">
+
   .buckets {
     .buckets__fieldset {
       /* override fieldset style */

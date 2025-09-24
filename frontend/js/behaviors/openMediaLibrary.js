@@ -1,19 +1,17 @@
 import forEachNodelist from '../utils/forEachNodelist.js'
 // Open Media library from the nav
 
-const openMediaLibrary = function() {
+const openMediaLibrary = function (app) {
   const bts = document.querySelectorAll('[data-medialib-btn]')
 
-  function _triggerOpenMediaLibrary() {
-    if (window[process.env.VUE_APP_NAME].vm) {
-      window[process.env.VUE_APP_NAME].vm.openFreeMediaLibrary()
-    }
+  function _triggerOpenMediaLibrary () {
+    app.openFreeMediaLibrary()
   }
 
   // Toggle Click button
   if (bts.length) {
-    forEachNodelist(bts, function(bt) {
-      bt.addEventListener('click', function(e) {
+    forEachNodelist(bts, function (bt) {
+      bt.addEventListener('click', function (e) {
         e.preventDefault()
 
         _triggerOpenMediaLibrary()

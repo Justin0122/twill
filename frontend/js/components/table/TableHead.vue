@@ -34,6 +34,7 @@
 
   export default {
     name: 'A17Tablehead',
+    emits: ['sortColumn'],
     props: {
       sortable: {
         type: Boolean,

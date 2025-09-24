@@ -13,6 +13,7 @@
 <script>
   export default {
     name: 'A17Infotip',
+    emits: ['click'],
     props: {
       text: {
         default: ''

@@ -1,14 +1,20 @@
 <template>
   <div class="editorSidebar__listItems">
-    <draggable
-      v-model="renderOrder"
-      :list="renderOrder"
-      :item-key="'id'"
-      :options="categoryDragOptions"
-      element="div"
-      class="editorSidebar__categories"
-      @change="saveOrderFromRender"
-    >
+    <!-- eslint-disable vue/no-mutating-props -->
+    <draggable class="editorSidebar__blocks"
+               :class="editorSidebarClasses"
+               :modelValue="blocks"
+               @update:modelValue="blocks = $event"
+               :options="{
+                    group: {
+                      name: 'editorBlocks',
+                      pull: 'clone',
+                      put: false
+                    },
+                    handle: '.editorSidebar__button'
+                    }"
+               @change="saveOrderFromRender">
+      <!--eslint-enable-->
       <div
         v-for="cat in renderOrder"
         :key="cat.id"
@@ -64,7 +70,8 @@
 </template>
 
 <script>
-  import draggable from 'vuedraggable'
+  import { VueDraggableNext } from 'vue-draggable-next'
+
   import { DraggableMixin } from '@/mixins'
   import tinycolor from 'tinycolor2'
 
@@ -73,12 +80,18 @@
   export default {
     name: 'A17EditorSidebarBlockList',
     props: {
-      blocks: { type: Array, default: () => [] },
-      inFieldset: { type: Boolean, default: false },
+      blocks: {
+        type: Array,
+        default: () => []
+      },
+      inFieldset: {
+        type: Boolean,
+        default: false
+      },
       storageKey: { type: String, default: DEFAULT_STORAGE_KEY }
     },
     mixins: [DraggableMixin],
-    components: { draggable },
+    components: { draggable: VueDraggableNext },
     data() {
       return {
         collapsedCategories: {},
@@ -144,11 +157,13 @@
       this.reconcileOrder()
     },
     methods: {
-      // ---------- icon helpers ----------
-      iconSymbol(icon) {
+      iconSymbol: function (icon) {
+        // Future block editor icons will have two variations: small and large.
+        // Small formats will be used by default in the dropdown, and large
+        // formats (named with `-lg` suffix) will be used in the sidebar.
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
-      hasLgIconVariation(icon) {
+      hasLgIconVariation: function (icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
       },
 
@@ -278,93 +293,18 @@
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
 
-  /* Full-width categories stacked vertically */
-  .editorSidebar__categories {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .editorSidebar__category {
-    flex: 0 0 100%;
-    width: 100%;
-    min-height: var(--cat-min-h, 44px);
-    position: relative;
-    contain: layout paint;
-  }
-
-  .editorSidebar__categoryHeader {
-    @include btn-reset;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: $color__background;
-    border-radius: $border-radius;
-    border: 1px solid $color__border;
-    cursor: move; // drag handle
-    user-select: none;
-    -webkit-user-drag: none;
-
-    &:hover {
-      border-color: $color__border--focus;
-    }
-  }
-
-  .editorSidebar__categoryTitle {
-    font-weight: 600;
-    color: $color__text;
-  }
-
-  .editorSidebar__categoryIcon {
-    font-size: 10px;
-    transition: transform 0.2s ease;
-    color: $color__text--light;
-
-    &.is-open {
-      transform: rotate(180deg);
-    }
-  }
-
-  /* Collapse only inner panel; keep outer footprint stable */
-  .editorSidebar__panel {
-    overflow: hidden;
-  }
-
-  .collapse-enter-active,
-  .collapse-leave-active {
-    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
-    max-height: 1000px;
-  }
-
-  .collapse-enter,
-  .collapse-leave-to {
-    max-height: 0;
-    opacity: 0;
-  }
-
-  .editorSidebar__blocks {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    transition: all 0.3s ease-out;
-    max-height: 1000px;
-    width: -moz-available;
-    width: -webkit-fill-available;
-    width: stretch;
-    border-radius: $border-radius;
-    padding: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-  }
-
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
 
     .editorSidebar__button:last-child {
       padding-bottom: 0;
     }
+  }
+
+  .editorSidebar__listItems > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .editorSidebar__button {
@@ -383,12 +323,6 @@
     color: $color__text--light;
     text-align: center;
 
-    &--full-width {
-      width: -moz-available;
-      width: -webkit-fill-available;
-      width: stretch;
-    }
-
     .icon {
       flex-grow: 1;
       width: 100%;
@@ -400,10 +334,7 @@
 
     .editorSidebar__buttonLabel {
       width: 100%;
-      line-height: 1.2;
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
+      line-height: 1;
     }
 
     &:hover,
@@ -417,23 +348,10 @@
     }
   }
 
-  .editorPreview__content .editorSidebar__button {
-    width: 100%;
-  }
-
-  /* Sortable feedback */
-  .is-ghost {
-    opacity: 0.6;
-    min-height: var(--cat-min-h, 44px);
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px dashed rgba(0, 0, 0, 0.1);
-  }
-
-  .is-chosen {
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06) inset;
-  }
-
-  .is-drag {
-    cursor: grabbing;
+  .editorPreview__content {
+    .editorSidebar__button {
+      // use full width instead of half for buttons being dragged to the content area
+      width: 100%;
+    }
   }
 </style>
