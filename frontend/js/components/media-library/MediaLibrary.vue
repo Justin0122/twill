@@ -258,6 +258,7 @@
 </template>
 
 <script>
+  import { eventBus } from '@/utils/eventBus';
   import { mapState } from 'vuex'
 
   import a17Checkbox from '@/components/Checkbox.vue'
@@ -310,12 +311,12 @@
         this.draggingOver = false
         this._dragDepth = 0
       }
-      this.$root.$on('ml:dnd:hover', this._onHoverId)
-      this.$root.$on('ml:dnd:hover:clear', this._onHoverClear)
+      eventBus.on('ml:dnd:hover', this._onHoverId);
+      eventBus.off('ml:dnd:hover', this._onHoverId);
       this._onGlobalCtxClose = () => {
         this.closeContextMenu()
       }
-      this.$root.$on('ml:ctx:close', this._onGlobalCtxClose)
+      eventBus.emit('ml:dnd:hover', someId);
     },
     mounted() {
       this._onGlobalDragEnd = () => this._onHoverClear()

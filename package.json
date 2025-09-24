@@ -37,6 +37,7 @@
     "fine-uploader-wrappers": "^1.1.0",
     "flatpickr": "4.6.13",
     "lodash": "^4.17.21",
+    "mitt": "^3.0.1",
     "quill": "^1.3.7",
     "smartcrop": "^2.0.5",
     "tinycolor2": "1.6.0",
