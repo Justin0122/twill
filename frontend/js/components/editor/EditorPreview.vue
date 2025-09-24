@@ -30,7 +30,6 @@
         <template v-for="savedBlock in blocks" :key="savedBlock.id">
           <a17-blockeditor-model
             :block="savedBlock"
-            :key="savedBlock.id"
             :editor-name="editorName"
             v-slot="{
               block,

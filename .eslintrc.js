@@ -9,7 +9,6 @@ module.exports = {
       process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-unused-vars': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-unreachable': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
-    indent: ['error', 2, { SwitchCase: 1 }],
     'no-useless-escape': 0,
     'arrow-parens': 0,
     'generator-star-spacing': 0,

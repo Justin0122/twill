@@ -36,11 +36,10 @@
 </template>
 
 <script>
-  import draggable from 'vuedraggable'
-
+  import { VueDraggableNext } from 'vue-draggable-next'
   export default {
     name: 'A17BlocksReorder',
-    components: { draggable },
+    components: { draggable: VueDraggableNext },
     props: {
       items: { type: Array, required: true },
       activeIndex: { type: Number, default: -1 }
