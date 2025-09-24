@@ -120,7 +120,7 @@
         }
       },
       toggleCollapse(row) {
-        this.$set(this.collapsedRows, row.id, !this.isCollapsed(row))
+        this.collapsedRows[row.id] = !this.isCollapsed(row);
       },
       isCollapsed(row) {
         return !!this.collapsedRows[row.id]
