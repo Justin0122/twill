@@ -32,7 +32,7 @@
           <span
             class="editorSidebar__categoryIcon"
             :class="{ 'is-open': !isCollapsed(cat.name) }"
-            >▼</span
+          >▼</span
           >
         </button>
 
@@ -60,8 +60,8 @@
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
                 <span class="editorSidebar__buttonLabel">{{
-                  block.title
-                }}</span>
+                    block.title
+                  }}</span>
               </div>
             </draggable>
           </div>
@@ -171,7 +171,7 @@
 
       // ---------- collapse ----------
       toggleCollapse(name) {
-        this.$set(this.collapsedCategories, name, !this.isCollapsed(name))
+        this.collapsedCategories[name] = !this.isCollapsed(name);
       },
       isCollapsed(name) {
         return !!this.collapsedCategories[name]
@@ -296,6 +296,87 @@
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
 
+  /* Full-width categories stacked vertically */
+  .editorSidebar__categories {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .editorSidebar__category {
+    flex: 0 0 100%;
+    width: 100%;
+    min-height: var(--cat-min-h, 44px);
+    position: relative;
+    contain: layout paint;
+  }
+
+  .editorSidebar__categoryHeader {
+    @include btn-reset;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: $color__background;
+    border-radius: $border-radius;
+    border: 1px solid $color__border;
+    cursor: move; // drag handle
+    user-select: none;
+    -webkit-user-drag: none;
+
+    &:hover {
+      border-color: $color__border--focus;
+    }
+  }
+
+  .editorSidebar__categoryTitle {
+    font-weight: 600;
+    color: $color__text;
+  }
+
+  .editorSidebar__categoryIcon {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    color: $color__text--light;
+
+    &.is-open {
+      transform: rotate(180deg);
+    }
+  }
+
+  /* Collapse only inner panel; keep outer footprint stable */
+  .editorSidebar__panel {
+    overflow: hidden;
+  }
+
+  .collapse-enter-active,
+  .collapse-leave-active {
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+    max-height: 1000px;
+  }
+
+  .collapse-enter,
+  .collapse-leave-to {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .editorSidebar__blocks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    transition: all 0.3s ease-out;
+    max-height: 1000px;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: stretch;
+    border-radius: $border-radius;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
 
@@ -326,6 +407,12 @@
     color: $color__text--light;
     text-align: center;
 
+    &--full-width {
+      width: -moz-available;
+      width: -webkit-fill-available;
+      width: stretch;
+    }
+
     .icon {
       flex-grow: 1;
       width: 100%;
@@ -337,7 +424,10 @@
 
     .editorSidebar__buttonLabel {
       width: 100%;
-      line-height: 1;
+      line-height: 1.2;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     &:hover,
@@ -351,10 +441,23 @@
     }
   }
 
-  .editorPreview__content {
-    .editorSidebar__button {
-      // use full width instead of half for buttons being dragged to the content area
-      width: 100%;
-    }
+  .editorPreview__content .editorSidebar__button {
+    width: 100%;
+  }
+
+  /* Sortable feedback */
+  .is-ghost {
+    opacity: 0.6;
+    min-height: var(--cat-min-h, 44px);
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px dashed rgba(0, 0, 0, 0.1);
+  }
+
+  .is-chosen {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06) inset;
+  }
+
+  .is-drag {
+    cursor: grabbing;
   }
 </style>
