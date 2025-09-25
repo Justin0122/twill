@@ -171,7 +171,7 @@
             v-else-if="isImage"
             :label="$trans('media-library.sidebar.alt-text', 'Alt text')"
             name="alt_text"
-            :initialValue="firstMedia.metadatas.default.altText"
+            :initialValue="firstDefaultMeta.altText || ''"
             size="small"
             @focus="focus"
             @blur="blur"
@@ -200,7 +200,7 @@
               :label="$trans('media-library.sidebar.caption', 'Caption')"
               name="caption"
               :options="wysiwygOptions"
-              :initialValue="firstMedia.metadatas.default.caption"
+              :initialValue="firstDefaultMeta.caption || ''"
               @focus="focus"
               @blur="blur"
             />
@@ -228,7 +228,7 @@
               size="small"
               :label="$trans('media-library.sidebar.caption', 'Caption')"
               name="caption"
-              :initialValue="firstMedia.metadatas.default.caption"
+              :initialValue="firstDefaultMeta.caption || ''"
               @focus="focus"
               @blur="blur"
             />
@@ -251,7 +251,7 @@
                 rows: 1,
                 size: 'small'
               }"
-              :initialValues="firstMedia.metadatas.default[field.name]"
+              :initialValues="(firstDefaultMeta[field.name] && typeof firstDefaultMeta[field.name] === 'object') ? firstDefaultMeta[field.name] : {}"
               @focus="focus"
               @blur="blur"
             />
@@ -261,7 +261,7 @@
               :label="field.label"
               :name="field.name"
               size="small"
-              :initialValue="firstMedia.metadatas.default[field.name]"
+              :initialValue="firstDefaultMeta[field.name] ?? ''"
               type="textarea"
               :rows="1"
               @focus="focus"
@@ -275,7 +275,7 @@
               <a17-checkbox
                 :label="field.label"
                 :name="field.name"
-                :initialValue="firstMedia.metadatas.default[field.name]"
+                :initialValue="firstDefaultMeta[field.name] ?? false"
                 :value="1"
                 @change="blur"
               />
@@ -445,6 +445,10 @@
       }
     },
     computed: {
+      firstDefaultMeta() {
+        const fm = this.firstMedia
+        return (fm && fm.metadatas && fm.metadatas.default) ? fm.metadatas.default : {}
+      },
       firstMedia: function() {
         return this.hasMedia ? this.medias[0] : null
       },
@@ -469,40 +473,48 @@
             allTags.filter(tag => currentTags.includes(tag))
           )
       },
-      sharedMetadata() {
-        return (name, type) => {
-          if (!this.hasMultipleMedias) {
-            return typeof this.firstMedia.metadatas.default[name] ===
-              'object' || type === 'boolean'
-              ? this.firstMedia.metadatas.default[name]
-              : {}
-          }
-
-          return this.medias
-            .map(media => {
-              return media.metadatas.default[name]
-              // eslint-disable-next-line eqeqeq
-            })
-            .every((val, i, arr) =>
-              Array.isArray(val) ? val[0] === arr[0] : val === arr[0]
-            )
-            ? this.firstMedia.metadatas.default[name]
-            : type === 'object'
-            ? {}
-            : type === 'boolean'
-            ? false
-            : ''
-        }
-      },
       captionValues() {
-        return typeof this.firstMedia.metadatas.default.caption === 'object'
-          ? this.firstMedia.metadatas.default.caption
-          : {}
+        const v = this.firstDefaultMeta.caption
+        return v && typeof v === 'object' ? v : {}
       },
       altValues() {
-        return typeof this.firstMedia.metadatas.default.altText === 'object'
-          ? this.firstMedia.metadatas.default.altText
-          : {}
+        const v = this.firstDefaultMeta.altText
+        return v && typeof v === 'object' ? v : {}
+      },
+      sharedMetadata() {
+        return (name, type) => {
+          // Single selection: just read from safe meta
+          if (!this.hasMultipleMedias) {
+            const v = this.firstDefaultMeta[name]
+            if (type === 'boolean') return !!v
+            if (type === 'object') return (v && typeof v === 'object') ? v : {}
+            // default (string-ish)
+            return v ?? ''
+          }
+
+          // Multiple selection: compare across medias (with guards)
+          const vals = this.medias.map(m => {
+            const meta = (m && m.metadatas && m.metadatas.default) ? m.metadatas.default : {}
+            return meta[name]
+          })
+
+          const allEqual = vals.every((val, i, arr) => {
+            const a0 = arr[0]
+            return Array.isArray(val) ? (val?.[0] === a0?.[0]) : (val === a0)
+          })
+
+          if (allEqual) {
+            const v = this.firstDefaultMeta[name]
+            if (type === 'boolean') return !!v
+            if (type === 'object') return (v && typeof v === 'object') ? v : {}
+            return v ?? ''
+          }
+
+          // Not shared—return neutral value by expected type
+          if (type === 'object') return {}
+          if (type === 'boolean') return false
+          return ''
+        }
       },
       mediasIds: function() {
         return this.medias
@@ -652,6 +664,11 @@
           )
         }
       },
+      ensureDefaultMeta(media) {
+        if (!media.metadatas) media.metadatas = {}
+        if (!media.metadatas.default) media.metadatas.default = {}
+        return media.metadatas.default
+      },
       clear: function() {
         this.$emit('clear')
       },
@@ -675,27 +692,33 @@
         const data = this.getFormData(form)
 
         if (this.hasSingleMedia) {
-          if (data.hasOwnProperty('alt_text'))
-            this.firstMedia.metadatas.default.altText = data.alt_text
-          else this.firstMedia.metadatas.default.altText = ''
+          const meta = this.ensureDefaultMeta(this.firstMedia)
 
-          if (data.hasOwnProperty('caption'))
-            this.firstMedia.metadatas.default.caption = data.caption
-          else this.firstMedia.metadatas.default.caption = ''
+          if (Object.prototype.hasOwnProperty.call(data, 'alt_text')) {
+            meta.altText = data.alt_text
+          } else {
+            meta.altText = ''
+          }
+
+          if (Object.prototype.hasOwnProperty.call(data, 'caption')) {
+            meta.caption = data.caption
+          } else {
+            meta.caption = ''
+          }
 
           this.extraMetadatas.forEach(metadata => {
-            if (data.hasOwnProperty(metadata.name)) {
-              this.firstMedia.metadatas.default[metadata.name] =
-                data[metadata.name]
+            if (Object.prototype.hasOwnProperty.call(data, metadata.name)) {
+              meta[metadata.name] = data[metadata.name]
             } else {
-              this.firstMedia.metadatas.default[metadata.name] = ''
+              meta[metadata.name] = ''
             }
           })
         } else {
           this.singleAndMultipleMetadatas.forEach(metadata => {
-            if (data.hasOwnProperty(metadata.name)) {
+            if (Object.prototype.hasOwnProperty.call(data, metadata.name)) {
               this.medias.forEach(media => {
-                media.metadatas.default[metadata.name] = data[metadata.name]
+                const meta = this.ensureDefaultMeta(media)
+                meta[metadata.name] = data[metadata.name]
               })
             }
           })
