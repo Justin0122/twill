@@ -390,6 +390,21 @@
     flex-wrap: wrap;
     justify-content: space-between;
   }
+  .editorSidebar__listItems {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editorSidebar__listItems > .editorSidebar__blocks {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 
   .editorSidebar__button {
     @include btn-reset;
