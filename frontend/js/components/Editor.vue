@@ -115,7 +115,6 @@
                 :editor-name="editorName"
                 :blocks="savedBlocks"
                 :hasBlockActive="hasBlockActive"
-                :sandbox="previewSandbox"
                 :bgColor="bgColor"
                 @blocks:move="moveBlock"
                 @visible:top="onTopVisible"
@@ -159,7 +158,9 @@
       return {
         editorName: null,
         editorOpen: false,
-        htmlEditorClass: htmlClasses.editor
+        htmlEditorClass: htmlClasses.editor,
+        activeTab: 'add',
+        activeIndex: -1
       }
     },
     computed: {

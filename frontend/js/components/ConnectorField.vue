@@ -21,154 +21,135 @@
   export default {
     name: 'A17ConnectorField',
     props: {
-      fieldName: {
-        type: String,
-        required: true
-      },
-      requiredFieldValues: {
-        default: ''
-      },
-      inModal: {
-        type: Boolean,
-        default: false
-      },
-      keepAlive: {
-        type: Boolean,
-        default: false
-      },
-      arrayContains: {
-        type: Boolean,
-        default: true
-      },
-      isValueEqual: {
-        // requiredFieldValues must be equal (or different) to the stored value to show
-        type: Boolean,
-        default: true
-      },
-      isBrowser: {
-        type: Boolean,
-        default: false
-      },
-      matchEmptyBrowser: {
-        type: Boolean,
-        default: false
-      }
+      fieldName: { type: String, required: true },
+      requiredFieldValues: { default: '' },
+      inModal: { type: Boolean, default: false },
+      keepAlive: { type: Boolean, default: false },
+      arrayContains: { type: Boolean, default: true },
+      isValueEqual: { type: Boolean, default: true },
+      isBrowser: { type: Boolean, default: false },
+      matchEmptyBrowser: { type: Boolean, default: false }
     },
     computed: {
-      storedValue: function() {
+      storedValue() {
         if (this.inModal) return this.modalFieldValueByName(this.fieldName)
         if (this.isBrowser) return this.selectedBrowser[this.fieldName]
         return this.fieldValueByName(this.fieldName)
       },
       ...mapGetters(['fieldValueByName', 'modalFieldValueByName']),
       ...mapState({
-        fields: state => state.form.fields, // Fields in the form
-        modalFields: state => state.form.modalFields, // Fields in the create/edit modal
+        fields: state => state.form.fields,
+        modalFields: state => state.form.modalFields,
         selectedBrowser: state => state.browser.selected
       })
     },
-    data: function() {
-      return {
-        open: false
-      }
+    data() {
+      return { open: false }
     },
     watch: {
-      storedValue: function(fieldInstore) {
+      storedValue(fieldInstore) {
         this.toggleVisibility(fieldInstore)
       }
     },
     methods: {
-      toggleVisibility: function(value) {
-        if (this.$refs.fieldContainer) {
-          this.$slots.default().forEach(child => {
-            // Base input fields.
-            if (
-              child.componentInstance !== undefined &&
-              child.componentInstance.$refs &&
-              child.componentInstance.$refs.field
-            ) {
-              if (child.componentInstance.$refs.field[0]) {
-                child.componentInstance.$refs.field[0].destroyValue()
-              }
+      // --- deep destroy across slotted children ---
+      destroyChildValues() {
+        if (!this.$refs.fieldContainer) return
+        if (typeof this.$slots.default !== 'function') return
+        const vnodes = this.$slots.default()
+        this._destroyValuesInVNodes(vnodes)
+      },
+      _destroyValuesInVNodes(vnodes) {
+        if (!vnodes) return
+        const list = Array.isArray(vnodes) ? vnodes : [vnodes]
+
+        for (const vnode of list) {
+          // Component instance proxy (public)
+          const comp = vnode && vnode.component && vnode.component.proxy
+
+          // 1) Direct method on the component
+          if (comp && typeof comp.destroyValue === 'function') {
+            try { comp.destroyValue() } catch (_) {}
+          }
+
+          // 2) Child's $refs.field -> may be array or single
+          if (comp && comp.$refs && comp.$refs.field) {
+            const fieldRef = Array.isArray(comp.$refs.field)
+              ? comp.$refs.field[0]
+              : comp.$refs.field
+            if (fieldRef && typeof fieldRef.destroyValue === 'function') {
+              try { fieldRef.destroyValue() } catch (_) {}
             }
-            // Special fields such as browsers.
-            else if (
-              child.componentInstance !== undefined &&
-              child.componentInstance.$slots !== undefined &&
-              child.componentInstance.$slots.default !== undefined
-            ) {
-              child.componentInstance.$slots.default().forEach(subChild => {
-                if (
-                  subChild.componentInstance &&
-                  subChild.componentInstance.destroyValue
-                ) {
-                  subChild.componentInstance.destroyValue()
-                }
-              })
-            } else if (child.componentInstance.destroyValue) {
-              child.componentInstance.destroyValue()
-            }
-          })
+          }
+
+          // 3) Recurse into the child's default slot, if any
+          if (comp && comp.$slots && typeof comp.$slots.default === 'function') {
+            try { this._destroyValuesInVNodes(comp.$slots.default()) } catch (_) {}
+          }
+
+          // 4) Recurse into vnode children (fragments/elements)
+          if (vnode && Array.isArray(vnode.children)) {
+            this._destroyValuesInVNodes(vnode.children)
+          }
         }
+      },
+
+      // --- compute next state first, then clear if hiding ---
+      toggleVisibility(value) {
+        // Compute next 'open' without mutating yet
+        let nextOpen = false
 
         if (this.isBrowser) {
           const browserLength = (value && value.length) ?? 0
           if (this.matchEmptyBrowser && browserLength === 0) {
-            this.open = true
-            return
-          }
-
-          this.open = this.matchEmptyBrowser ? false : browserLength > 0
-          return
-        }
-
-        const newValue = clone(value)
-        const newFieldValues = clone(this.requiredFieldValues)
-        const newFieldValuesArray = Array.isArray(newFieldValues)
-          ? newFieldValues
-          : [newFieldValues]
-
-        // sort requiredFieldValues and value if is array, so the order of values is the same
-        if (Array.isArray(newFieldValues)) newFieldValues.sort()
-        if (Array.isArray(newValue)) newValue.sort()
-
-        // update visiblity
-        if (this.isValueEqual) {
-          if (Array.isArray(newValue)) {
-            this.open = this.arrayContains
-              ? newFieldValuesArray.some(value => {
-                  return newValue.includes(value)
-                })
-              : (this.open =
-                  JSON.stringify(newFieldValuesArray) ===
-                  JSON.stringify(newValue))
+            nextOpen = true
           } else {
-            this.open = Array.isArray(newFieldValues)
-              ? newFieldValues.indexOf(newValue) !== -1
-              : isEqual(newValue, newFieldValues)
+            nextOpen = this.matchEmptyBrowser ? false : browserLength > 0
           }
         } else {
-          if (Array.isArray(newValue)) {
-            this.open = this.arrayContains
-              ? newFieldValuesArray.every(value => {
-                  return !newValue.includes(value)
-                })
-              : (this.open =
-                  JSON.stringify(newFieldValuesArray) !==
-                  JSON.stringify(newValue))
+          const newValue = clone(value)
+          const newFieldValues = clone(this.requiredFieldValues)
+          const newFieldValuesArray = Array.isArray(newFieldValues)
+            ? newFieldValues
+            : [newFieldValues]
+
+          if (Array.isArray(newFieldValues)) newFieldValues.sort()
+          if (Array.isArray(newValue)) newValue.sort()
+
+          if (this.isValueEqual) {
+            if (Array.isArray(newValue)) {
+              nextOpen = this.arrayContains
+                ? newFieldValuesArray.some(v => newValue.includes(v))
+                : JSON.stringify(newFieldValuesArray) === JSON.stringify(newValue)
+            } else {
+              nextOpen = Array.isArray(newFieldValues)
+                ? newFieldValues.indexOf(newValue) !== -1
+                : isEqual(newValue, newFieldValues)
+            }
           } else {
-            this.open = Array.isArray(newFieldValues)
-              ? newFieldValues.indexOf(newValue) === -1
-              : !isEqual(newValue, newFieldValues)
+            if (Array.isArray(newValue)) {
+              nextOpen = this.arrayContains
+                ? newFieldValuesArray.every(v => !newValue.includes(v))
+                : JSON.stringify(newFieldValuesArray) !== JSON.stringify(newValue)
+            } else {
+              nextOpen = Array.isArray(newFieldValues)
+                ? newFieldValues.indexOf(newValue) === -1
+                : !isEqual(newValue, newFieldValues)
+            }
           }
         }
+
+        // If we are about to hide, clear nested field values safely
+        if (this.open && !nextOpen) {
+          this.destroyChildValues()
+        }
+
+        this.open = nextOpen
       }
     },
-    mounted: function() {
-      const self = this
-      // init show/hide
-      this.$nextTick(function() {
-        self.toggleVisibility(this.storedValue)
+    mounted() {
+      this.$nextTick(() => {
+        this.toggleVisibility(this.storedValue)
       })
     }
   }

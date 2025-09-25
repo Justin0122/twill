@@ -11,11 +11,11 @@
     >
       <div class="editorPreview__empty" v-if="!blocks.length">
         <b>{{
-          $trans(
-            'previewer.drag-and-drop',
-            'Drag and drop content from the left navigation'
-          )
-        }}</b>
+            $trans(
+              'previewer.drag-and-drop',
+              'Drag and drop content from the left navigation'
+            )
+          }}</b>
       </div>
       <draggable
         class="editorPreview__content"
@@ -61,7 +61,7 @@
         <!-- eslint-enable -->
       </draggable>
       <a17-spinner v-if="loading" :visible="true"
-        >{{ $trans('fields.block-editor.loading', 'Loading') }}&hellip;
+      >{{ $trans('fields.block-editor.loading', 'Loading') }}&hellip;
       </a17-spinner>
     </div>
   </a17-blockeditor-model>
@@ -87,14 +87,12 @@
         default: '#FFFFFF'
       },
       hasBlockActive: {
-        props: {
-          type: Boolean,
-          default: false
-        }
+        type: Boolean,
+        default: false
       }
     },
     mixins: [DraggableMixin, BlockEditorMixin],
-    emits: ['blocks:move'],
+    emits: ['blocks:move', 'visible:top', 'scroll-to'],
     components: {
       draggable: VueDraggableNext,
       'a17-editor-block-preview': A17EditorBlockPreview,
@@ -311,6 +309,7 @@
     },
     mounted() {
       this.init()
+      this.emitTopVisible()
       this.$nextTick(() => {
         this.getAllPreviews()
       })
@@ -353,6 +352,12 @@
         if (active) return
         this.unSubscribe()
         this.blockSelectIndex = -1
+      },
+      blocks: {
+        handler() {
+          this.$nextTick(() => this.emitTopVisible())
+        },
+        deep: true
       }
     }
   }

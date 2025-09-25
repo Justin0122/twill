@@ -205,11 +205,11 @@
                 v-if="canInsert"
                 variant="action"
                 @click="saveAndClose"
-                >{{ btnLabel }}</a17-button
-              >
-              <a17-button v-else variant="action" :disabled="true">{{
-                btnLabel
-              }}</a17-button>
+                >{{ btnLabel }}
+              </a17-button>
+              <a17-button v-else variant="action" :disabled="true"
+                >{{ btnLabel }}
+              </a17-button>
             </footer>
 
             <!-- CENTER: media list + uploader -->
@@ -246,8 +246,8 @@
                   @move="onMoveToFolder"
                 />
                 <a17-spinner v-if="loading" class="medialibrary__spinner"
-                  >Loading&hellip;</a17-spinner
-                >
+                  >Loading&hellip;
+                </a17-spinner>
               </div>
             </div>
           </div>
@@ -258,7 +258,7 @@
 </template>
 
 <script>
-  import { eventBus } from '@/utils/eventBus';
+  import { eventBus } from '@/utils/eventBus'
   import { mapState } from 'vuex'
 
   import a17Checkbox from '@/components/Checkbox.vue'
@@ -311,12 +311,13 @@
         this.draggingOver = false
         this._dragDepth = 0
       }
-      eventBus.on('ml:dnd:hover', this._onHoverId);
-      eventBus.off('ml:dnd:hover', this._onHoverId);
+      eventBus.on('ml:dnd:hover', this._onHoverId)
+      eventBus.on('ml:dnd:hover:clear', this._onHoverClear)
+
       this._onGlobalCtxClose = () => {
         this.closeContextMenu()
       }
-      eventBus.emit('ml:dnd:hover', this._onGlobalCtxClose);
+      eventBus.on('ml:ctx:close', this._onGlobalCtxClose)
     },
     mounted() {
       this._onGlobalDragEnd = () => this._onHoverClear()
@@ -329,9 +330,9 @@
       window.addEventListener('scroll', this.closeContextMenu, true)
     },
     beforeUnmount() {
-      eventBus.off('ml:dnd:hover', this._onHoverId);
-      eventBus.off('ml:dnd:hover:clear', this._onHoverClear);
-      eventBus.off('ml:ctx:close', this._onGlobalCtxClose);
+      eventBus.off('ml:dnd:hover', this._onHoverId)
+      eventBus.off('ml:dnd:hover:clear', this._onHoverClear)
+      eventBus.off('ml:ctx:close', this._onGlobalCtxClose)
 
       window.removeEventListener('dragend', this._onGlobalDragEnd)
       window.removeEventListener('drop', this._onGlobalDragEnd)
@@ -363,7 +364,7 @@
     },
     methods: {
       onReparentFolder(payload) {
-        eventBus.emit('moveFolder', payload)
+        this.$emit('moveFolder', payload)
       },
       startInlineCreate() {
         this.closeContextMenu()
@@ -387,7 +388,7 @@
           return
         }
         // Emit upwards so the parent does the API call
-        eventBus.emit('create', {
+        this.$emit('create', {
           id: this.node.id ?? null,
           path: this.pathHere(),
           name,
@@ -465,7 +466,7 @@
         if (this.node.id === 'trash') return
         this.closeContextMenu()
         const { id, path } = this.contextMenu.meta
-        eventBus.emit('delete', { id, path: path || [] })
+        this.$emit('delete', { id, path: path || [] })
       },
       pathHere() {
         const path = []
@@ -478,7 +479,7 @@
         return path
       },
       selectSelf() {
-        eventBus.emit('select', {
+        this.$emit('select', {
           id: this.node.id ?? null,
           path: this.level === 0 ? [] : this.pathHere()
         })
@@ -511,7 +512,7 @@
         }
         evt.dataTransfer.effectAllowed = 'move'
         // clear any previous hover states
-        this.$root.$emit('ml:dnd:hover:clear')
+        eventBus.emit('ml:dnd:hover:clear')
       },
 
       // --- DROP TARGETS (accept media OR folder) ---
@@ -542,7 +543,7 @@
         // react to either media OR folder payloads
         if (!(this.hasMediaPayload(evt) || this.hasFolderPayload(evt))) return
         this._dragDepth += 1
-        this.$root.$emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
+        eventBus.emit('ml:dnd:hover', (this.node.id ?? 'root') + '')
         this.draggingOver = true
         evt.preventDefault()
         evt.stopPropagation()
@@ -574,7 +575,7 @@
           }
           if (targetPath.join('/').startsWith(sourcePath.join('/'))) {
             // cannot move into its own descendant
-            this.$root.$emit('ml:dnd:hover:clear')
+            eventBus.emit('ml:dnd:hover:clear')
             this.draggingOver = false
             // optional: toast
             eventBus.emit('toast', {
@@ -586,7 +587,7 @@
             return
           }
 
-          eventBus.emit('moveFolder', { sourceId, targetId })
+          this.$emit('moveFolder', { sourceId, targetId })
           this._clearHover(evt)
           return
         }
@@ -595,7 +596,7 @@
         const payload = this.readMediaPayload(evt)
         this._dragDepth = 0
         this.draggingOver = false
-        this.$root.$emit('ml:dnd:hover:clear')
+        eventBus.emit('ml:dnd:hover:clear')
 
         if (!payload || !payload.ids || !payload.ids.length) {
           evt.preventDefault()
@@ -603,7 +604,7 @@
           return
         }
         const targetId = this.node.id ?? null
-        eventBus.emit('move', {
+        this.$emit('move', {
           targetPath: this.level === 0 ? [] : this.pathHere(),
           targetId,
           mediaIds: payload.ids,
@@ -616,7 +617,7 @@
       _clearHover(evt) {
         this._dragDepth = 0
         this.draggingOver = false
-        this.$root.$emit('ml:dnd:hover:clear')
+        eventBus.emit('ml:dnd:hover:clear')
         evt.preventDefault()
         evt.stopPropagation()
       },
@@ -660,7 +661,7 @@
         this.isRenaming = false
         if (!next || next === this.node.name) return
         // Emit up with the new name; parent should handle API call.
-        eventBus.emit('rename', {
+        this.$emit('rename', {
           id: this.node.id,
           path: this.pathHere(),
           name: next
@@ -704,46 +705,46 @@
             </button>
 
             <span class="folder-node__icon" aria-hidden="true">
-              <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
-                <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15" />
-                <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z"
-                      fill="none" stroke="currentColor" stroke-width="1.5" />
-              </svg>
+            <svg v-if="level === 0" class="icon icon--root" viewBox="0 0 24 24">
+              <path d="M3 5h8l2 2h8v12a2 2 0 0 1-2 2H3z" fill="currentColor" opacity="0.15" />
+              <path d="M3 5h7l2 2h9M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7H12L10 5z"
+                    fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
 
               <!-- Active trash -->
-              <svg v-else-if="node.id==='trash' && isActiveHere" class="icon icon--trash-active" viewBox="0 0 24 24">
-                  <g transform="rotate(10 12 3)">
-                      <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
-                            fill="currentColor" opacity="0.15" />
-                  <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
-                        fill="none" stroke="currentColor" stroke-width="1.5" />
-                      <path d="M8 5.2v-2h8v2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                  </g>
-              </svg>
+            <svg v-else-if="node.id==='trash' && isActiveHere" class="icon icon--trash-active" viewBox="0 0 24 24">
+                <g transform="rotate(10 12 3)">
+                    <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
+                          fill="currentColor" opacity="0.15" />
+                <path d="M3 6h18M8 6h10l-1 14H8L7 6z"
+                      fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M8 5.2v-2h8v2" fill="none" stroke="currentColor" stroke-width="1.5" />
+                </g>
+            </svg>
 
               <!-- Default trash -->
-              <svg v-else-if="node.id==='trash'" class="icon icon--trash" viewBox="0 0 24 24">
-                <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
-                      fill="none" stroke="currentColor" stroke-width="1.5" />
-              </svg>
+            <svg v-else-if="node.id==='trash'" class="icon icon--trash" viewBox="0 0 24 24">
+              <path d="M3 6h18M8 6V4h8v2m-9 0h10l-1 14H8L7 6z"
+                    fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
 
               <!-- Normal folders -->
-              <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
-                <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                <path
-                  d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z"
-                  fill="currentColor" opacity="0.15" />
-                <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z"
-                      fill="none" stroke="currentColor" stroke-width="1.5" />
-              </svg>
+            <svg v-else-if="open" class="icon icon--folder-open" viewBox="0 0 24 24">
+              <path d="M3 7h7l2 2h9v2" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path
+                d="M3 10h18a1 1 0 0 1 .95 1.31l-2.2 6.6A2 2 0 0 1 17.85 19H5.15a2 2 0 0 1-1.9-1.09L1.1 11.4A1 1 0 0 1 2.03 10z"
+                fill="currentColor" opacity="0.15" />
+              <path d="M3 7h7l2 2h9M3 10h18l-2.2 6.6A2 2 0 0 1 17.85 19H5.15A2 2 0 0 1 3.25 17z"
+                    fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
 
-              <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
-                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-                      fill="currentColor" opacity="0.15" />
-                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z"
-                      fill="none" stroke="currentColor" stroke-width="1.5" />
-              </svg>
-            </span>
+            <svg v-else class="icon icon--folder" viewBox="0 0 24 24">
+              <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                    fill="currentColor" opacity="0.15" />
+              <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z"
+                    fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </span>
 
             <!-- Rename or static name -->
             <template v-if="isRenaming">
@@ -780,14 +781,13 @@
           <div v-if="creatingChild" class="folder-node folder-node--virtual" :style="{ '--level': level + 1 }">
             <div class="folder-node__row is-creating">
               <div class="folder-node__indent">
-            <span class="folder-node__icon" aria-hidden="true">
-              <!-- a plain folder icon (optional) -->
-              <svg class="icon icon--folder" viewBox="0 0 24 24">
-                <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
-                <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none"
-                      stroke="currentColor" stroke-width="1.5" />
-              </svg>
-            </span>
+          <span class="folder-node__icon" aria-hidden="true">
+            <svg class="icon icon--folder" viewBox="0 0 24 24">
+              <path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" opacity="0.15" />
+              <path d="M3 7h7l2 2h9M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H12L10 7z" fill="none"
+                    stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </span>
                 <input
                   ref="createInput"
                   class="folder-node__create-input"
@@ -810,12 +810,12 @@
                        :level="level+1"
                        :active-path="activePath"
                        :active-id="activeId"
-                       @select="eventBus.emit('select', $event)"
-                       @create="eventBus.emit('create', $event)"
-                       @rename="eventBus.emit('rename', $event)"
-                       @delete="eventBus.emit('delete', $event)"
-                       @move="eventBus.emit('move', $event)"
-                       @moveFolder="eventBus.emit('moveFolder', $event)"
+                       @select="$emit('select', $event)"
+                       @create="$emit('create', $event)"
+                       @rename="$emit('rename', $event)"
+                       @delete="$emit('delete', $event)"
+                       @move="$emit('move', $event)"
+                       @moveFolder="$emit('moveFolder', $event)"
           />
         </div>
 
@@ -939,7 +939,7 @@
       this.updateDynamicWidths()
       window.addEventListener('resize', this.updateDynamicWidths)
     },
-    beforeDestroy() {
+    beforeUnmount() {
       window.removeEventListener('resize', this.updateDynamicWidths)
     },
     computed: {
@@ -1308,16 +1308,12 @@
       },
       getFormData(form) {
         let data = FormDataAsObj(form)
-
         if (data) data.page = this.page
         else data = { page: this.page }
-
         data.type = this.type
-
-        if (Array.isArray(data.unused) && data.unused.length) {
+        if (Array.isArray(data.unused) && data.unused.length)
           data.unused = data.unused[0]
-        }
-
+        data.folder_id = this.currentFolderId ?? '' // '' or null => root
         return data
       },
       clearFilters: function() {
@@ -1780,10 +1776,12 @@
       min-width: 200px;
     }
   }
+
   .medialibrary__filter-item.checkbox {
     margin-top: 8px;
     margin-right: 45px !important;
   }
+
   .medialibrary__header {
     @include breakpoint(small-) {
       .filter__inner {
@@ -1807,23 +1805,27 @@
     padding: 0;
     position: relative;
   }
+
   .medialibrary__header {
     background: $color__border--light;
     border-bottom: 1px solid $color__border;
     padding: 0 20px;
   }
+
   .medialibrary__frame {
     position: absolute;
     inset: 0;
     display: flex;
     flex-flow: column nowrap;
   }
+
   .medialibrary__inner {
     position: relative;
     width: 100%;
     overflow: hidden;
     flex-grow: 1;
   }
+
   .medialibrary__grid {
     position: relative;
     height: 100%;
@@ -1896,6 +1898,7 @@
       display: block;
       width: 100%;
     }
+
     @media screen and (max-width: 550px) {
       width: 100%;
     }
@@ -1919,6 +1922,7 @@
       right: 0;
     }
   }
+
   .medialibrary__list-items {
     position: relative;
     display: block;
@@ -1933,19 +1937,24 @@
     gap: 8px;
     margin-top: 8px;
   }
+
   .breadcrumbs a {
     text-decoration: none;
   }
+
   .breadcrumbs .sep {
     margin: 0 6px;
     color: #999;
   }
+
   .breadcrumbs .is-active {
     font-weight: 600;
   }
+
   .ml-2 {
     margin-left: 8px;
   }
+
   .mt-2 {
     margin-top: 8px;
   }
@@ -1976,6 +1985,7 @@
     padding: 2px var(--pad-x);
     border-radius: 4px;
     color: var(--text);
+
     &::before {
       content: '';
       position: absolute;
@@ -1988,17 +1998,21 @@
       opacity: 0.6;
       pointer-events: none;
     }
+
     &:hover {
       background: var(--hover);
     }
+
     &.is-active {
       background: var(--active);
     }
+
     &.is-dragover {
       outline: 2px dashed #3b82f6;
       outline-offset: -2px;
       background: rgba(59, 130, 246, 0.06);
     }
+
     &.is-dragover * {
       pointer-events: none !important;
     }
@@ -2043,9 +2057,11 @@
     height: 18px;
     color: #f59e0b;
   }
+
   .folder-node__icon .icon--root {
     color: #6366f1;
   }
+
   .folder-node__name {
     text-align: left;
     flex: 1 1 auto;
@@ -2061,16 +2077,19 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
     &.is-active {
       font-weight: 600;
     }
   }
+
   .folder-node__actions {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-left: auto;
   }
+
   .folder-node__action {
     border: 0;
     background: none;
@@ -2079,14 +2098,17 @@
     cursor: pointer;
     color: var(--muted);
   }
+
   .folder-node__action:hover {
     background: #edf2f7;
     color: #111827;
   }
+
   .folder-node__action.danger:hover {
     background: #fee2e2;
     color: #b91c1c;
   }
+
   .folder-node__action .icon {
     width: 16px;
     height: 16px;
@@ -2098,6 +2120,7 @@
   .folder-node__children {
     position: relative;
   }
+
   .folder-node__children::before {
     content: '';
     position: absolute;
@@ -2110,9 +2133,11 @@
     opacity: 0.4;
     pointer-events: none;
   }
+
   .folder-node__children:empty::before {
     display: none;
   }
+
   .folder-node__rename-input {
     font: inherit;
     color: inherit;
@@ -2124,9 +2149,11 @@
     max-width: 220px;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
+
   .folder-node__name.is-locked {
     cursor: default;
   }
+
   .folder-node__ctxmenu {
     position: fixed;
     z-index: 1000;
@@ -2155,15 +2182,19 @@
     &:hover {
       background: #f3f4f6;
     }
+
     &.danger {
       color: #b91c1c;
     }
+
     &.danger:hover {
       background: #fee2e2;
     }
+
     &.edit {
       color: #3b82f6;
     }
+
     &.edit:hover {
       background: #f3f4f6;
     }
@@ -2179,6 +2210,7 @@
   .folder-node__row.is-ctx {
     box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.25);
   }
+
   .folder-node__create-input,
   .folder-node__rename-input {
     font: inherit;

@@ -23,9 +23,10 @@ export default {
     }
   },
   computed: {
-    storedValue: function() {
-      if (this.inModal) return this.modalFieldValueByName(this.getFieldName())
-      else return this.fieldValueByName(this.getFieldName())
+    storedValue() {
+      return this.inModal
+        ? this.modalFieldValueByName(this.getFieldName())
+        : this.fieldValueByName(this.getFieldName())
     },
     ...mapGetters(['fieldValueByName', 'modalFieldValueByName']),
     ...mapState({
@@ -35,51 +36,54 @@ export default {
     })
   },
   watch: {
-    storedValue: function(fieldInstore) {
+    storedValue(fieldInstore) {
       if (this.inStore === '') return
 
       const currentValue = this[this.inStore]
       const newValue = this.locale
-        ? fieldInstore[this.locale.value]
-        : fieldInstore
+        ? (fieldInstore && typeof fieldInstore === 'object'
+          ? fieldInstore?.[this.locale.value] ?? null
+          : null)
+        : (fieldInstore ?? null)
 
-      // new value detected, let's update the UI (updateFromStore method need to be present into the component so the value is properly updated)
+      // If different, update the UI (prefer component hook if present)
       if (!isEqual(currentValue, newValue)) {
-        if (typeof this.updateFromStore !== 'undefined')
+        if (typeof this.updateFromStore === 'function') {
           this.updateFromStore(newValue)
+        } else {
+          this[this.inStore] = newValue
+        }
       }
     }
   },
   methods: {
-    getFieldName: function() {
+    getFieldName() {
       return this.fieldName !== '' ? this.fieldName : this.name
     },
     // Save the value into the store
-    saveIntoStore: function(value) {
+    saveIntoStore(value) {
       if (this.inStore === '') return
 
-      let newValue = ''
+      const newValue = value !== undefined ? value : this[this.inStore]
 
-      if (value) newValue = value
-      else newValue = this[this.inStore]
+      // Build payload
+      const field = {
+        name: this.getFieldName(),
+        value: newValue
+      }
+      if (this.locale && this.locale.value) field.locale = this.locale.value
 
-      // The object that is saved
-      const field = {}
-      field.name = this.getFieldName()
-      field.value = newValue
-      if (this.locale) field.locale = this.locale.value
-
-      // in Modal or in Form
+      // In Modal or in Form
       if (this.inModal) this.$store.commit(FORM.UPDATE_MODAL_FIELD, field)
       else this.$store.commit(FORM.UPDATE_FORM_FIELD, field)
     },
-    preventSubmit: function() {
+    preventSubmit() {
       this.$store.commit(FORM.PREVENT_SUBMIT)
     },
-    allowSubmit: function() {
+    allowSubmit() {
       this.$store.commit(FORM.ALLOW_SUBMIT)
     },
-    destroyValue: function() {
+    destroyValue() {
       if (this.inStore !== '') {
         // Delete form field from store because the field has been removed
         if (this.inModal)
@@ -88,28 +92,30 @@ export default {
       }
     }
   },
-  beforeMount: function() {
+  // Vue 3 Options API keeps beforeMount; just add null-safe guards
+  beforeMount() {
     const fieldName = this.getFieldName()
-
     if (this.inStore === '') return
     if (fieldName === '') return
 
     const fields = this.inModal ? this.modalFields : this.fields
 
-    const fieldInStore = fields.filter(function(field) {
-      return field.name === fieldName
-    })
+    const fieldInStore = fields.filter(field => field.name === fieldName)
 
     if (fieldInStore.length) {
-      // init value with the one from the store
+      // Init value with the one from the store
+      const storeVal = fieldInStore[0].value
 
-      if (this.locale) {
-        this[this.inStore] = fieldInStore[0].value[this.locale.value]
+      if (this.locale && this.locale.value) {
+        this[this.inStore] =
+          (storeVal && typeof storeVal === 'object'
+            ? storeVal?.[this.locale.value] ?? null
+            : null)
       } else {
-        this[this.inStore] = fieldInStore[0].value
+        this[this.inStore] = storeVal ?? null
       }
     } else if (this.hasDefaultStore) {
-      // init value with the one present into the component itself
+      // Init value with the one present in the component itself
       this.saveIntoStore()
     }
   }

@@ -4,6 +4,7 @@ import ACTIONS from '@/store/actions'
 import { BLOCKS } from '@/store/mutations'
 
 export default {
+  emits: ['visible:top'],
   props: {
     block: {
       type: Object

@@ -11,12 +11,12 @@
         ref="list"
         class="reorder__list"
         tag="transition-group"
-        :component-data="{ name: 'fade', tag: 'ul' }"
-        :value="items"
-        :draggable="'.reorder__item'"
-        :handle="'.reorder__handle'"
-        @start="onStart"
-        @end="onEnd"
+        :component-data="{
+          name: 'fade',
+          tag: 'ul',
+          onAfterEnter: onAfterTransition,
+          onAfterLeave: onAfterTransition
+        }"
       >
         <li
           v-for="(b, i) in items"
@@ -37,6 +37,8 @@
 
 <script>
   import { VueDraggableNext } from 'vue-draggable-next'
+  import { nextTick } from 'vue'
+
   export default {
     name: 'A17BlocksReorder',
     components: { draggable: VueDraggableNext },
@@ -58,18 +60,27 @@
       })
       if (this.$refs.list && this.$refs.list.$el) {
         this._ro.observe(this.$refs.list.$el)
+        this._onScroll = () => {
+          nextTick(() => this.updateMarker())
+        }
+        this.$refs.list.$el.addEventListener('scroll', this._onScroll, {
+          passive: true
+        })
       }
     },
-    beforeDestroy() {
+    beforeUnmount() {
       if (this._ro) this._ro.disconnect()
+      if (this.$refs.list && this.$refs.list.$el && this._onScroll) {
+        this.$refs.list.$el.removeEventListener('scroll', this._onScroll)
+      }
     },
     watch: {
       activeIndex() {
-        this.updateMarker()
+        nextTick(() => this.updateMarker())
       },
       items: {
         handler() {
-          this.updateMarker()
+          nextTick(() => this.updateMarker())
         },
         deep: true
       }
@@ -87,6 +98,7 @@
       emitFocus(b, i) {
         if (!b) return
         this.$emit('focus', { id: b.id, index: i })
+        nextTick(() => this.updateMarker())
       },
       onStart(evt) {
         const idx = evt && typeof evt.oldIndex === 'number' ? evt.oldIndex : -1
@@ -100,15 +112,17 @@
         this.$emit('reorder', { oldIndex, newIndex })
         const b = this.items[newIndex]
         if (b) this.$emit('focus', { id: b.id, index: newIndex })
+        nextTick(() => this.updateMarker())
+      },
+      onAfterTransition() {
+        nextTick(() => this.updateMarker())
       },
       updateMarker() {
         if (this.activeIndex < 0) return
-        this.$nextTick(() => {
-          const refEntry = this.$refs['item-' + this.activeIndex]
-          const el = Array.isArray(refEntry) ? refEntry[0] : refEntry
-          if (!el) return
-          this.markerTop = el.offsetTop
-        })
+        const refEntry = this.$refs['item-' + this.activeIndex]
+        const el = Array.isArray(refEntry) ? refEntry[0] : refEntry
+        if (!el) return
+        this.markerTop = el.offsetTop
       }
     }
   }
