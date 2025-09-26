@@ -1165,7 +1165,14 @@
     gap: 8px;
     font: inherit;
 
-    &:hover { text-decoration: underline; }
+    &:hover {
+      border-bottom: 1px dashed $color__text--light;
+      .module-badge{
+        background-color: $color__link;
+        color: #fff;
+        opacity: 0.7;
+      }
+    }
   }
 
   .module-toggle .chev {
