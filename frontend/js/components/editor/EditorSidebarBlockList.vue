@@ -2,18 +2,11 @@
   <div class="editorSidebar__listItems">
     <!-- eslint-disable vue/no-mutating-props -->
     <draggable
-      class="editorSidebar__blocks"
+      class="editorSidebar__blocks editorSidebar__categories"
       :class="editorSidebarClasses"
-      :modelValue="blocks"
-      @update:modelValue="blocks = $event"
-      :options="{
-        group: {
-          name: 'editorBlocks',
-          pull: 'clone',
-          put: false
-        },
-        handle: '.editorSidebar__button'
-      }"
+      v-model="renderOrder"
+      :item-key="'id'"
+      :options="categoryDragOptions"
       @change="saveOrderFromRender"
     >
       <!--eslint-enable-->
@@ -304,7 +297,6 @@
   }
 
   .editorSidebar__category {
-    flex: 0 0 100%;
     width: 100%;
     min-height: var(--cat-min-h, 44px);
     position: relative;
@@ -399,7 +391,6 @@
   }
 
   .editorSidebar__listItems > .editorSidebar__blocks {
-    flex: 1 1 auto;
     min-height: 0;
     max-height: none;
     overflow-y: auto;
