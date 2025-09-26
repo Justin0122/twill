@@ -78,43 +78,49 @@ class Media extends Model
     {
         // Compute once and reuse
         $owners = $this->getOwnersAttribute();
+        $uploadedDate = [];
+        if (config('twill.file_library.show_uploaded_date')) {
+            $uploadedDate = [
+                'uploadedDate' => $this->created_at->format(config("twill.file_library.format_uploaded_date", "d/m/Y H:i"))
+            ];
+        }
 
         return [
-            'id'       => $this->id,
-            'name'     => $this->filename,
-            'thumbnail'=> ImageService::getCmsUrl($this->uuid, ['h' => '256']),
-            'original' => ImageService::getRawUrl($this->uuid),
-            'medium'   => ImageService::getUrl($this->uuid, ['h' => '430']),
-            'width'    => $this->width,
-            'height'   => $this->height,
-            'owners'   => $owners,
-            'tags'     => $this->tags
-                ? $this->tags->pluck('name')->values()->all()
-                : [],
+                'id'       => $this->id,
+                'name'     => $this->filename,
+                'thumbnail'=> ImageService::getCmsUrl($this->uuid, ['h' => '256']),
+                'original' => ImageService::getRawUrl($this->uuid),
+                'medium'   => ImageService::getUrl($this->uuid, ['h' => '430']),
+                'width'    => $this->width,
+                'height'   => $this->height,
+                'owners'   => $owners,
+                'tags'     => $this->tags
+                    ? $this->tags->pluck('name')->values()->all()
+                    : [],
 
-            'deleteUrl'     => $this->canDeleteSafely()
-                ? moduleRoute('medias', 'media-library', 'destroy', $this->id)
-                : null,
-            'updateUrl'     => route(config('twill.admin_route_name_prefix') . 'media-library.medias.single-update'),
-            'updateBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-update'),
-            'deleteBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-delete'),
+                'deleteUrl'     => $this->canDeleteSafely()
+                    ? moduleRoute('medias', 'media-library', 'destroy', $this->id)
+                    : null,
+                'updateUrl'     => route(config('twill.admin_route_name_prefix') . 'media-library.medias.single-update'),
+                'updateBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-update'),
+                'deleteBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-delete'),
 
-            'metadatas' => [
-                'default' => [
-                        'caption' => $this->caption,
-                        'altText' => $this->alt_text,
+                'metadatas' => [
+                    'default' => [
+                            'caption' => $this->caption,
+                            'altText' => $this->alt_text,
+                            'video'   => null,
+                        ] + Collection::make(config('twill.media_library.extra_metadatas_fields'))
+                            ->mapWithKeys(fn ($field) => [$field['name'] => $this->{$field['name']}])
+                            ->toArray(),
+                    'custom' => [
+                        'caption' => null,
+                        'altText' => null,
                         'video'   => null,
-                    ] + Collection::make(config('twill.media_library.extra_metadatas_fields'))
-                        ->mapWithKeys(fn ($field) => [$field['name'] => $this->{$field['name']}])
-                        ->toArray(),
-                'custom' => [
-                    'caption' => null,
-                    'altText' => null,
-                    'video'   => null,
-                    'owners'  => [],
+                        'owners'  => [],
+                    ],
                 ],
-            ],
-        ];
+            ] + $uploadedDate;
     }
 
     public function getMetadata($name, $fallback = null)
