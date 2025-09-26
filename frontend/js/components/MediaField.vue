@@ -6,7 +6,10 @@
     <div class="media__field">
       <div class="media__info" v-if="hasMedia">
         <div class="media__img">
-          <div class="media__imgFrame">
+          <div
+            class="media__imgFrame"
+            @click="openMediaLibrary(1, mediaKey, index)"
+          >
             <div class="media__imgCentered" :style="cropThumbnailStyle">
               <img
                 v-if="cropSrc && showImg"
@@ -15,123 +18,116 @@
                 :class="cropThumbnailClass"
               />
             </div>
-            <div
-              class="media__edit"
-              @click="openMediaLibrary(1, mediaKey, index)"
-              v-if="!disabled"
-            >
+            <div class="media__edit" v-if="!disabled">
               <span class="media__edit--button"
-              ><span v-svg symbol="edit"></span
+                ><span v-svg symbol="edit"></span
               ></span>
             </div>
           </div>
         </div>
 
-        <ul class="media__metadatas" v-if="!disabled">
-          <li class="media__name" @click="openMediaLibrary(1, mediaKey, index)">
-            <strong :title="media.name">{{ media.name }}</strong>
-          </li>
-          <li class="f--small" v-if="media.size">
-            File size: {{ uppercase(media.size) }}
-          </li>
-          <li class="f--small" v-if="media.width + media.height">
-            {{ $trans('fields.medias.original-dimensions') }}:
-            {{ media.width }}&nbsp;&times;&nbsp;{{ media.height }}
-          </li>
-          <li
-            class="f--small media__crop-link"
-            v-if="cropInfos && activeCrop"
-            @click="openCropMedia"
-          >
-            <p
-              class="f--small f--note hide--xsmall"
-              v-for="(cropInfo, index) in cropInfos"
-              :key="index"
+        <!-- Two-column meta (left: details, right: references) -->
+        <div class="media__meta" v-if="!disabled">
+          <!-- Left: details -->
+          <ul class="media__metadatas">
+            <li
+              class="media__name"
+              @click="openMediaLibrary(1, mediaKey, index)"
             >
-              <span v-html="cropInfo"></span>
-            </p>
-          </li>
-          <li class="f--small">
-            <a
-              href="#"
-              @click.prevent="metadatasInfos"
-              v-if="withAddInfo"
-              class="f--link-underlined--o"
-            >{{ metadatas.text }}</a
+              <strong :title="media.name">{{ media.name }}</strong>
+            </li>
+            <li class="f--small" v-if="media.size">
+              File size: {{ uppercase(media.size) }}
+            </li>
+            <li class="f--small" v-if="media.width + media.height">
+              {{ $trans('fields.medias.original-dimensions') }}:
+              {{ media.width }}&nbsp;&times;&nbsp;{{ media.height }}
+            </li>
+            <li
+              class="f--small media__crop-link"
+              v-if="cropInfos && activeCrop"
+              @click="openCropMedia"
             >
-          </li>
-          <li v-if="shouldShowRefs">
-            <ul class="media__references" :class="{ 'owners--scroll': ownersExpanded && ownersCount > 8 }">
+              <p
+                class="f--small f--note hide--xsmall"
+                v-for="(cropInfo, index) in cropInfos"
+                :key="index"
+              >
+                <span v-html="cropInfo"></span>
+              </p>
+            </li>
+            <li class="f--small">
+              <a
+                href="#"
+                @click.prevent="metadatasInfos"
+                v-if="withAddInfo"
+                class="f--link-underlined--o"
+                >{{ metadatas.text }}</a
+              >
+            </li>
+          </ul>
+
+          <!-- Right: references grouped by module -->
+          <aside class="media__refs" v-if="shouldShowRefs">
+            <ul class="media__references">
               <li class="media__name">
                 {{ $trans('media-library.sidebar.references', 'References') }}
               </li>
 
-              <li class="f--small"
-                  v-for="(item, index) in visibleOwners"
-                  :key="'mediaowner_' + (item.id ?? index)">
-                <a v-if="item.edit" :href="item.edit" target="_blank">
-                  {{ item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
-                </a>
-                <span v-else>
-        {{ item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
-      </span>
+              <li v-if="ownersCount === 0" class="f--tiny f--note">
+                {{
+                  $trans('media-library.sidebar.no-references', 'No references')
+                }}
               </li>
 
-              <!-- Toggle -->
-              <li v-if="showMoreOwners" class="f--tiny">
-                <button type="button" class="owners-toggle"
-                        @click="ownersExpanded = !ownersExpanded">
-                  {{
-                    ownersExpanded
-                      ? $trans('media-library.sidebar.show-less', 'Show less')
-                      : $trans('media-library.sidebar.show-all', 'Show all') + ` (${ownersCount})`
-                  }}
+              <li
+                v-for="mod in moduleKeys"
+                :key="'mod_' + mod"
+                class="owners-module"
+              >
+                <button
+                  type="button"
+                  class="module-toggle"
+                  @click="toggleModule(mod)"
+                >
+                  <span class="chev">{{ isModuleOpen(mod) ? '▼' : '►' }}</span>
+                  <span class="module-badge">{{ mod }}</span>
+                  <span class="count">({{ groupedOwners[mod].length }})</span>
                 </button>
+
+                <ul
+                  v-show="isModuleOpen(mod)"
+                  class="ownerslist"
+                  :class="{ 'owners--scroll': groupedOwners[mod].length > 8 }"
+                >
+                  <li
+                    class="f--small"
+                    v-for="(item, index) in groupedOwners[mod]"
+                    :key="'mediaowner_' + (item.id ?? index)"
+                  >
+                    <a
+                      v-if="item.edit || item.admin_url"
+                      :href="item.edit || item.admin_url"
+                      target="_blank"
+                    >
+                      {{
+                        item.title ||
+                          item.name ||
+                          (item.type || 'Item') + ' #' + (item.id ?? '?')
+                      }}
+                    </a>
+                    <span v-else>
+                      {{
+                        item.title ||
+                          item.name ||
+                          (item.type || 'Item') + ' #' + (item.id ?? '?')
+                      }}
+                    </span>
+                  </li>
+                </ul>
               </li>
             </ul>
-          </li>
-
-        </ul>
-
-        <!--Actions-->
-        <a17-buttonbar class="media__actions" v-if="!disabled">
-          <a :href="media.original" download
-          ><span v-svg symbol="download"></span
-          ></a>
-          <button type="button" @click="openCropMedia" v-if="activeCrop">
-            <span v-svg symbol="crop"></span>
-          </button>
-          <button type="button" @click="deleteMediaClick">
-            <span v-svg symbol="trash"></span>
-          </button>
-        </a17-buttonbar>
-
-        <div class="media__actions-dropDown">
-          <a17-dropdown ref="dropDown" position="right">
-            <a17-button
-              size="icon"
-              variant="icon"
-              @click="$refs.dropDown.toggle()"
-            >
-              <span v-svg symbol="more-dots"></span
-              ></a17-button>
-            <template v-slot:dropdown__content>
-              <div>
-                <a :href="media.original" download
-                ><span v-svg symbol="download"></span
-                >{{ $trans('fields.medias.download') }}</a
-                >
-                <button type="button" @click="openCropMedia" v-if="activeCrop">
-                  <span v-svg symbol="crop"></span
-                  >{{ $trans('fields.medias.crop') }}
-                </button>
-                <button type="button" @click="deleteMediaClick">
-                  <span v-svg symbol="trash"></span
-                  >{{ $trans('fields.medias.delete') }}
-                </button>
-              </div>
-            </template>
-          </a17-dropdown>
+          </aside>
         </div>
       </div>
 
@@ -141,7 +137,7 @@
         @click="openMediaLibrary"
         :disabled="disabled"
         v-if="!hasMedia"
-      >{{ btnLabel }}</a17-button
+        >{{ btnLabel }}</a17-button
       >
       <p class="media__note f--small" v-if="!!this.$slots.default">
         <slot />
@@ -222,7 +218,7 @@
           class="cropper__button"
           variant="action"
           @click="$refs[cropModalName].close()"
-        >{{ $trans('fields.medias.crop-save') }}</a17-button
+          >{{ $trans('fields.medias.crop-save') }}</a17-button
         >
       </a17-cropper>
     </a17-modal>
@@ -254,54 +250,22 @@
     },
     mixins: [mediaLibrayMixin, mediaFieldMixin],
     props: {
-      name: {
-        type: String,
-        required: true
-      },
-      disabled: {
-        type: Boolean,
-        default: false
-      },
-      required: {
-        type: Boolean,
-        default: false
-      },
+      name: { type: String, required: true },
+      disabled: { type: Boolean, default: false },
+      required: { type: Boolean, default: false },
       btnLabel: {
         type: String,
         default() {
           return window.$trans('fields.medias.btn-label', 'Attach image')
         }
       },
-      hover: {
-        type: Boolean,
-        default: false
-      },
-      isSlide: {
-        type: Boolean,
-        default: false
-      },
-      // Index of media in selected context
-      index: {
-        type: Number,
-        default: 0
-      },
-      // current media context put in store. eg: slideshow, cover...
-      mediaContext: {
-        type: String,
-        default: ''
-      },
-      activeCrop: {
-        type: Boolean,
-        default: true
-      },
-      widthMin: {
-        type: Number,
-        default: 0
-      },
-      heightMin: {
-        type: Number,
-        default: 0
-      }
+      hover: { type: Boolean, default: false },
+      isSlide: { type: Boolean, default: false },
+      index: { type: Number, default: 0 }, // Index of media in selected context
+      mediaContext: { type: String, default: '' }, // current media context
+      activeCrop: { type: Boolean, default: true },
+      widthMin: { type: Number, default: 0 },
+      heightMin: { type: Number, default: 0 }
     },
     data: function() {
       return {
@@ -312,14 +276,8 @@
         cropSrc: '',
         showImg: false,
         isDestroyed: false,
-        naturalDim: {
-          width: null,
-          height: null
-        },
-        originalDim: {
-          width: null,
-          height: null
-        },
+        naturalDim: { width: null, height: null },
+        originalDim: { width: null, height: null },
         hasMediaChanged: false,
         metadatas: {
           text: this.$trans('fields.medias.edit-info'),
@@ -327,41 +285,50 @@
           textClose: this.$trans('fields.medias.edit-close'),
           active: false
         },
-        ownersExpanded: false,
+        ownersExpandedModules: Object.create(null) // { [module]: boolean }
       }
     },
     computed: {
       ...mapState({
         useWysiwyg: state => state.mediaLibrary.config.useWysiwyg,
-        wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions
+        wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions,
+        selectedMedias: state => state.mediaLibrary.selected,
+        allCrops: state => state.mediaLibrary.crops,
+        showMediaReferences: state => {
+          const cfg = state.mediaLibrary && state.mediaLibrary.config
+          return cfg && typeof cfg.showMediaReferences === 'boolean'
+            ? cfg.showMediaReferences
+            : true
+        }
       }),
       shouldShowRefs() {
-        return this.hasMedia && (this.showMediaReferences || this.ownersCount > 0)
+        return this.hasMedia && this.showMediaReferences
+      },
+      groupedOwners() {
+        return this.groupByModule(this.safeOwners)
+      },
+      moduleKeys() {
+        return Object.keys(this.groupedOwners).sort()
       },
       cropThumbnailStyle: function() {
         if (this.showImg) return {}
         if (!this.hasMedia) return {}
         if (!this.media.crops) return {}
         if (this.cropSrc.length === 0) return {}
-
-        return {
-          backgroundImage: `url(${this.cropSrc})`
-        }
+        return { backgroundImage: `url(${this.cropSrc})` }
       },
       safeOwners() {
         const top = Array.isArray(this.media?.owners) ? this.media.owners : null
-        const def = Array.isArray(this.media?.metadatas?.default?.owners) ? this.media.metadatas.default.owners : null
-        const cus = Array.isArray(this.media?.metadatas?.custom?.owners) ? this.media.metadatas.custom.owners : null
+        const def = Array.isArray(this.media?.metadatas?.default?.owners)
+          ? this.media.metadatas.default.owners
+          : null
+        const cus = Array.isArray(this.media?.metadatas?.custom?.owners)
+          ? this.media.metadatas.custom.owners
+          : null
         return top || def || cus || []
       },
       ownersCount() {
         return this.safeOwners.length
-      },
-      showMoreOwners() {
-        return this.ownersCount > 3
-      },
-      visibleOwners() {
-        return this.ownersExpanded ? this.safeOwners : this.safeOwners.slice(0, 3)
       },
       cropThumbnailClass: function() {
         if (!this.hasMedia) return {}
@@ -426,23 +393,12 @@
         return this.media.crops
       },
       cropModalName: function() {
-        return `${name}Modal`
-      },
-      ...mapState({
-        selectedMedias: state => state.mediaLibrary.selected,
-        allCrops: state => state.mediaLibrary.crops,
-        showMediaReferences: state => {
-          const cfg = state.mediaLibrary && state.mediaLibrary.config
-          return (cfg && typeof cfg.showMediaReferences === 'boolean')
-            ? cfg.showMediaReferences
-            : true
-        }
-      })
+        return `${this.name}Modal`
+      }
     },
     watch: {
       media: function(val, oldVal) {
         this.hasMediaChanged = val !== oldVal
-
         if (this.selectedMedias.hasOwnProperty(this.mediaKey)) {
           // reset isDestroyed status because we changed the media
           if (this.selectedMedias[this.mediaKey][this.index])
@@ -512,10 +468,7 @@
             const ratio = this.allCrops[this.cropContext][cropVariant][0].ratio
             const width = this.media.width
             const height = this.media.height
-            const center = {
-              x: width / 2,
-              y: height / 2
-            }
+            const center = { x: width / 2, y: height / 2 }
 
             let cropWidth = width
             let cropHeight = height
@@ -530,12 +483,7 @@
               cropWidth = Math.floor(cropHeight * ratio)
             }
 
-            let crop = {
-              x: 0,
-              y: 0,
-              width: cropWidth,
-              height: cropHeight
-            }
+            let crop = { x: 0, y: 0, width: cropWidth, height: cropHeight }
 
             // Convert crop for original img values
             crop = cropConversion(crop, this.naturalDim, this.originalDim)
@@ -729,10 +677,7 @@
       // metadatas
       updateMetadata: function(newValue) {
         this.$store.commit(MEDIA_LIBRARY.SET_MEDIA_METADATAS, {
-          media: {
-            context: this.mediaKey,
-            index: this.index
-          },
+          media: { context: this.mediaKey, index: this.index },
           value: newValue
         })
       },
@@ -743,8 +688,27 @@
           : this.metadatas.textOpen
       },
       destroyValue: function() {
-        if (this.isSlide) return // for Slideshows : the medias are deleted when the slideshow component is destroyed (so no need to do it here)
+        if (this.isSlide) return // for Slideshows : medias are deleted with slideshow component
         if (!this.isDestroyed) this.deleteMedia()
+      },
+
+      // --- references grouping / toggling ---
+      groupByModule(list) {
+        return (list || []).reduce((acc, item) => {
+          const mod = item?.module || item?.type || 'other'
+          if (!acc[mod]) acc[mod] = []
+          acc[mod].push(item)
+          return acc
+        }, {})
+      },
+      isModuleOpen(mod) {
+        // default CLOSED; flip to `|| true` if you want open-by-default
+        return !!this.ownersExpandedModules[mod]
+      },
+      toggleModule(mod) {
+        const current = !!this.ownersExpandedModules[mod]
+        if (this.$set) this.$set(this.ownersExpandedModules, mod, !current)
+        else this.ownersExpandedModules[mod] = !current
       }
     },
     beforeMount: function() {
@@ -802,13 +766,33 @@
       }
     }
   }
-
+  @media (max-width: 1024px) {
+    .media__img {
+      flex-basis: 200px;
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+    }
+  }
+  @media (max-width: 640px) {
+    .media__img {
+      flex-basis: 160px;
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+    }
+  }
   .media__img {
-    width: 33.33%;
+    flex: 0 0 240px;
+    width: 240px;
+    min-width: 240px;
     max-width: 240px;
-    user-select: none;
-    position: relative;
-    min-width: 100px;
+    transition: filter 0.15s ease;
+
+    &:hover {
+      cursor: pointer;
+      filter: brightness(90%);
+    }
 
     &:before {
       content: '';
@@ -838,29 +822,15 @@
       }
     }
   }
-
-  .media--slide .media__img {
-    max-width: 120px;
+  /* keep the preview from collapsing vertically */
+  .media__img {
+    position: relative;
+    flex: 0 0 240px;
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
   }
 
-  .media__crop-link {
-    text-decoration: none;
-    cursor: pointer;
-
-    p:first-letter {
-      text-transform: capitalize;
-    }
-
-    &:hover .f--small span {
-      @include bordered($color__text, false);
-    }
-
-    @include breakpoint('medium-') {
-      flex-direction: column;
-    }
-  }
-
-  // Image centered in a square option
   .media__imgFrame {
     width: 100%;
     padding-bottom: 100%;
@@ -868,66 +838,55 @@
     overflow: hidden;
   }
 
-  .media__imgCentered {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    position: absolute;
-    display: flex;
-    background-color: $color__lighter;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center center;
-    transition: background-image 350ms cubic-bezier(0.795, 0.125, 0.28, 0.99),
-    background-size 0ms 350ms;
-
-    &:before {
-      content: '';
-      position: absolute;
-      display: block;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+  @media (max-width: 1024px) {
+    .media__img {
+      flex-basis: 200px;
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+    }
+    .media__imgFrame {
+      min-height: 170px;
+    }
+  }
+  @media (max-width: 640px) {
+    .media__img {
+      flex-basis: 160px;
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+    }
+    .media__imgFrame {
+      min-height: 140px;
     }
   }
 
-  .media__edit {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: block;
-    opacity: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: opacity 0.3s ease;
+  .media__meta {
+    padding: 5px 15px;
+    flex-grow: 1;
+    color: $color__text--light;
+    overflow: hidden;
+    min-width: 0;
 
-    .media__edit--button {
-      display: block;
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      height: 26px;
-      width: 26px;
-      line-height: 26px;
-      text-align: center;
-      border-radius: 50%;
-      background: $color__background;
-      color: $color__icons;
+    display: grid;
+    grid-template-columns: 1fr minmax(220px, 38%);
+    gap: 16px;
+    align-items: start;
+  }
 
-      .icon {
-        color: $color__icons;
-        transition: color 0.25s linear;
-      }
+  @media (max-width: 1024px) {
+    .media__meta {
+      grid-template-columns: 1fr;
     }
+  }
 
-    .media__imgFrame:hover & {
-      opacity: 1;
-    }
+  /* tighten spacing on the right column */
+  .media__refs .media__references {
+    margin-top: 0;
+  }
+
+  .media__refs {
+    min-width: 220px;
   }
 
   .media__info {
@@ -939,10 +898,7 @@
   }
 
   .media__metadatas {
-    padding: 5px 15px;
-    flex-grow: 1;
     color: $color__text--light;
-    overflow: hidden;
 
     li {
       overflow: hidden;
@@ -1032,9 +988,11 @@
     }
   }
 
-  /* Media References */
   .media__references {
     margin-top: 20px;
+  }
+  .media__refs .media__references {
+    margin-top: 0;
   }
 
   .owners--scroll {
@@ -1050,6 +1008,93 @@
     color: $color__link;
     text-decoration: underline;
     font: inherit;
+  }
+
+  .module-badge {
+    display: inline-block;
+    font-size: 11px;
+    line-height: 1;
+    padding: 2px 6px;
+    margin-right: 6px;
+    border: 1px solid $color__border;
+    border-radius: 10px;
+    color: $color__text--light;
+  }
+
+  .owners-module {
+    margin-top: 8px;
+  }
+
+  .module-toggle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: $color__text;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: inherit;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  .module-toggle .chev {
+    width: 1em;
+    display: inline-block;
+    text-align: center;
+  }
+  .module-toggle .count {
+    color: $color__text--light;
+    font-size: 12px;
+  }
+
+  .ownerslist {
+    margin: 6px 0 0 22px;
+    padding: 0;
+    list-style: none;
+  }
+  .media__imgFrame {
+    aspect-ratio: 1 / 1;
+    padding-bottom: 0;
+  }
+  @media (max-width: 1024px) {
+    .media__imgFrame {
+      min-height: 200px;
+    }
+  }
+  @media (max-width: 640px) {
+    .media__imgFrame {
+      min-height: 160px;
+    }
+  }
+
+  .media__imgCentered {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    background-color: $color__lighter;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+  }
+
+  .media__imgCentered img {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100%;
+    max-height: 100%;
+    margin: auto;
+    object-fit: contain;
+  }
+
+  .media__crop-link:hover {
+    cursor: pointer;
+    text-decoration: underline;
   }
 </style>
 

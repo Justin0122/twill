@@ -76,54 +76,33 @@
             {{ $trans('media-library.sidebar.references', 'References') }}
           </p>
 
-          <!-- Single media -->
-          <ul v-if="hasSingleMedia"
-              class="mediasidebar__metadatas usage"
-              :class="{'owners--scroll': ownersExpandedSingle && totalOwnersSingle > 8}">
-            <li class="f--small"
-                v-for="(item, index) in visibleOwnersSingle"
-                :key="`mediaowner_${firstMedia.id}_${item.id ?? index}`">
-    <span class="ownerline">
-      <span class="module-badge" v-if="item.module">{{ item.module }}</span>
-      <a v-if="item.edit || item.admin_url"
-         :href="item.edit || item.admin_url" target="_blank">
-        {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
-      </a>
-      <span v-else>
-        {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
-      </span>
-    </span>
-            </li>
-
+          <!-- Single media (grouped by module) -->
+          <ul v-if="hasSingleMedia" class="mediasidebar__metadatas usage">
             <li v-if="!ownersCount(firstMedia)" class="f--tiny f--note">
               {{ $trans('media-library.sidebar.no-references', 'No references') }}
             </li>
 
-            <!-- Toggle -->
-            <li v-else-if="showMoreSingle" class="f--tiny">
-              <button type="button" class="owners-toggle"
-                      @click="ownersExpandedSingle = !ownersExpandedSingle">
-                {{
-                  ownersExpandedSingle ? $trans('media-library.sidebar.show-less', 'Show less')
-                    : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersSingle})`
-                }}
+            <li v-for="mod in moduleKeysSingle"
+                :key="`mod_single_${mod}`"
+                class="owners-module">
+              <button type="button"
+                      class="module-toggle"
+                      @click="toggleModuleSingle(mod)">
+                <span class="chev">{{ isModuleOpenSingle(mod) ? '▼' : '►' }}</span>
+                <span class="module-badge">{{ mod }}</span>
+                <span class="count">({{ groupedOwnersSingle[mod].length }})</span>
               </button>
-            </li>
-          </ul>
 
-          <!-- Multiple medias -->
-          <ul v-else class="mediasidebar__metadatas usage">
-            <li class="f--small" v-for="m in medias" :key="`owners_of_${m.id}`">
-              <strong>{{ m.name || ('Media #' + m.id) }}</strong>
-
-              <ul class="mediasidebar__metadatas usage"
-                  :class="{'owners--scroll': isOwnersExpanded(m) && totalOwnersFor(m) > 8}">
-                <li v-for="(item, index) in visibleOwnersFor(m)"
-                    :key="`mediaowner_${m.id}_${item.id ?? index}`">
+              <ul v-show="isModuleOpenSingle(mod)"
+                  class="ownerslist"
+                  :class="{'owners--scroll': groupedOwnersSingle[mod].length > 8}">
+                <li class="f--small"
+                    v-for="(item, index) in groupedOwnersSingle[mod]"
+                    :key="`mediaowner_${firstMedia.id}_${mod}_${item.id ?? index}`">
         <span class="ownerline">
-          <span class="module-badge" v-if="item.module">{{ item.module }}</span>
           <a v-if="item.edit || item.admin_url"
-             :href="item.edit || item.admin_url" target="_blank">
+             :href="item.edit || item.admin_url"
+             target="_blank">
             {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
           </a>
           <span v-else>
@@ -131,25 +110,53 @@
           </span>
         </span>
                 </li>
-
-                <li v-if="!ownersCount(m)" class="f--tiny f--note">
-                  {{ $trans('media-library.sidebar.no-references', 'No references') }}
-                </li>
-
-                <!-- Toggle -->
-                <li v-else-if="showMoreFor(m)" class="f--tiny">
-                  <button type="button" class="owners-toggle"
-                          @click="toggleOwnersExpanded(m)">
-                    {{
-                      isOwnersExpanded(m) ? $trans('media-library.sidebar.show-less', 'Show less')
-                        : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersFor(m)})`
-                    }}
-                  </button>
-                </li>
               </ul>
             </li>
           </ul>
 
+          <!-- Multiple medias (grouped by module per media) -->
+          <ul v-else class="mediasidebar__metadatas usage">
+            <li class="f--small" v-for="m in medias" :key="`owners_of_${m.id}`">
+              <strong>{{ m.name || ('Media #' + m.id) }}</strong>
+
+              <ul class="mediasidebar__metadatas usage">
+                <li v-if="!ownersCount(m)" class="f--tiny f--note">
+                  {{ $trans('media-library.sidebar.no-references', 'No references') }}
+                </li>
+
+                <li v-for="mod in moduleKeysFor(m)"
+                    :key="`mod_${m.id}_${mod}`"
+                    class="owners-module">
+                  <button type="button"
+                          class="module-toggle"
+                          @click="toggleModuleFor(m, mod)">
+                    <span class="chev">{{ isModuleOpenFor(m, mod) ? '▼' : '►' }}</span>
+                    <span class="module-badge">{{ mod }}</span>
+                    <span class="count">({{ groupedOwnersFor(m)[mod].length }})</span>
+                  </button>
+
+                  <ul v-show="isModuleOpenFor(m, mod)"
+                      class="ownerslist"
+                      :class="{'owners--scroll': groupedOwnersFor(m)[mod].length > 8}">
+                    <li class="f--small"
+                        v-for="(item, index) in groupedOwnersFor(m)[mod]"
+                        :key="`mediaowner_${m.id}_${mod}_${item.id ?? index}`">
+            <span class="ownerline">
+              <a v-if="item.edit || item.admin_url"
+                 :href="item.edit || item.admin_url"
+                 target="_blank">
+                {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+              </a>
+              <span v-else>
+                {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+              </span>
+            </span>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
 
         </template>
         <a17-buttonbar class="mediasidebar__buttonbar" v-if="hasMedia">
@@ -517,13 +524,15 @@
         focused: false,
         previousSavedData: {},
         fieldsRemovedFromBulkEditing: [],
-        ownersExpandedSingle: false,
-        ownersExpandedMap: Object.create(null),
+        ownersExpandedSingleModules: Object.create(null),
+        ownersExpandedModulesMap: Object.create(null), // mediaId -> { [module]: bool }
       }
     },
     watch: {
       medias: function () {
         this.fieldsRemovedFromBulkEditing = []
+        this.ownersExpandedSingleModules = Object.create(null)
+        this.ownersExpandedModulesMap = Object.create(null)
       }
     },
     computed: {
@@ -532,6 +541,14 @@
       },
       shouldShowRefs() {
         return this.hasMedia && this.showMediaReferences && this.totalOwnersAll > 0;
+      },
+      groupedOwnersSingle() {
+        return this.groupByModule(this.safeOwners)
+      },
+
+      // Sorted module keys for the single-media view
+      moduleKeysSingle() {
+        return Object.keys(this.groupedOwnersSingle).sort()
       },
       totalOwnersSingle() {
         return this.ownersCount(this.firstMedia);
@@ -721,6 +738,49 @@
         } else {
           this.triggerMediaReplace()
         }
+      },
+      groupByModule(list) {
+        return (list || []).reduce((acc, item) => {
+          const mod = item?.module || item?.type || 'other'
+          if (!acc[mod]) acc[mod] = []
+          acc[mod].push(item)
+          return acc
+        }, {})
+      },
+      // --- Single selection expand/collapse ---
+      isModuleOpenSingle(mod) {
+        // default CLOSED: change `|| true` to open by default
+        return !!this.ownersExpandedSingleModules[mod]
+      },
+      toggleModuleSingle(mod) {
+        const current = !!this.ownersExpandedSingleModules[mod]
+        if (this.$set) this.$set(this.ownersExpandedSingleModules, mod, !current)
+        else this.ownersExpandedSingleModules[mod] = !current
+      },
+
+// --- Multi selection expand/collapse ---
+      groupedOwnersFor(m) {
+        return this.groupByModule(this.ownersOf(m))
+      },
+      moduleKeysFor(m) {
+        return Object.keys(this.groupedOwnersFor(m)).sort()
+      },
+      isModuleOpenFor(m, mod) {
+        const id = m?.id
+        if (!id) return false
+        const bucket = this.ownersExpandedModulesMap[id] || {}
+        return !!bucket[mod]
+      },
+      toggleModuleFor(m, mod) {
+        const id = m?.id
+        if (!id) return
+        if (!this.ownersExpandedModulesMap[id]) {
+          if (this.$set) this.$set(this.ownersExpandedModulesMap, id, {})
+          else this.ownersExpandedModulesMap[id] = {}
+        }
+        const current = !!this.ownersExpandedModulesMap[id][mod]
+        if (this.$set) this.$set(this.ownersExpandedModulesMap[id], mod, !current)
+        else this.ownersExpandedModulesMap[id][mod] = !current
       },
       triggerMediaReplace: function () {
         this.$emit('triggerMediaReplace', {
@@ -1088,4 +1148,41 @@
     text-decoration: underline;
     font: inherit;
   }
+
+
+  .owners-module {
+    margin-top: 8px;
+  }
+
+  .module-toggle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: $color__text;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: inherit;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  .module-toggle .chev {
+    width: 1em;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .module-toggle .count {
+    color: $color__text--light;
+    font-size: 12px;
+  }
+
+  .ownerslist {
+    margin: 6px 0 0 22px;
+    padding: 0;
+    list-style: none;
+  }
+
 </style>
