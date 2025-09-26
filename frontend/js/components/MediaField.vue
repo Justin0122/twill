@@ -21,7 +21,7 @@
               v-if="!disabled"
             >
               <span class="media__edit--button"
-                ><span v-svg symbol="edit"></span
+              ><span v-svg symbol="edit"></span
               ></span>
             </div>
           </div>
@@ -57,21 +57,46 @@
               @click.prevent="metadatasInfos"
               v-if="withAddInfo"
               class="f--link-underlined--o"
-              >{{ metadatas.text }}</a
+            >{{ metadatas.text }}</a
             >
           </li>
-          <li v-if="showMediaReferences && media.owners.length >= 1">
-            <ul class="media__references ">
-              <li class="media__name">{{ $trans('media-library.sidebar.references', 'References') }}</li>
-              <li class="f--small" :style="(index)" v-for="(item, index) in media.owners" :key="'mediaowner_' + item.id"><a :href="item.edit" target="_blank">{{ item.name }}</a></li>
+          <li v-if="shouldShowRefs">
+            <ul class="media__references" :class="{ 'owners--scroll': ownersExpanded && ownersCount > 8 }">
+              <li class="media__name">
+                {{ $trans('media-library.sidebar.references', 'References') }}
+              </li>
+
+              <li class="f--small"
+                  v-for="(item, index) in visibleOwners"
+                  :key="'mediaowner_' + (item.id ?? index)">
+                <a v-if="item.edit" :href="item.edit" target="_blank">
+                  {{ item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+                </a>
+                <span v-else>
+        {{ item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+      </span>
+              </li>
+
+              <!-- Toggle -->
+              <li v-if="showMoreOwners" class="f--tiny">
+                <button type="button" class="owners-toggle"
+                        @click="ownersExpanded = !ownersExpanded">
+                  {{
+                    ownersExpanded
+                      ? $trans('media-library.sidebar.show-less', 'Show less')
+                      : $trans('media-library.sidebar.show-all', 'Show all') + ` (${ownersCount})`
+                  }}
+                </button>
+              </li>
             </ul>
           </li>
+
         </ul>
 
         <!--Actions-->
         <a17-buttonbar class="media__actions" v-if="!disabled">
           <a :href="media.original" download
-            ><span v-svg symbol="download"></span
+          ><span v-svg symbol="download"></span
           ></a>
           <button type="button" @click="openCropMedia" v-if="activeCrop">
             <span v-svg symbol="crop"></span>
@@ -89,12 +114,12 @@
               @click="$refs.dropDown.toggle()"
             >
               <span v-svg symbol="more-dots"></span
-            ></a17-button>
+              ></a17-button>
             <template v-slot:dropdown__content>
               <div>
                 <a :href="media.original" download
-                  ><span v-svg symbol="download"></span
-                  >{{ $trans('fields.medias.download') }}</a
+                ><span v-svg symbol="download"></span
+                >{{ $trans('fields.medias.download') }}</a
                 >
                 <button type="button" @click="openCropMedia" v-if="activeCrop">
                   <span v-svg symbol="crop"></span
@@ -116,7 +141,7 @@
         @click="openMediaLibrary"
         :disabled="disabled"
         v-if="!hasMedia"
-        >{{ btnLabel }}</a17-button
+      >{{ btnLabel }}</a17-button
       >
       <p class="media__note f--small" v-if="!!this.$slots.default">
         <slot />
@@ -197,7 +222,7 @@
           class="cropper__button"
           variant="action"
           @click="$refs[cropModalName].close()"
-          >{{ $trans('fields.medias.crop-save') }}</a17-button
+        >{{ $trans('fields.medias.crop-save') }}</a17-button
         >
       </a17-cropper>
     </a17-modal>
@@ -301,7 +326,8 @@
           textOpen: this.$trans('fields.medias.edit-info'),
           textClose: this.$trans('fields.medias.edit-close'),
           active: false
-        }
+        },
+        ownersExpanded: false,
       }
     },
     computed: {
@@ -309,6 +335,9 @@
         useWysiwyg: state => state.mediaLibrary.config.useWysiwyg,
         wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions
       }),
+      shouldShowRefs() {
+        return this.hasMedia && (this.showMediaReferences || this.ownersCount > 0)
+      },
       cropThumbnailStyle: function() {
         if (this.showImg) return {}
         if (!this.hasMedia) return {}
@@ -318,6 +347,21 @@
         return {
           backgroundImage: `url(${this.cropSrc})`
         }
+      },
+      safeOwners() {
+        const top = Array.isArray(this.media?.owners) ? this.media.owners : null
+        const def = Array.isArray(this.media?.metadatas?.default?.owners) ? this.media.metadatas.default.owners : null
+        const cus = Array.isArray(this.media?.metadatas?.custom?.owners) ? this.media.metadatas.custom.owners : null
+        return top || def || cus || []
+      },
+      ownersCount() {
+        return this.safeOwners.length
+      },
+      showMoreOwners() {
+        return this.ownersCount > 3
+      },
+      visibleOwners() {
+        return this.ownersExpanded ? this.safeOwners : this.safeOwners.slice(0, 3)
       },
       cropThumbnailClass: function() {
         if (!this.hasMedia) return {}
@@ -387,7 +431,12 @@
       ...mapState({
         selectedMedias: state => state.mediaLibrary.selected,
         allCrops: state => state.mediaLibrary.crops,
-        showMediaReferences: state => state.mediaLibrary.showMediaReferences
+        showMediaReferences: state => {
+          const cfg = state.mediaLibrary && state.mediaLibrary.config
+          return (cfg && typeof cfg.showMediaReferences === 'boolean')
+            ? cfg.showMediaReferences
+            : true
+        }
       })
     },
     watch: {
@@ -831,7 +880,7 @@
     background-repeat: no-repeat;
     background-position: center center;
     transition: background-image 350ms cubic-bezier(0.795, 0.125, 0.28, 0.99),
-      background-size 0ms 350ms;
+    background-size 0ms 350ms;
 
     &:before {
       content: '';
@@ -986,6 +1035,21 @@
   /* Media References */
   .media__references {
     margin-top: 20px;
+  }
+
+  .owners--scroll {
+    max-height: 180px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+  .owners-toggle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: $color__link;
+    text-decoration: underline;
+    font: inherit;
   }
 </style>
 

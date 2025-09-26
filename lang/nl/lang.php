@@ -284,6 +284,7 @@ return [
             'files-selected' => 'bestanden geselecteerd',
             'tags' => 'Tags',
             'show-all' => 'Alles tonen',
+            'show-less' => 'Minder tonen',
             'no-references' => 'Geen referenties',
             'references' => 'Referenties',
         ],

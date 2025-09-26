@@ -287,6 +287,7 @@ return [
             'files-selected' => 'files selected',
             'tags' => 'Tags',
             'show-all' => 'Show all',
+            'show-less' => 'Show less',
             'no-references' => 'No references',
             'references' => 'References',
         ],

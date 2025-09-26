@@ -71,7 +71,7 @@
             </li>
           </ul>
         </template>
-        <template v-if="showMediaReferences && hasMedia">
+        <template v-if="shouldShowRefs">
           <p class="mediasidebar__reference_label">
             {{ $trans('media-library.sidebar.references', 'References') }}
           </p>
@@ -103,13 +103,14 @@
             <li v-else-if="showMoreSingle" class="f--tiny">
               <button type="button" class="owners-toggle"
                       @click="ownersExpandedSingle = !ownersExpandedSingle">
-                {{ ownersExpandedSingle ? $trans('media-library.sidebar.show-less', 'Show less')
-                : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersSingle})` }}
+                {{
+                  ownersExpandedSingle ? $trans('media-library.sidebar.show-less', 'Show less')
+                    : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersSingle})`
+                }}
               </button>
             </li>
           </ul>
 
-          <!-- Multiple medias -->
           <!-- Multiple medias -->
           <ul v-else class="mediasidebar__metadatas usage">
             <li class="f--small" v-for="m in medias" :key="`owners_of_${m.id}`">
@@ -139,14 +140,15 @@
                 <li v-else-if="showMoreFor(m)" class="f--tiny">
                   <button type="button" class="owners-toggle"
                           @click="toggleOwnersExpanded(m)">
-                    {{ isOwnersExpanded(m) ? $trans('media-library.sidebar.show-less', 'Show less')
-                    : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersFor(m)})` }}
+                    {{
+                      isOwnersExpanded(m) ? $trans('media-library.sidebar.show-less', 'Show less')
+                        : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersFor(m)})`
+                    }}
                   </button>
                 </li>
               </ul>
             </li>
           </ul>
-
 
 
         </template>
@@ -525,6 +527,12 @@
       }
     },
     computed: {
+      totalOwnersAll() {
+        return (this.medias || []).reduce((n, m) => n + this.ownersOf(m).length, 0);
+      },
+      shouldShowRefs() {
+        return this.hasMedia && this.showMediaReferences && this.totalOwnersAll > 0;
+      },
       totalOwnersSingle() {
         return this.ownersCount(this.firstMedia);
       },
@@ -693,7 +701,13 @@
         useWysiwyg: state => state.mediaLibrary.config.useWysiwyg,
         wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions,
         mediasLoading: state => state.mediaLibrary.loading,
-        showMediaReferences: state => state.mediaLibrary.showMediaReferences
+
+        showMediaReferences: state => {
+          const cfg = state.mediaLibrary && state.mediaLibrary.config
+          return (cfg && typeof cfg.showMediaReferences === 'boolean')
+            ? cfg.showMediaReferences
+            : true
+        }
       })
     },
     methods: {
@@ -729,6 +743,25 @@
         } else {
           this.deleteSelectedMedias()
         }
+      },
+      isOwnersExpanded(m) {
+        return !!this.ownersExpandedMap[m?.id];
+      },
+      toggleOwnersExpanded(m) {
+        const id = m?.id;
+        if (!id) return;
+        this.$set ? this.$set(this.ownersExpandedMap, id, !this.ownersExpandedMap[id])
+          : (this.ownersExpandedMap[id] = !this.ownersExpandedMap[id]);
+      },
+      totalOwnersFor(m) {
+        return this.ownersOf(m).length;
+      },
+      showMoreFor(m) {
+        return this.totalOwnersFor(m) > 5;
+      },
+      visibleOwnersFor(m) {
+        const owners = this.ownersOf(m);
+        return this.isOwnersExpanded(m) ? owners : owners.slice(0, 5);
       },
       deleteSelectedMedias: function () {
         if (this.loading) return false
