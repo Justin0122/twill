@@ -2,6 +2,7 @@
 
 namespace A17\Twill;
 
+use A17\Twill\Commands\BlockImport;
 use A17\Twill\Commands\BlockMake;
 use A17\Twill\Commands\Build;
 use A17\Twill\Commands\CapsuleInstall;
@@ -34,6 +35,8 @@ use A17\Twill\Http\ViewComposers\FilesUploaderConfig;
 use A17\Twill\Http\ViewComposers\Localization;
 use A17\Twill\Http\ViewComposers\MediasUploaderConfig;
 use A17\Twill\Models\Block;
+use A17\Twill\Services\Blocks\Block as BlockService;
+use A17\Twill\Services\Blocks\BlockRegistry;
 use A17\Twill\Models\File;
 use A17\Twill\Models\Group;
 use A17\Twill\Models\Media;
@@ -140,17 +143,21 @@ class TwillServiceProvider extends ServiceProvider
         );
 
         foreach (config('twill.block_editor.directories.source.blocks') as $value) {
-            TwillBlocks::$blockDirectories[$value['path']] = [
-                'source' => $value['source'],
-                'renderNamespace' => null,
-            ];
+            Facades\TwillBlocks::registerSourceDirectory(
+                $value['path'],
+                BlockService::TYPE_BLOCK,
+                $value['source'],
+                $value['renderNamespace'] ?? null
+            );
         }
 
         foreach (config('twill.block_editor.directories.source.repeaters') as $value) {
-            TwillBlocks::$repeatersDirectories[$value['path']] = [
-                'source' => $value['source'],
-                'renderNamespace' => null,
-            ];
+            Facades\TwillBlocks::registerSourceDirectory(
+                $value['path'],
+                BlockService::TYPE_REPEATER,
+                $value['source'],
+                $value['renderNamespace'] ?? null
+            );
         }
 
         Relation::morphMap([
@@ -166,6 +173,14 @@ class TwillServiceProvider extends ServiceProvider
     {
         $this->app->bind('twill_util', function () {
             return new TwillUtil();
+        });
+
+        $this->app->singleton(TwillBlocks::class, function ($app) {
+            return new TwillBlocks($app->make(BlockRegistry::class));
+        });
+
+        $this->app->singleton(BlockRegistry::class, function () {
+            return new BlockRegistry();
         });
     }
 
@@ -373,6 +388,7 @@ class TwillServiceProvider extends ServiceProvider
             MakeCapsule::class,
             MakeSingleton::class,
             BlockMake::class,
+            BlockImport::class,
             ListIcons::class,
             ListBlocks::class,
             CreateSuperAdmin::class,
