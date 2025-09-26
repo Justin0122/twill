@@ -60,6 +60,12 @@
               >{{ metadatas.text }}</a
             >
           </li>
+          <li v-if="showMediaReferences && media.owners.length >= 1">
+            <ul class="media__references ">
+              <li class="media__name">{{ $trans('media-library.sidebar.references', 'References') }}</li>
+              <li class="f--small" :style="(index)" v-for="(item, index) in media.owners" :key="'mediaowner_' + item.id"><a :href="item.edit" target="_blank">{{ item.name }}</a></li>
+            </ul>
+          </li>
         </ul>
 
         <!--Actions-->
@@ -380,7 +386,8 @@
       },
       ...mapState({
         selectedMedias: state => state.mediaLibrary.selected,
-        allCrops: state => state.mediaLibrary.crops
+        allCrops: state => state.mediaLibrary.crops,
+        showMediaReferences: state => state.mediaLibrary.showMediaReferences
       })
     },
     watch: {
@@ -974,6 +981,11 @@
       margin-top: 20px;
       margin-bottom: 20px;
     }
+  }
+
+  /* Media References */
+  .media__references {
+    margin-top: 20px;
   }
 </style>
 

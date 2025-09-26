@@ -1,6 +1,6 @@
 <template>
   <div class="mediasidebar">
-    <a17-mediasidebar-upload v-if="mediasLoading.length" />
+    <a17-mediasidebar-upload v-if="mediasLoading.length"/>
 
     <template v-else>
       <div v-if="folderError" class="mediasidebar__foldererror">
@@ -46,8 +46,8 @@
             $trans('media-library.sidebar.files-selected', 'files selected')
           }}
           <a href="#" @click.prevent="clear">{{
-            $trans('media-library.sidebar.clear', 'Clear')
-          }}</a>
+              $trans('media-library.sidebar.clear', 'Clear')
+            }}</a>
         </p>
 
         <template v-if="hasSingleMedia">
@@ -71,11 +71,89 @@
             </li>
           </ul>
         </template>
+        <template v-if="showMediaReferences && hasMedia">
+          <p class="mediasidebar__reference_label">
+            {{ $trans('media-library.sidebar.references', 'References') }}
+          </p>
 
+          <!-- Single media -->
+          <ul v-if="hasSingleMedia"
+              class="mediasidebar__metadatas usage"
+              :class="{'owners--scroll': ownersExpandedSingle && totalOwnersSingle > 8}">
+            <li class="f--small"
+                v-for="(item, index) in visibleOwnersSingle"
+                :key="`mediaowner_${firstMedia.id}_${item.id ?? index}`">
+    <span class="ownerline">
+      <span class="module-badge" v-if="item.module">{{ item.module }}</span>
+      <a v-if="item.edit || item.admin_url"
+         :href="item.edit || item.admin_url" target="_blank">
+        {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+      </a>
+      <span v-else>
+        {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+      </span>
+    </span>
+            </li>
+
+            <li v-if="!ownersCount(firstMedia)" class="f--tiny f--note">
+              {{ $trans('media-library.sidebar.no-references', 'No references') }}
+            </li>
+
+            <!-- Toggle -->
+            <li v-else-if="showMoreSingle" class="f--tiny">
+              <button type="button" class="owners-toggle"
+                      @click="ownersExpandedSingle = !ownersExpandedSingle">
+                {{ ownersExpandedSingle ? $trans('media-library.sidebar.show-less', 'Show less')
+                : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersSingle})` }}
+              </button>
+            </li>
+          </ul>
+
+          <!-- Multiple medias -->
+          <!-- Multiple medias -->
+          <ul v-else class="mediasidebar__metadatas usage">
+            <li class="f--small" v-for="m in medias" :key="`owners_of_${m.id}`">
+              <strong>{{ m.name || ('Media #' + m.id) }}</strong>
+
+              <ul class="mediasidebar__metadatas usage"
+                  :class="{'owners--scroll': isOwnersExpanded(m) && totalOwnersFor(m) > 8}">
+                <li v-for="(item, index) in visibleOwnersFor(m)"
+                    :key="`mediaowner_${m.id}_${item.id ?? index}`">
+        <span class="ownerline">
+          <span class="module-badge" v-if="item.module">{{ item.module }}</span>
+          <a v-if="item.edit || item.admin_url"
+             :href="item.edit || item.admin_url" target="_blank">
+            {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+          </a>
+          <span v-else>
+            {{ item.title || item.name || ((item.type || 'Item') + ' #' + (item.id ?? '?')) }}
+          </span>
+        </span>
+                </li>
+
+                <li v-if="!ownersCount(m)" class="f--tiny f--note">
+                  {{ $trans('media-library.sidebar.no-references', 'No references') }}
+                </li>
+
+                <!-- Toggle -->
+                <li v-else-if="showMoreFor(m)" class="f--tiny">
+                  <button type="button" class="owners-toggle"
+                          @click="toggleOwnersExpanded(m)">
+                    {{ isOwnersExpanded(m) ? $trans('media-library.sidebar.show-less', 'Show less')
+                    : $trans('media-library.sidebar.show-all', 'Show all') + ` (${totalOwnersFor(m)})` }}
+                  </button>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+
+
+        </template>
         <a17-buttonbar class="mediasidebar__buttonbar" v-if="hasMedia">
           <!-- Actions -->
           <a v-if="hasSingleMedia" :href="firstMedia.original" download
-            ><span v-svg symbol="download"></span
+          ><span v-svg symbol="download"></span
           ></a>
           <button
             v-if="allowDelete && authorized"
@@ -106,7 +184,7 @@
         @submit="submit"
       >
         <span class="mediasidebar__loader" v-if="loading"
-          ><span class="loader loader--small"><span></span></span
+        ><span class="loader loader--small"><span></span></span
         ></span>
         <a17-vselect
           v-if="!fieldsRemovedFromBulkEditing.includes('tags')"
@@ -139,18 +217,18 @@
           data-tooltip-theme="default"
           data-tooltip-placement="top"
           v-tooltip
-          >Remove from bulk edit</span
+        >Remove from bulk edit</span
         >
         <template v-if="hasMultipleMedias">
-          <input type="hidden" name="ids" :value="mediasIds" />
+          <input type="hidden" name="ids" :value="mediasIds"/>
         </template>
         <template v-else>
-          <input type="hidden" name="id" :value="firstMedia.id" />
+          <input type="hidden" name="id" :value="firstMedia.id"/>
           <div
             class="mediasidebar__langswitcher"
             v-if="translatableMetadatas.length > 0"
           >
-            <a17-langswitcher :in-modal="true" :all-published="true" />
+            <a17-langswitcher :in-modal="true" :all-published="true"/>
           </div>
 
           <a17-locale
@@ -357,7 +435,7 @@
             data-tooltip-theme="default"
             data-tooltip-placement="top"
             v-tooltip
-            >Remove from bulk edit</span
+          >Remove from bulk edit</span
           >
         </template>
       </form>
@@ -370,16 +448,16 @@
     >
       <p class="modal--tiny-title">
         <strong>{{
-          $trans('media-library.dialogs.delete.title', 'Are you sure ?')
-        }}</strong>
+            $trans('media-library.dialogs.delete.title', 'Are you sure ?')
+          }}</strong>
       </p>
       <p>{{ warningDeleteMessage }}</p>
       <a17-inputframe>
         <a17-button variant="validate" @click="deleteSelectedMedias"
-          >Delete ({{ mediasIdsToDelete.length }})
+        >Delete ({{ mediasIdsToDelete.length }})
         </a17-button>
         <a17-button variant="aslink" @click="$refs.warningDelete.close()"
-          ><span>Cancel</span></a17-button
+        ><span>Cancel</span></a17-button
         >
       </a17-inputframe>
     </a17-modal>
@@ -388,13 +466,13 @@
 
 <script>
   import isEqual from 'lodash/isEqual'
-  import { mapState } from 'vuex'
+  import {mapState} from 'vuex'
 
   import a17Langswitcher from '@/components/LangSwitcher'
   import a17MediaSidebarUpload from '@/components/media-library/MediaSidebarUpload'
   import api from '@/store/api/media-library'
-  import { NOTIFICATION } from '@/store/mutations'
-  import { uppercase } from '@/utils/filters.js'
+  import {NOTIFICATION} from '@/store/mutations'
+  import {uppercase} from '@/utils/filters.js'
   import FormDataAsObj from '@/utils/formDataAsObj.js'
 
   export default {
@@ -406,7 +484,7 @@
     },
     props: {
       medias: {
-        default: function() {
+        default: function () {
           return []
         }
       },
@@ -431,47 +509,71 @@
         }
       }
     },
-    data: function() {
+    data() {
       return {
         loading: false,
         focused: false,
         previousSavedData: {},
-        fieldsRemovedFromBulkEditing: []
+        fieldsRemovedFromBulkEditing: [],
+        ownersExpandedSingle: false,
+        ownersExpandedMap: Object.create(null),
       }
     },
     watch: {
-      medias: function() {
+      medias: function () {
         this.fieldsRemovedFromBulkEditing = []
       }
     },
     computed: {
+      totalOwnersSingle() {
+        return this.ownersCount(this.firstMedia);
+      },
+      showMoreSingle() {
+        return this.totalOwnersSingle > 5;
+      },
+      visibleOwnersSingle() {
+        const list = this.safeOwners;
+        return this.ownersExpandedSingle ? list : list.slice(0, 5);
+      },
+      ownersMap() {
+        const map = new Map();
+        (this.medias || []).forEach(m => {
+          const list =
+            (Array.isArray(m?.owners) && m.owners) ||
+            (Array.isArray(m?.metadatas?.default?.owners) && m.metadatas.default.owners) ||
+            (Array.isArray(m?.metadatas?.custom?.owners) && m.metadatas.custom.owners) ||
+            [];
+          map.set(m?.id, Array.isArray(list) ? list : []);
+        });
+        return map;
+      },
+      safeOwners() {
+        return this.firstMedia ? (this.ownersMap.get(this.firstMedia.id) || []) : [];
+      },
       firstDefaultMeta() {
         const fm = this.firstMedia
         return (fm && fm.metadatas && fm.metadatas.default) ? fm.metadatas.default : {}
       },
-      firstMedia: function() {
+      firstMedia: function () {
         return this.hasMedia ? this.medias[0] : null
       },
-      hasMultipleMedias: function() {
+      hasMultipleMedias: function () {
         return this.medias.length > 1
       },
-      hasSingleMedia: function() {
+      hasSingleMedia: function () {
         return this.medias.length === 1
       },
-      hasMedia: function() {
+      hasMedia: function () {
         return this.medias.length > 0
       },
-      isImage: function() {
+      isImage: function () {
         return this.type.value === 'image'
       },
-      sharedTags: function() {
+      sharedTags() {
+        if (!this.medias.length) return [];
         return this.medias
-          .map(media => {
-            return media.tags
-          })
-          .reduce((allTags, currentTags) =>
-            allTags.filter(tag => currentTags.includes(tag))
-          )
+          .map(m => Array.isArray(m?.tags) ? m.tags : [])
+          .reduce((acc, tags) => acc.filter(t => tags.includes(t)));
       },
       captionValues() {
         const v = this.firstDefaultMeta.caption
@@ -516,22 +618,22 @@
           return ''
         }
       },
-      mediasIds: function() {
+      mediasIds: function () {
         return this.medias
-          .map(function(media) {
+          .map(function (media) {
             return media.id
           })
           .join(',')
       },
-      mediasIdsToDelete: function() {
+      mediasIdsToDelete: function () {
         return this.medias
           .filter(media => media.deleteUrl)
           .map(media => media.id)
       },
-      mediasIdsToDeleteString: function() {
+      mediasIdsToDeleteString: function () {
         return this.mediasIdsToDelete.join(',')
       },
-      allowDelete: function() {
+      allowDelete: function () {
         return (
           this.medias.every(media => {
             return media.deleteUrl
@@ -542,7 +644,7 @@
             }))
         )
       },
-      warningDeleteMessage: function() {
+      warningDeleteMessage: function () {
         if (this.allowDelete) {
           if (this.hasMultipleMedias) {
             return this.$trans(
@@ -569,18 +671,18 @@
           }
         }
       },
-      containerClasses: function() {
+      containerClasses: function () {
         return {
           'mediasidebar__inner--multi': this.hasMultipleMedias,
           'mediasidebar__inner--single': this.hasSingleMedia
         }
       },
-      singleAndMultipleMetadatas: function() {
+      singleAndMultipleMetadatas: function () {
         return this.extraMetadatas.filter(
           m => m.multiple && !this.translatableMetadatas.includes(m.name)
         )
       },
-      singleOnlyMetadatas: function() {
+      singleOnlyMetadatas: function () {
         return this.extraMetadatas.filter(
           m =>
             !m.multiple ||
@@ -588,14 +690,15 @@
         )
       },
       ...mapState({
-        mediasLoading: state => state.mediaLibrary.loading,
         useWysiwyg: state => state.mediaLibrary.config.useWysiwyg,
-        wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions
+        wysiwygOptions: state => state.mediaLibrary.config.wysiwygOptions,
+        mediasLoading: state => state.mediaLibrary.loading,
+        showMediaReferences: state => state.mediaLibrary.showMediaReferences
       })
     },
     methods: {
       uppercase,
-      replaceMedia: function() {
+      replaceMedia: function () {
         // Open confirm dialog if any
         if (this.$root.$refs.replaceWarningMediaLibrary) {
           this.$root.$refs.replaceWarningMediaLibrary.open(() => {
@@ -605,12 +708,12 @@
           this.triggerMediaReplace()
         }
       },
-      triggerMediaReplace: function() {
+      triggerMediaReplace: function () {
         this.$emit('triggerMediaReplace', {
           id: this.getMediaToReplaceId()
         })
       },
-      deleteSelectedMediasValidation: function() {
+      deleteSelectedMediasValidation: function () {
         if (this.loading) return false
 
         if (this.mediasIdsToDelete.length !== this.medias.length) {
@@ -627,14 +730,14 @@
           this.deleteSelectedMedias()
         }
       },
-      deleteSelectedMedias: function() {
+      deleteSelectedMedias: function () {
         if (this.loading) return false
         this.loading = true
 
         if (this.hasMultipleMedias) {
           api.bulkDelete(
             this.firstMedia.deleteBulkUrl,
-            { ids: this.mediasIdsToDeleteString },
+            {ids: this.mediasIdsToDeleteString},
             resp => {
               this.loading = false
               this.$emit('delete', this.mediasIdsToDelete)
@@ -664,27 +767,40 @@
           )
         }
       },
+      ownersOf(m) {
+        if (!m) return [];
+        const owners =
+          (Array.isArray(m.owners) && m.owners) ||
+          (Array.isArray(m?.metadatas?.default?.owners) && m.metadatas.default.owners) ||
+          (Array.isArray(m?.metadatas?.custom?.owners) && m.metadatas.custom.owners) ||
+          [];
+        return Array.isArray(owners) ? owners : [];
+      },
+      // tiny helper if you want to avoid `.length` in templates
+      ownersCount(m) {
+        return this.ownersOf(m).length;
+      },
       ensureDefaultMeta(media) {
         if (!media.metadatas) media.metadatas = {}
         if (!media.metadatas.default) media.metadatas.default = {}
         return media.metadatas.default
       },
-      clear: function() {
+      clear: function () {
         this.$emit('clear')
       },
-      getFormData: function(form) {
+      getFormData: function (form) {
         return FormDataAsObj(form)
       },
-      getMediaToReplaceId: function() {
+      getMediaToReplaceId: function () {
         return this.firstMedia.id
       },
-      removeFieldFromBulkEditing: function(name) {
+      removeFieldFromBulkEditing: function (name) {
         this.fieldsRemovedFromBulkEditing.push(name)
       },
-      focus: function() {
+      focus: function () {
         this.focused = true
       },
-      blur: function() {
+      blur: function () {
         this.focused = false
         this.save()
 
@@ -724,7 +840,7 @@
           })
         }
       },
-      save: function() {
+      save: function () {
         this.$nextTick(() => {
           const form = this.$refs.form
           if (!form) return
@@ -737,11 +853,11 @@
           }
         })
       },
-      submit: function(event) {
+      submit: function (event) {
         event.preventDefault()
         this.save()
       },
-      update: function(form) {
+      update: function (form) {
         if (this.loading) return
 
         this.loading = true
@@ -765,8 +881,8 @@
             // Bulk update : Refresh tags
             if (this.hasMultipleMedias && resp.data.items) {
               // Update the tags of all the selected medias
-              this.medias.forEach(function(media) {
-                resp.data.items.some(function(mediaFromResp) {
+              this.medias.forEach(function (media) {
+                resp.data.items.some(function (mediaFromResp) {
                   if (mediaFromResp.id === media.id)
                     media.tags = mediaFromResp.tags // replace tags with the one from the response
                   return mediaFromResp.id === media.id
@@ -873,12 +989,14 @@
     border: 1px solid #f3c2c2;
     background: #fff6f6;
     border-radius: 8px;
+
     .mediasidebar__foldererror-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 8px;
     }
+
     .foldererror__close {
       background: transparent;
       border: 0;
@@ -886,15 +1004,55 @@
       font-size: 18px;
       line-height: 1;
     }
+
     .foldererror__items {
       margin: 0;
       padding-left: 16px;
     }
+
     .foldererror__file {
       margin-top: 6px;
     }
+
     .foldererror__places {
       margin: 4px 0 0 16px;
     }
+  }
+
+  .module-badge {
+    display: inline-block;
+    font-size: 11px;
+    line-height: 1;
+    padding: 2px 6px;
+    margin-right: 6px;
+    border: 1px solid $color__border;
+    border-radius: 10px;
+    color: $color__text--light;
+  }
+
+  .ownerline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .owner-slug {
+    color: $color__text--light;
+    font-size: 12px;
+  }
+  .owners--scroll {
+    max-height: 240px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .owners-toggle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: $color__link;
+    text-decoration: underline;
+    font: inherit;
   }
 </style>

@@ -32,6 +32,7 @@ return [
     'prefix_uuid_with_local_path' => config('twill.file_library.prefix_uuid_with_local_path', false),
     'translated_form_fields' => false,
     'show_file_name' => false,
+    'show_media_references' => true,
     /*
     |--------------------------------------------------------------------------
     | Wysiwyg options for the caption field.

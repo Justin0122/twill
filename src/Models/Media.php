@@ -2,7 +2,9 @@
 
 namespace A17\Twill\Models;
 
+use A17\Twill\Models\Behaviors\HasSlug;
 use A17\Twill\Services\MediaLibrary\ImageService;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -10,7 +12,7 @@ use Illuminate\Support\Str;
 class Media extends Model
 {
     public $timestamps = true;
-
+    protected $appends = ['owners'];
     protected $fillable = [
         'uuid',
         'filename',
@@ -67,37 +69,56 @@ class Media extends Model
         return DB::table(config('twill.mediables_table', 'twill_mediables'))->where('media_id', $this->id)->count() > 0;
     }
 
+    public function getOwnersAttribute(): array
+    {
+        return $this->getOwnerDetails() ?: [];
+    }
+
     public function toCmsArray()
     {
+        // Compute once and reuse
+        $owners = $this->getOwnersAttribute();
+
         return [
-            'id' => $this->id,
-            'name' => $this->filename,
-            'thumbnail' => ImageService::getCmsUrl($this->uuid, ['h' => '256']),
+            'id'       => $this->id,
+            'name'     => $this->filename,
+            'thumbnail'=> ImageService::getCmsUrl($this->uuid, ['h' => '256']),
             'original' => ImageService::getRawUrl($this->uuid),
-            'medium' => ImageService::getUrl($this->uuid, ['h' => '430']),
-            'width' => $this->width,
-            'height' => $this->height,
-            'tags' => $this->tags->map(function ($tag) {
-                return $tag->name;
-            }),
-            'deleteUrl' => $this->canDeleteSafely() ? moduleRoute('medias', 'media-library', 'destroy', $this->id) : null,
-            'updateUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.single-update'),
+            'medium'   => ImageService::getUrl($this->uuid, ['h' => '430']),
+            'width'    => $this->width,
+            'height'   => $this->height,
+
+            // 🔹 Top-level owners for legacy/frontend expectations
+            'owners'   => $owners,
+
+            // 🔹 Make sure tags is a plain array
+            'tags'     => $this->tags
+                ? $this->tags->pluck('name')->values()->all()
+                : [],
+
+            'deleteUrl'     => $this->canDeleteSafely()
+                ? moduleRoute('medias', 'media-library', 'destroy', $this->id)
+                : null,
+            'updateUrl'     => route(config('twill.admin_route_name_prefix') . 'media-library.medias.single-update'),
             'updateBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-update'),
             'deleteBulkUrl' => route(config('twill.admin_route_name_prefix') . 'media-library.medias.bulk-delete'),
+
             'metadatas' => [
                 'default' => [
-                    'caption' => $this->caption,
-                    'altText' => $this->alt_text,
-                    'video' => null,
-                ] + Collection::make(config('twill.media_library.extra_metadatas_fields'))->mapWithKeys(function ($field) {
-                    return [
-                        $field['name'] => $this->{$field['name']},
-                    ];
-                })->toArray(),
+                        'caption' => $this->caption,
+                        'altText' => $this->alt_text,
+                        'video'   => null,
+
+                        // 🔹 Keep owners in default metadatas too (back-compat)
+                        'owners'  => $owners,
+                    ] + Collection::make(config('twill.media_library.extra_metadatas_fields'))
+                        ->mapWithKeys(fn ($field) => [$field['name'] => $this->{$field['name']}])
+                        ->toArray(),
                 'custom' => [
                     'caption' => null,
                     'altText' => null,
-                    'video' => null,
+                    'video'   => null,
+                    'owners'  => [],
                 ],
             ],
         ];
@@ -171,5 +192,69 @@ class Media extends Model
     public function getTable()
     {
         return config('twill.medias_table', 'twill_medias');
+    }
+
+    public function getOwners()
+    {
+        $morphMap = Relation::morphMap();
+
+        $owners = collect(
+            DB::table(config('twill.mediables_table', 'twill_mediables'))
+                ->where('media_id', $this->id)->get()
+        );
+
+        return $owners->map(function ($owner) use ($morphMap) {
+            $resolvedClass = array_key_exists($owner->mediable_type, $morphMap) ? $morphMap[$owner->mediable_type] : $owner->mediable_type;
+            return resolve($resolvedClass)::find($owner->mediable_id);
+        });
+    }
+
+    public function getOwnerDetails()
+    {
+        return collect($this->getOwners())
+            ->filter(fn ($v) => is_object($v))
+            ->map(function ($item) {
+                if ($item instanceof Block) {
+                    $model = $item->blockable;
+                    if (!$model) {
+                        return null;
+                    }
+                    $module = Str::plural(lcfirst(class_basename($model)));
+                    return [
+                        'id'       => $model->id,
+                        'slug'     => classHasTrait($model, HasSlug::class) ? $model->slug : null,
+                        'name'     => $model->{$model->titleKey},
+                        'titleKey' => $model->titleKey,
+                        'model'    => $model,
+                        'module'   => $module,
+                        'edit'     => moduleRoute($module, config('twill.module_route_prefixes.' . $module), 'edit', $model->id)
+                            ? moduleRoute($module, config('twill.module_route_prefixes.' . $module), 'edit', $model->id)
+                            : null,
+                        '_unique'  => get_class($model) . ':' . $model->id,
+                    ];
+                }
+
+                $module = Str::plural(lcfirst(class_basename($item)));
+                return [
+                    'id'       => $item->id,
+                    'slug'     => classHasTrait($item, HasSlug::class) ? $item->slug : null,
+                    'name'     => $item->{$item->titleKey},
+                    'titleKey' => $item->titleKey,
+                    'model'    => $item,
+                    'module'   => $module,
+                    'edit'     => moduleRoute($module, config('twill.module_route_prefixes.' . $module), 'edit', $item->id)
+                        ? moduleRoute($module, config('twill.module_route_prefixes.' . $module), 'edit', $item->id)
+                        : null,
+                    '_unique'  => get_class($item) . ':' . $item->id,
+                ];
+            })
+            ->filter()
+            ->unique('_unique')
+            ->map(function ($o) {
+                unset($o['_unique']);
+                return $o;
+            })
+            ->values()
+            ->toArray();
     }
 }
