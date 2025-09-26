@@ -69,6 +69,7 @@
               {{ $trans('media-library.sidebar.dimensions', 'Dimensions') }}:
               {{ firstMedia.width }} &times; {{ firstMedia.height }}
             </li>
+            <li class="f--small" v-if="firstMedia.uploadedDate">{{ $trans('media-library.sidebar.uploaded-at', 'Uploaded at') }}: {{ firstMedia.uploadedDate }}</li>
           </ul>
         </template>
         <template v-if="shouldShowRefs">

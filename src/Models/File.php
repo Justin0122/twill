@@ -45,17 +45,21 @@ class File extends Model
 
     public function toCmsArray()
     {
-        $owners = $this->getOwnersAttribute();
-
+        $uploadedDate = [];
+        if (config('twill.file-library.show_uploaded_date')) {
+            $uploadedDate = [
+                'uploadedDate' => $this->created_at->format(config("twill.file-library.format_uploaded_date", "d/m/Y H:i"))
+            ];
+        }
         return [
-            'id'            => $this->id,
-            'name'          => $this->filename,
-            'src'           => FileService::getUrl($this->uuid),
-            'original'      => FileService::getUrl($this->uuid),
-            'size'          => $this->size,
-            'filesizeInMb'  => number_format(($this->attributes['size'] ?? 0) / 1048576, 2),
-            'owners'        => $owners,
-        ];
+            'id' => $this->id,
+            'name' => $this->filename,
+            'src' => FileService::getUrl($this->uuid),
+            'original' => FileService::getUrl($this->uuid),
+            'size' => $this->size,
+            'owners' => $this->getOwnersAttribute(),
+            'filesizeInMb' => number_format($this->attributes['size'] / 1048576, 2),
+        ] + $uploadedDate;
     }
 
     public function getTable()

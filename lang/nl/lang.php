@@ -283,6 +283,7 @@ return [
             'empty-text' => 'Geen bestand geselecteerd',
             'files-selected' => 'bestanden geselecteerd',
             'tags' => 'Tags',
+            'uploaded-at' => 'Geüpload op',
             'show-all' => 'Alles tonen',
             'show-less' => 'Minder tonen',
             'no-references' => 'Geen referenties',

@@ -293,7 +293,6 @@
   .editorSidebar__categories {
     display: flex;
     flex-direction: column;
-    gap: 10px;
   }
 
   .editorSidebar__category {

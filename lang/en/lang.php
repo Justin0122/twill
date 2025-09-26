@@ -286,6 +286,7 @@ return [
             'empty-text' => 'No file selected',
             'files-selected' => 'files selected',
             'tags' => 'Tags',
+            'uploaded-at' => 'Uploaded at',
             'show-all' => 'Show all',
             'show-less' => 'Show less',
             'no-references' => 'No references',
