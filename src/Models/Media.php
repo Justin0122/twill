@@ -87,11 +87,7 @@ class Media extends Model
             'medium'   => ImageService::getUrl($this->uuid, ['h' => '430']),
             'width'    => $this->width,
             'height'   => $this->height,
-
-            // 🔹 Top-level owners for legacy/frontend expectations
             'owners'   => $owners,
-
-            // 🔹 Make sure tags is a plain array
             'tags'     => $this->tags
                 ? $this->tags->pluck('name')->values()->all()
                 : [],
@@ -108,9 +104,6 @@ class Media extends Model
                         'caption' => $this->caption,
                         'altText' => $this->alt_text,
                         'video'   => null,
-
-                        // 🔹 Keep owners in default metadatas too (back-compat)
-                        'owners'  => $owners,
                     ] + Collection::make(config('twill.media_library.extra_metadatas_fields'))
                         ->mapWithKeys(fn ($field) => [$field['name'] => $this->{$field['name']}])
                         ->toArray(),
