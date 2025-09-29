@@ -535,7 +535,7 @@ trait HandleBlocks
         }
     }
 
-    public function afterDeleteHandleBlocks(Model $object, array $fields): void
+    public function afterDeleteHandleBlocks(Model $object): void
     {
         $modelType  = $object->getMorphClass();
         $pageId     = $object->blockable_id ?? $object->id;
