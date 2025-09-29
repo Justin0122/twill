@@ -16,14 +16,21 @@ class Options extends Collection
      */
     public static function fromArray(array $options): static
     {
-        return static::make(collect($options)->map(function ($value, $key) {
-            if ($value instanceof Option) {
-                return $value;
-            }
-
-            return is_array($value)
-                ? Option::make(...$value)
-                : Option::make($key, $value);
-        })->values());
+        return static::make(
+            collect($options)
+                ->map(function ($value, $key) {
+                    if (is_null($value)) {
+                        return null;
+                    }
+                    if ($value instanceof Option) {
+                        return $value;
+                    }
+                    return is_array($value)
+                        ? Option::make(...$value)
+                        : Option::make($key, $value);
+                })
+                ->filter()
+                ->values()
+        );
     }
 }
