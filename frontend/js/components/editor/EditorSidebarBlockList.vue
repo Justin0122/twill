@@ -9,10 +9,7 @@
       :options="categoryDragOptions"
       @change="saveOrderFromRender"
       @start="isDragging = true"
-      @end="
-        isDragging = false
-        _dragClickSuppressUntil = Date.now() + 250
-      "
+      @end="isDragging = false; _dragClickSuppressUntil = Date.now() + 250"
     >
       <!--eslint-enable-->
       <div
@@ -30,7 +27,7 @@
           <span
             class="editorSidebar__categoryIcon"
             :class="{ 'is-open': !isCollapsed(cat.name) }"
-            >▼</span
+          >▼</span
           >
 
           <!-- dedicated drag handle -->
@@ -40,7 +37,7 @@
             @mousedown.stop
             @touchstart.stop
             aria-label="Drag handle"
-            >⠿</span
+          >⠿</span
           >
         </button>
 
@@ -55,9 +52,7 @@
               :sort="false"
               handle=".editorSidebar__button"
               @start="isDragging = true"
-              @end="
-                isDragging = false
-                _dragClickSuppressUntil = Date.now() + 250
+              @end="isDragging = false; _dragClickSuppressUntil = Date.now() + 250
               "
             >
               <div
@@ -73,8 +68,8 @@
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
                 <span class="editorSidebar__buttonLabel">{{
-                  block.title
-                }}</span>
+                    block.title
+                  }}</span>
               </div>
             </draggable>
           </div>
