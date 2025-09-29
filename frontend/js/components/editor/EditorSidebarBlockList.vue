@@ -289,7 +289,32 @@
 <style lang="scss" scoped>
   @import '~styles/setup/_mixins-colors-vars.scss';
 
-  /* Full-width categories stacked vertically */
+  .editorSidebar__listItems {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editorSidebar__listItems > .editorSidebar__blocks.editorSidebar__categories {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 !important;
+    border: 0 !important;
+    gap: 10px;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .editorSidebar__categories,
+  .editorSidebar__panel {
+    min-width: 0;
+  }
+
   .editorSidebar__categories {
     display: flex;
     flex-direction: column;
@@ -316,9 +341,7 @@
     user-select: none;
     -webkit-user-drag: none;
 
-    &:hover {
-      border-color: $color__border--focus;
-    }
+    &:hover { border-color: $color__border--focus; }
   }
 
   .editorSidebar__categoryTitle {
@@ -331,22 +354,16 @@
     transition: transform 0.2s ease;
     color: $color__text--light;
 
-    &.is-open {
-      transform: rotate(180deg);
-    }
+    &.is-open { transform: rotate(180deg); }
   }
 
-  /* Collapse only inner panel; keep outer footprint stable */
-  .editorSidebar__panel {
-    overflow: hidden;
-  }
+  .editorSidebar__panel { overflow: hidden; }
 
   .collapse-enter-active,
   .collapse-leave-active {
     transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
     max-height: 1000px;
   }
-
   .collapse-enter,
   .collapse-leave-to {
     max-height: 0;
@@ -354,69 +371,43 @@
   }
 
   .editorSidebar__blocks {
+    box-sizing: border-box;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    transition: all 0.3s ease-out;
-    max-height: 1000px;
-    width: -moz-available;
-    width: -webkit-fill-available;
-    width: stretch;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    max-height: none;
     border-radius: $border-radius;
     padding: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
+    overflow-x: hidden;
   }
 
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
 
-    .editorSidebar__button:last-child {
-      padding-bottom: 0;
-    }
-  }
-
-  .editorSidebar__listItems > div {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-  .editorSidebar__listItems {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .editorSidebar__listItems > .editorSidebar__blocks {
-    min-height: 0;
-    max-height: none;
-    overflow-y: auto;
-    overflow-x: hidden;
+    .editorSidebar__button:last-child { padding-bottom: 0; }
   }
 
   .editorSidebar__button {
     @include btn-reset;
     @include font-tiny-btn;
+    box-sizing: border-box;
     cursor: move;
     display: flex;
     flex-direction: column;
-    width: calc(50% - 5px);
+    flex: 1 1 calc(50% - 10px);
     height: 100px;
     padding: 8px 20px;
-    margin-bottom: 10px;
+    margin: 0;
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
     color: $color__text--light;
     text-align: center;
 
-    &--full-width {
-      width: -moz-available;
-      width: -webkit-fill-available;
-      width: stretch;
-    }
+    &--full-width { flex-basis: 100%; }
 
     .icon {
       flex-grow: 1;
@@ -439,30 +430,18 @@
     &:focus {
       color: $color__text;
       border-color: $color__border--focus;
-
-      .icon {
-        color: $color__text;
-      }
+      .icon { color: $color__text; }
     }
   }
 
-  .editorPreview__content .editorSidebar__button {
-    width: 100%;
-  }
+  .editorPreview__content .editorSidebar__button { width: 100%; }
 
-  /* Sortable feedback */
   .is-ghost {
     opacity: 0.6;
     min-height: var(--cat-min-h, 44px);
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px dashed rgba(0, 0, 0, 0.1);
+    background: rgba(0,0,0,0.02);
+    border: 1px dashed rgba(0,0,0,0.1);
   }
-
-  .is-chosen {
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06) inset;
-  }
-
-  .is-drag {
-    cursor: grabbing;
-  }
+  .is-chosen { box-shadow: 0 0 0 2px rgba(0,0,0,0.06) inset; }
+  .is-drag { cursor: grabbing; }
 </style>
