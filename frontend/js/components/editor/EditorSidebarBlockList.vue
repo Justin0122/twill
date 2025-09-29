@@ -8,6 +8,11 @@
       :item-key="'id'"
       :options="categoryDragOptions"
       @change="saveOrderFromRender"
+      @start="isDragging = true"
+      @end="
+        isDragging = false
+        _dragClickSuppressUntil = Date.now() + 250
+      "
     >
       <!--eslint-enable-->
       <div
@@ -16,7 +21,7 @@
         class="editorSidebar__category"
       >
         <button
-          @click="toggleCollapse(cat.name)"
+          @click="onHeaderClick($event, cat.name)"
           class="editorSidebar__categoryHeader"
           type="button"
           :title="`Drag to reorder ${cat.name}`"
@@ -25,7 +30,17 @@
           <span
             class="editorSidebar__categoryIcon"
             :class="{ 'is-open': !isCollapsed(cat.name) }"
-          >▼</span
+            >▼</span
+          >
+
+          <!-- dedicated drag handle -->
+          <span
+            class="editorSidebar__dragHandle"
+            title="Drag to reorder category"
+            @mousedown.stop
+            @touchstart.stop
+            aria-label="Drag handle"
+            >⠿</span
           >
         </button>
 
@@ -39,6 +54,11 @@
               :group="{ name: 'editorBlocks', pull: 'clone', put: false }"
               :sort="false"
               handle=".editorSidebar__button"
+              @start="isDragging = true"
+              @end="
+                isDragging = false
+                _dragClickSuppressUntil = Date.now() + 250
+              "
             >
               <div
                 v-for="block in groupedBlocks[cat.name]"
@@ -53,8 +73,8 @@
               >
                 <span v-svg :symbol="iconSymbol(block.icon)"></span>
                 <span class="editorSidebar__buttonLabel">{{
-                    block.title
-                  }}</span>
+                  block.title
+                }}</span>
               </div>
             </draggable>
           </div>
@@ -66,7 +86,6 @@
 
 <script>
   import { VueDraggableNext } from 'vue-draggable-next'
-
   import { DraggableMixin } from '@/mixins'
   import tinycolor from 'tinycolor2'
 
@@ -92,13 +111,16 @@
         collapsedCategories: {},
         categoryOrder: [], // persisted names
         renderOrder: [], // [{ id, name }]
-        hydrated: false // set true after storage load; blocks may still be async
+        hydrated: false, // set true after storage load; blocks may still be async
+        isDragging: false,
+        // eslint-disable-next-line
+        _dragClickSuppressUntil: 0
       }
     },
     computed: {
       categoryDragOptions() {
         return {
-          handle: '.editorSidebar__categoryHeader',
+          handle: '.editorSidebar__dragHandle',
           animation: 180,
           easing: 'ease',
           direction: 'vertical',
@@ -108,7 +130,10 @@
           forceFallback: true,
           ghostClass: 'is-ghost',
           chosenClass: 'is-chosen',
-          dragClass: 'is-drag'
+          dragClass: 'is-drag',
+          delayOnTouchOnly: true,
+          delay: 120,
+          touchStartThreshold: 6
         }
       },
       groupedBlocks() {
@@ -130,7 +155,6 @@
       }
     },
     watch: {
-      // Important: don't run immediately during creation (when blocks is still empty)
       groupedBlocks: {
         immediate: false,
         handler() {
@@ -158,13 +182,21 @@
         // formats (named with `-lg` suffix) will be used in the sidebar.
         return this.hasLgIconVariation(icon) ? `${icon}-lg` : icon
       },
-      hasLgIconVariation: function(icon) {
+      hasLgIconVariation(icon) {
         return Boolean(document.querySelector(`#icon--${icon}-lg`))
+      },
+
+      // safer header click: ignore when dragging/just finished a drag or if clicking handle
+      onHeaderClick(evt, name) {
+        const now = Date.now()
+        if (this.isDragging || now < this._dragClickSuppressUntil) return
+        if (evt.target.closest('.editorSidebar__dragHandle')) return
+        this.toggleCollapse(name)
       },
 
       // ---------- collapse ----------
       toggleCollapse(name) {
-        this.collapsedCategories[name] = !this.isCollapsed(name);
+        this.collapsedCategories[name] = !this.isCollapsed(name)
       },
       isCollapsed(name) {
         return !!this.collapsedCategories[name]
@@ -333,15 +365,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     padding: 8px 12px;
     background: $color__background;
     border-radius: $border-radius;
     border: 1px solid $color__border;
-    cursor: move; // drag handle
     user-select: none;
     -webkit-user-drag: none;
 
-    &:hover { border-color: $color__border--focus; }
+    &:hover {
+      border-color: $color__border--focus;
+    }
   }
 
   .editorSidebar__categoryTitle {
@@ -354,10 +388,33 @@
     transition: transform 0.2s ease;
     color: $color__text--light;
 
-    &.is-open { transform: rotate(180deg); }
+    &.is-open {
+      transform: rotate(180deg);
+    }
   }
 
-  .editorSidebar__panel { overflow: hidden; }
+  /* dedicated drag handle (only draggable hotspot) */
+  .editorSidebar__dragHandle {
+    margin-left: auto;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: grab;
+    font-size: 14px;
+    line-height: 1;
+    color: $color__text--light;
+
+    &:active {
+      cursor: grabbing;
+    }
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: $color__text;
+    }
+  }
+
+  .editorSidebar__panel {
+    overflow: hidden;
+  }
 
   .collapse-enter-active,
   .collapse-leave-active {
@@ -380,14 +437,16 @@
     max-height: none;
     border-radius: $border-radius;
     padding: 10px;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     overflow-x: hidden;
   }
 
   .editorSidebar__blocks--in-fieldset {
     padding-top: 20px;
 
-    .editorSidebar__button:last-child { padding-bottom: 0; }
+    .editorSidebar__button:last-child {
+      padding-bottom: 0;
+    }
   }
 
   .editorSidebar__button {
@@ -407,7 +466,9 @@
     color: $color__text--light;
     text-align: center;
 
-    &--full-width { flex-basis: 100%; }
+    &--full-width {
+      flex-basis: 100%;
+    }
 
     .icon {
       flex-grow: 1;
@@ -430,18 +491,26 @@
     &:focus {
       color: $color__text;
       border-color: $color__border--focus;
-      .icon { color: $color__text; }
+      .icon {
+        color: $color__text;
+      }
     }
   }
 
-  .editorPreview__content .editorSidebar__button { width: 100%; }
+  .editorPreview__content .editorSidebar__button {
+    width: 100%;
+  }
 
   .is-ghost {
     opacity: 0.6;
     min-height: var(--cat-min-h, 44px);
-    background: rgba(0,0,0,0.02);
-    border: 1px dashed rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px dashed rgba(0, 0, 0, 0.1);
   }
-  .is-chosen { box-shadow: 0 0 0 2px rgba(0,0,0,0.06) inset; }
-  .is-drag { cursor: grabbing; }
+  .is-chosen {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06) inset;
+  }
+  .is-drag {
+    cursor: grabbing;
+  }
 </style>
