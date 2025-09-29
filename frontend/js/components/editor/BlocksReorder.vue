@@ -17,6 +17,12 @@
           onAfterEnter: onAfterTransition,
           onAfterLeave: onAfterTransition
         }"
+        :modelValue="items"
+        item-key="id"
+        :handle="'.reorder__handle'"
+        @start="onStart"
+        @end="onEnd"
+        @update:modelValue="noop"
       >
         <li
           v-for="(b, i) in items"
@@ -55,9 +61,7 @@
         class {
           observe() {}
           disconnect() {}
-        })(() => {
-        this.updateMarker()
-      })
+        })(() => this.updateMarker())
       if (this.$refs.list && this.$refs.list.$el) {
         this._ro.observe(this.$refs.list.$el)
         this._onScroll = () => {
@@ -86,6 +90,8 @@
       }
     },
     methods: {
+      noop() {
+      },
       titleOf(b) {
         return (
           b.title ||
@@ -131,15 +137,13 @@
 <style scoped lang="scss">
   .reorder__wrap {
     position: relative;
-  } /* anchor for absolute marker */
-
+  }
   .reorder__list {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  /* Sliding highlight marker */
   .reorder__marker {
     position: absolute;
     left: 0;
@@ -180,7 +184,6 @@
     text-overflow: ellipsis;
   }
 
-  /* keep your fade transitions */
   .fade-enter-active,
   .fade-leave-active {
     transition: opacity 0.15s;
