@@ -15,8 +15,8 @@
             <span class="dropdown__arrow" v-if="arrow"></span>
             <div class="dropdown__scroller" :style="innerStyle">
               <span class="dropdown__title f--small" v-if="title">{{
-                title
-              }}</span>
+                  title
+                }}</span>
               <slot name="dropdown__content"> </slot>
             </div>
           </div>
@@ -116,10 +116,15 @@
         }
       },
       innerStyle: function() {
+        const fallbackMax =
+          typeof window !== 'undefined' ? Math.max(160, window.innerHeight - 120) : 300;
+        const maxH = this.maxHeight > 0 ? this.maxHeight : fallbackMax;
+
         return {
-          'max-height': this.maxHeight > 0 ? this.maxHeight + 'px' : '',
-          overflow: this.maxHeight > 0 ? 'hidden' : '',
-          'overflow-y': this.maxHeight > 0 ? 'scroll' : ''
+          'max-height': maxH + 'px',
+          'overflow-y': 'auto',
+          'overflow-x': 'hidden',
+          '-webkit-overflow-scrolling': 'touch',
         }
       }
     },
@@ -128,33 +133,33 @@
         return this.currentPosition.indexOf(type) !== -1
       },
       reposition: function() {
-        const yLimitBottom =
-          this.$el.getBoundingClientRect().top +
-          this.$el.offsetHeight +
-          window.pageYOffset +
-          this.offset
-        const yLimitTop =
-          this.$el.getBoundingClientRect().top +
-          window.pageYOffset -
-          this.offset
-        const yWin = window.pageYOffset + window.innerHeight
+        const rect = this.$el.getBoundingClientRect()
+        const triggerTop = rect.top
+        const triggerBottom = rect.bottom
+        const nearTopThreshold = 120
 
-        // revert to original desired position
-        if (this.currentPosition !== this.position)
-          this.currentPosition = this.position
+        const spaceAbove = triggerTop - this.offset
+        const spaceBelow = window.innerHeight - (triggerBottom + this.offset)
+        const need = this.currentHeight || 100
 
-        if (this.isPosition('bottom')) {
-          if (yLimitBottom + this.currentHeight > yWin)
-            this.currentPosition = this.currentPosition.replace(
-              /bottom/i,
-              'top'
-            ) // reposition from bottom to top
-        } else if (this.isPosition('top')) {
-          if (yLimitTop - this.currentHeight < window.pageYOffset)
-            this.currentPosition = this.currentPosition.replace(
-              /top/i,
-              'bottom'
-            ) // reposition from top to bottom
+        const baseDesired = this.position
+        if (this.currentPosition !== baseDesired) {
+          this.currentPosition = baseDesired
+        }
+
+        if (triggerTop <= nearTopThreshold) {
+          this.currentPosition = this.currentPosition.replace(/top|bottom/i, 'bottom')
+          return
+        }
+
+        if (spaceBelow >= need) {
+          this.currentPosition = this.currentPosition.replace(/top|bottom/i, 'bottom')
+        } else if (spaceAbove >= need) {
+          this.currentPosition = this.currentPosition.replace(/top|bottom/i, 'top')
+        } else {
+          this.currentPosition = (spaceBelow >= spaceAbove)
+            ? this.currentPosition.replace(/top|bottom/i, 'bottom')
+            : this.currentPosition.replace(/top|bottom/i, 'top')
         }
       },
       getHeight: function() {
