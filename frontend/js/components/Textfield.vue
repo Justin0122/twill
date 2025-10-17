@@ -160,6 +160,7 @@
       LocaleMixin,
       FormStoreMixin
     ],
+    emits: ['focus', 'blur', 'change', 'input', 'update:modelValue'],
     props: {
       name: {
         type: String,
@@ -263,6 +264,7 @@
       updateValue: function(newValue) {
         this.value = newValue
         this.updateCounter(newValue)
+        this.$emit('update:modelValue', newValue)
       },
       updateAndSaveValue: function(newValue) {
         this.updateValue(newValue)
