@@ -15,10 +15,7 @@
                 :class="cropThumbnailClass"
               />
             </div>
-            <div
-              class="media__edit"
-              v-if="!disabled"
-            >
+            <div class="media__edit" v-if="!disabled">
               <span class="media__edit--button"
               ><span v-svg symbol="edit"></span
               ></span>
@@ -63,7 +60,6 @@
             </li>
           </ul>
 
-          <!-- Right: references grouped by module -->
           <aside class="media__refs" v-if="shouldShowRefs">
             <ul class="media__references">
               <li class="media__name">
@@ -71,7 +67,9 @@
               </li>
 
               <li v-if="ownersCount === 0" class="f--tiny f--note">
-                {{ $trans('media-library.sidebar.no-references', 'No references') }}
+                {{
+                  $trans('media-library.sidebar.no-references', 'No references')
+                }}
               </li>
 
               <li
@@ -111,19 +109,59 @@
                       }}
                     </a>
                     <span v-else>
-              {{
+                      {{
                         item.title ||
                         item.name ||
-                        ((item.type || 'Item') + ' #' + (item.id ?? '?'))
+                        (item.type || 'Item') + ' #' + (item.id ?? '?')
                       }}
-            </span>
+                    </span>
                   </li>
                 </ul>
               </li>
             </ul>
           </aside>
         </div>
+        <!-- Action buttons (dropdown) -->
+        <div class="media__actions-dropDown" v-if="!disabled">
+          <a17-dropdown ref="dropDown" position="right">
+            <a17-button
+              size="icon"
+              variant="icon"
+              class="media__actions-trigger"
+              @click="$refs.dropDown?.toggle?.()"
+              aria-label="More actions"
+            >
+              <span v-svg symbol="more-dots"></span>
+            </a17-button>
 
+            <template #dropdown__content>
+              <div class="dropdownActions">
+                <a
+                  :href="media.original"
+                  download
+                  @click="$refs.dropDown?.close?.()"
+                >
+                  <span v-svg symbol="download"></span>
+                  {{ $trans('fields.medias.download') }}
+                </a>
+
+                <button
+                  type="button"
+                  v-if="activeCrop"
+                  @click="handleCropClick"
+                >
+                  <span v-svg symbol="crop"></span>
+                  {{ $trans('fields.medias.crop') }}
+                </button>
+
+                <button type="button" @click="handleDeleteClick">
+                  <span v-svg symbol="trash"></span>
+                  {{ $trans('fields.medias.delete') }}
+                </button>
+              </div>
+            </template>
+          </a17-dropdown>
+        </div>
       </div>
 
       <!--Add media button-->
@@ -262,7 +300,7 @@
       widthMin: { type: Number, default: 0 },
       heightMin: { type: Number, default: 0 }
     },
-    data: function () {
+    data: function() {
       return {
         canvas: null,
         img: null,
@@ -291,7 +329,7 @@
         allCrops: state => state.mediaLibrary.crops,
         showMediaReferences: state => {
           const cfg = state.mediaLibrary && state.mediaLibrary.config
-          return (cfg && typeof cfg.showMediaReferences === 'boolean')
+          return cfg && typeof cfg.showMediaReferences === 'boolean'
             ? cfg.showMediaReferences
             : true
         }
@@ -305,7 +343,7 @@
       moduleKeys() {
         return Object.keys(this.groupedOwners).sort()
       },
-      cropThumbnailStyle: function () {
+      cropThumbnailStyle: function() {
         if (this.showImg) return {}
         if (!this.hasMedia) return {}
         if (!this.media.crops) return {}
@@ -325,7 +363,7 @@
       ownersCount() {
         return this.safeOwners.length
       },
-      cropThumbnailClass: function () {
+      cropThumbnailClass: function() {
         if (!this.hasMedia) return {}
         if (!this.media.crops) return {}
         const crop = this.media.crops[Object.keys(this.media.crops)[0]]
@@ -334,27 +372,27 @@
           'media__img--portrait': crop.width / crop.height < 1
         }
       },
-      mediaKey: function () {
+      mediaKey: function() {
         return this.mediaContext.length > 0 ? this.mediaContext : this.name
       },
-      inputName: function () {
+      inputName: function() {
         let fieldName = this.name
         if (this.name.indexOf('[')) {
           fieldName = this.name.replace(']', '').replace('[', '][')
         }
         return 'medias[' + fieldName + '][' + this.index + ']'
       },
-      metadataName: function () {
+      metadataName: function() {
         return 'mediaMeta[' + this.name + '][' + this.media.id + ']'
       },
-      media: function () {
+      media: function() {
         if (this.selectedMedias.hasOwnProperty(this.mediaKey)) {
           return this.selectedMedias[this.mediaKey][this.index] || {}
         } else {
           return {}
         }
       },
-      cropInfos: function () {
+      cropInfos: function() {
         const cropInfos = []
         if (this.media.crops) {
           for (const variant in this.media.crops) {
@@ -378,21 +416,21 @@
         }
         return cropInfos.length > 0 ? cropInfos : null
       },
-      hasMedia: function () {
+      hasMedia: function() {
         return Object.keys(this.media).length > 0
       },
-      cropperKey: function () {
+      cropperKey: function() {
         return `${this.mediaKey}-${this.index}_${this.cropContext}`
       },
-      mediaHasCrop: function () {
+      mediaHasCrop: function() {
         return this.media.crops
       },
-      cropModalName: function () {
+      cropModalName: function() {
         return `${this.name}Modal`
       }
     },
     watch: {
-      media: function (val, oldVal) {
+      media: function(val, oldVal) {
         this.hasMediaChanged = val !== oldVal
         if (this.selectedMedias.hasOwnProperty(this.mediaKey)) {
           // reset isDestroyed status because we changed the media
@@ -402,6 +440,14 @@
       }
     },
     methods: {
+      handleCropClick() {
+        this.openCropMedia()
+        this.$refs.dropDown?.close?.()
+      },
+      handleDeleteClick() {
+        this.deleteMediaClick()
+        this.$refs.dropDown?.close?.()
+      },
       uppercase,
       // crop
       canvasCrop() {
@@ -454,7 +500,7 @@
           }
         })
       },
-      setDefaultCrops: function () {
+      setDefaultCrops: function() {
         const defaultCrops = {}
         const smarcrops = []
 
@@ -540,25 +586,25 @@
           this.cropMedia({ values: defaultCrops })
         }
       },
-      cropMedia: function (crop) {
+      cropMedia: function(crop) {
         crop.key = this.mediaKey
         crop.index = this.index
         this.$store.commit(MEDIA_LIBRARY.SET_MEDIA_CROP, crop)
         if (this.img) this.canvasCrop()
       },
-      setNaturalDimensions: function () {
+      setNaturalDimensions: function() {
         if (this.img) {
           this.naturalDim.width = this.img.naturalWidth
           this.naturalDim.height = this.img.naturalHeight
         }
       },
-      setOriginalDimensions: function () {
+      setOriginalDimensions: function() {
         if (this.media) {
           this.originalDim.width = this.media.width
           this.originalDim.height = this.media.height
         }
       },
-      init: function () {
+      init: function() {
         this.showImg = false
 
         const imgLoaded = () => {
@@ -617,7 +663,7 @@
           this.hasMediaChanged = false
         }
       },
-      initImg: function () {
+      initImg: function() {
         return new Promise((resolve, reject) => {
           this.img = new Image()
           if (!IS_SAFARI) {
@@ -651,38 +697,38 @@
           this.img.src = this.media.thumbnail + append + 'no-cache'
         })
       },
-      showDefaultThumbnail: function () {
+      showDefaultThumbnail: function() {
         this.showImg = true
         if (this.hasMedia) this.cropSrc = this.media.thumbnail
       },
-      openCropMedia: function () {
+      openCropMedia: function() {
         this.$refs[this.cropModalName].open()
       },
-      deleteMediaClick: function () {
+      deleteMediaClick: function() {
         this.isDestroyed = true
         this.deleteMedia()
       },
       // delete the media
-      deleteMedia: function () {
+      deleteMedia: function() {
         this.$store.commit(MEDIA_LIBRARY.DESTROY_SPECIFIC_MEDIA, {
           name: this.mediaKey,
           index: this.index
         })
       },
       // metadatas
-      updateMetadata: function (newValue) {
+      updateMetadata: function(newValue) {
         this.$store.commit(MEDIA_LIBRARY.SET_MEDIA_METADATAS, {
           media: { context: this.mediaKey, index: this.index },
           value: newValue
         })
       },
-      metadatasInfos: function () {
+      metadatasInfos: function() {
         this.metadatas.active = !this.metadatas.active
         this.metadatas.text = this.metadatas.active
           ? this.metadatas.textClose
           : this.metadatas.textOpen
       },
-      destroyValue: function () {
+      destroyValue: function() {
         if (this.isSlide) return // for Slideshows : medias are deleted with slideshow component
         if (!this.isDestroyed) this.deleteMedia()
       },
@@ -706,10 +752,10 @@
         else this.ownersExpandedModules[mod] = !current
       }
     },
-    beforeMount: function () {
+    beforeMount: function() {
       this.init()
     },
-    beforeUpdate: function () {
+    beforeUpdate: function() {
       if (this.hasMediaChanged) {
         this.init()
       }
@@ -762,10 +808,20 @@
     }
   }
   @media (max-width: 1024px) {
-    .media__img { flex-basis: 200px; width: 200px; min-width: 200px; max-width: 200px; }
+    .media__img {
+      flex-basis: 200px;
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+    }
   }
   @media (max-width: 640px) {
-    .media__img { flex-basis: 160px; width: 160px; min-width: 160px; max-width: 160px; }
+    .media__img {
+      flex-basis: 160px;
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+    }
   }
   .media__img {
     flex: 0 0 240px;
@@ -824,12 +880,26 @@
   }
 
   @media (max-width: 1024px) {
-    .media__img { flex-basis: 200px; width: 200px; min-width: 200px; max-width: 200px; }
-    .media__imgFrame { min-height: 170px; }
+    .media__img {
+      flex-basis: 200px;
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+    }
+    .media__imgFrame {
+      min-height: 170px;
+    }
   }
   @media (max-width: 640px) {
-    .media__img { flex-basis: 160px; width: 160px; min-width: 160px; max-width: 160px; }
-    .media__imgFrame { min-height: 140px; }
+    .media__img {
+      flex-basis: 160px;
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+    }
+    .media__imgFrame {
+      min-height: 140px;
+    }
   }
 
   .media__meta {
@@ -922,24 +992,54 @@
   }
 
   .media__actions-dropDown {
-    @media screen and (min-width: 1139px) {
-      display: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    margin-left: auto;
+    position: relative;
+
+    .media__actions-trigger {
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .s--in-editor & {
-      display: block !important;
+    .dropdownActions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 160px;
+      padding: 8px;
+    }
+
+    a,
+    button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      color: $color__text;
+      font: inherit;
+      cursor: pointer;
+      padding: 4px 6px;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .media__actions-trigger {
+      width: 26px;
     }
   }
 
-  .media.media--hoverable {
-    .media__actions {
-      opacity: 0;
-      transition: opacity 250ms ease;
-    }
-
-    :hover .media__actions {
-      opacity: 1;
-    }
+  .media__meta .media__actions-dropDown {
+    grid-column: 2;
+    justify-self: end;
   }
 
   /* Modal with cropper */
@@ -992,7 +1092,9 @@
     transition: background-color 0.15s ease, color 0.15s ease;
   }
 
-  .owners-module { margin-top: 8px; }
+  .owners-module {
+    margin-top: 8px;
+  }
 
   .module-toggle {
     background: transparent;
@@ -1007,15 +1109,22 @@
 
     &:hover {
       border-bottom: 1px dashed $color__text--light;
-      .module-badge{
+      .module-badge {
         background-color: $color__link;
         color: #fff;
         opacity: 0.7;
       }
     }
   }
-  .module-toggle .chev { width: 1em; display: inline-block; text-align: center; }
-  .module-toggle .count { color: $color__text--light; font-size: 12px; }
+  .module-toggle .chev {
+    width: 1em;
+    display: inline-block;
+    text-align: center;
+  }
+  .module-toggle .count {
+    color: $color__text--light;
+    font-size: 12px;
+  }
 
   .ownerslist {
     margin: 6px 0 0 22px;
@@ -1026,12 +1135,23 @@
     aspect-ratio: 1 / 1;
     padding-bottom: 0;
   }
-  @media (max-width: 1024px) { .media__imgFrame { min-height: 200px; } }
-  @media (max-width: 640px)  { .media__imgFrame { min-height: 160px; } }
+  @media (max-width: 1024px) {
+    .media__imgFrame {
+      min-height: 200px;
+    }
+  }
+  @media (max-width: 640px) {
+    .media__imgFrame {
+      min-height: 160px;
+    }
+  }
 
   .media__imgCentered {
     position: absolute;
-    top: 0; right: 0; bottom: 0; left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: flex;
     background-color: $color__lighter;
     background-size: contain;
@@ -1048,12 +1168,12 @@
     object-fit: contain;
   }
 
-  .media__crop-link:hover{
+  .media__crop-link:hover {
     cursor: pointer;
     text-decoration: underline;
   }
 
-  .mediaowner_link{
+  .mediaowner_link {
     color: $color__link;
     text-decoration: none;
 
@@ -1061,7 +1181,6 @@
       text-decoration: underline;
     }
   }
-
 </style>
 
 <style lang="scss">
