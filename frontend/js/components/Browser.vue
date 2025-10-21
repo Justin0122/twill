@@ -209,7 +209,10 @@
       },
       saveAndClose() {
         this.$store.commit(BROWSER.SAVE_ITEMS, this.selectedItems)
-        this.$parent.close()
+        const modalRef = this.$root.$refs.browser || this.$root.$refs.browserWide
+        if (modalRef && typeof modalRef.close === 'function') {
+          modalRef.close()
+        }
       },
       changeBrowserSource(source) {
         this.$store.commit(BROWSER.UPDATE_BROWSER_ENDPOINT, source)
