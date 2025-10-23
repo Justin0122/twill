@@ -26,6 +26,7 @@
         @add="onAdd(add, edit, $event)"
         @update="onUpdate"
       >
+        <paste-gap @paste-here="onPasteHere" />
         <!-- eslint-disable vue/no-v-for-template-key -->
         <template v-for="savedBlock in blocks" :key="savedBlock.id">
           <a17-blockeditor-model
@@ -57,8 +58,9 @@
               @scroll-to="scrollToActive"
             />
           </a17-blockeditor-model>
+          <!-- eslint-enable -->
+          <paste-gap @paste-here="onPasteHere" />
         </template>
-        <!-- eslint-enable -->
       </draggable>
       <a17-spinner v-if="loading" :visible="true"
       >{{ $trans('fields.block-editor.loading', 'Loading') }}&hellip;
@@ -78,6 +80,7 @@
   import { BlockEditorMixin, DraggableMixin } from '@/mixins'
   import ACTIONS from '@/store/actions/index'
   import { PREVIEW } from '@/store/mutations/index'
+  import PasteGap from '@/components/editor/PasteGap.vue'
 
   export default {
     name: 'A17editorPreview',
@@ -97,7 +100,8 @@
       draggable: VueDraggableNext,
       'a17-editor-block-preview': A17EditorBlockPreview,
       'a17-blockeditor-model': A17BlockEditorModel,
-      'a17-spinner': A17Spinner
+      'a17-spinner': A17Spinner,
+      'paste-gap': PasteGap
     },
     data() {
       return {
@@ -119,6 +123,171 @@
       }
     },
     methods: {
+      async onPasteHere() {
+        try {
+          this.loading = true
+
+          const raw = await this._captureNativePasteText() // resolves with pasted text
+          if (!raw) throw new Error('Nothing pasted')
+
+          let payload
+          try {
+            payload = JSON.parse(raw)
+          } catch {
+            throw new Error('Pasted content is not valid JSON')
+          }
+
+          // Basic sanity (optional)
+          if (
+            !payload ||
+            typeof payload !== 'object' ||
+            !payload.type ||
+            !payload.content
+          ) {
+            throw new Error('Pasted JSON is not a valid block payload')
+          }
+
+          // 2) Resolve module + item id (your existing logic)
+          const state = this.$store.state
+          const path = window.location.pathname.replace(/\/+$/, '')
+          const parts = path.split('/').filter(Boolean)
+          const idxAdmin = parts.indexOf('admin')
+
+          const moduleFromUrl =
+            idxAdmin !== -1 && parts[idxAdmin + 1]
+              ? parts[idxAdmin + 1]
+              : undefined
+
+          let idFromUrl
+          if (idxAdmin !== -1) {
+            for (let i = idxAdmin + 2; i < parts.length; i++) {
+              if (/^\d+$/.test(parts[i])) {
+                idFromUrl = parseInt(parts[i], 10)
+                break
+              }
+            }
+          }
+
+          const module =
+            state?.form?.endpoint?.module ||
+            state?.form?.module ||
+            moduleFromUrl
+
+          const itemId =
+            state?.form?.item?.id ??
+            state?.form?.id ??
+            state?.form?.itemId ??
+            idFromUrl
+
+          if (!module || !itemId) {
+            throw new Error('Cannot determine module/item id from URL/store')
+          }
+
+          const base =
+            (window?.Twill?.config?.baseUrl &&
+              window.Twill.config.baseUrl.replace(/\/+$/, '')) ||
+            '/admin'
+
+          const res = await fetch(`${base}/blocks/paste`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN':
+                document
+                  .querySelector('meta[name="csrf-token"]')
+                  ?.getAttribute('content') || ''
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              payload,
+              module,
+              item_id: itemId,
+              editor_name: this.editorName
+            })
+          })
+
+          // after `const res = await fetch(...);`
+          if (!res.ok) {
+            const txt = await res.text().catch(() => '')
+            throw new Error(`Paste failed: ${res.status} ${txt}`)
+          }
+
+          const result = await res.json().catch(() => ({}))
+          const newId = result?.id
+
+          await this.$store.dispatch(ACTIONS.GET_CURRENT)
+
+          await this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, {
+            editorName: this.editorName
+          })
+
+          if (newId != null) {
+            this.$nextTick(() => this.scrollToId(String(newId)))
+          }
+
+          await this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, {
+            editorName: this.editorName
+          })
+
+          if (newId != null) {
+            this.$nextTick(() => this.scrollToId(String(newId)))
+          }
+        } catch (e) {
+          console.error('Paste failed', e)
+        } finally {
+          this.$nextTick(() => {
+            this.loading = false
+          })
+        }
+      },
+      _captureNativePasteText() {
+        return new Promise(resolve => {
+          // Create hidden editable catcher
+          const ed = document.createElement('div')
+          ed.setAttribute('contenteditable', 'true')
+          ed.setAttribute('aria-hidden', 'true')
+          Object.assign(ed.style, {
+            position: 'fixed',
+            opacity: '0',
+            pointerEvents: 'none',
+            width: '1px',
+            height: '1px',
+            left: '0',
+            top: '0',
+            zIndex: '-1',
+            userSelect: 'text'
+          })
+          document.body.appendChild(ed)
+
+          const cleanup = () => {
+            ed.removeEventListener('paste', onPaste)
+            // Delay removal a tick so some browsers don’t drop the paste
+            setTimeout(() => document.body.removeChild(ed), 0)
+          }
+
+          const onPaste = e => {
+            try {
+              e.preventDefault()
+              const text = e.clipboardData?.getData('text/plain') || ''
+              resolve(text)
+            } catch {
+              resolve('')
+            } finally {
+              cleanup()
+            }
+          }
+
+          ed.addEventListener('paste', onPaste)
+          ed.focus()
+
+          // Optional: if user never pastes within N seconds, cancel gracefully
+          setTimeout(() => {
+            cleanup()
+            resolve('')
+          }, 15000)
+        })
+      },
       // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
@@ -240,8 +409,6 @@
       },
 
       scrollToIndex(index) {
-        // Fallback: try to resolve by index via the block ref list
-        // We can map from blocks[index].id -> ref
         const b = this.blocks && this.blocks[index]
         if (b && b.id != null) {
           this.scrollToId(String(b.id))
@@ -328,7 +495,6 @@
           })
         }
         container.addEventListener('scroll', this._onScroll, { passive: true })
-        // fire once to set initial state
         this.emitTopVisible()
       }
     },

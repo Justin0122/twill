@@ -136,23 +136,25 @@ const getBlockPreview = (block, commit, rootState, callback) => {
       blockData.activeLanguage = rootState.language.active.value
     }
 
-    if (isBlockEmpty(blockData)) {
-      commit(BLOCKS.ADD_BLOCK_PREVIEW, {
-        id: block.id,
-        html: ''
-      })
+    if (!blockData.editor_name && block?.name) {
+      blockData.editor_name = block.name
+    }
 
+    commit(
+      'previewPayloads/set',
+      { id: block.id, payload: blockData },
+      { root: true }
+    )
+
+    if (isBlockEmpty(blockData)) {
+      commit(BLOCKS.ADD_BLOCK_PREVIEW, { id: block.id, html: '' })
       if (callback && typeof callback === 'function') callback()
     } else {
       api.getBlockPreview(
         rootState.form.blockPreviewUrl,
         blockData,
         data => {
-          commit(BLOCKS.ADD_BLOCK_PREVIEW, {
-            id: block.id,
-            html: data
-          })
-
+          commit(BLOCKS.ADD_BLOCK_PREVIEW, { id: block.id, html: data })
           if (callback && typeof callback === 'function') callback()
         },
         errorResponse => {}

@@ -68,6 +68,7 @@ if (config('twill.enabled.block-editor')) {
     Route::post('blocks/preview', ['as' => 'blocks.preview', 'uses' => 'BlocksController@preview']);
     Route::get('blocks/sidebar-preview', [\A17\Twill\Http\Controllers\Admin\BlockPreviewController::class, 'show'])
         ->name('blocks.sidebar-preview');
+    Route::post('blocks/paste', ['as' => 'blocks.paste', 'uses' => 'BlocksController@paste']);
 }
 
 if (config('twill.enabled.buckets')) {
