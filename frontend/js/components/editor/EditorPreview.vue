@@ -20,7 +20,8 @@
       <draggable
         class="editorPreview__content"
         ref="previewContent"
-        :value="blocks"
+        :value="blocks && blocks.filter(Boolean)"
+        item-key="id"
         group="editorBlocks"
         :handle="handle"
         @add="onAdd(add, edit, $event)"
@@ -28,7 +29,7 @@
       >
         <paste-gap @paste-here="onPasteHere" />
         <!-- eslint-disable vue/no-v-for-template-key -->
-        <template v-for="savedBlock in blocks" :key="savedBlock.id">
+        <template v-for="savedBlock in (blocks && blocks.filter(Boolean))" :key="savedBlock.id">
           <a17-blockeditor-model
             :block="savedBlock"
             :editor-name="editorName"
@@ -44,10 +45,10 @@
             }"
           >
             <a17-editor-block-preview
-              :ref="block.id"
+              :ref="`block-${String(block.id)}`"
               :block="block"
               :blockIndex="blockIndex"
-              :blocksLength="blocks.length"
+              :blocksLength="(blocks && blocks.filter(Boolean)).length"
               :isBlockActive="isActive"
               :key="savedBlock.id"
               @block:select="_selectBlock(edit, blockIndex)"
@@ -107,7 +108,7 @@
       return {
         loading: false,
         blockSelectIndex: -1,
-        handle: '.editorPreview__dragger' // Drag handle override
+        handle: '.editorPreview__dragger'
       }
     },
     computed: {
@@ -126,33 +127,22 @@
       async onPasteHere() {
         try {
           this.loading = true
-
-          const raw = await this._captureNativePasteText() // resolves with pasted text
+          const raw = await this._captureNativePasteText()
           if (!raw) throw new Error('Nothing pasted')
-
           let payload
           try {
             payload = JSON.parse(raw)
           } catch {
             throw new Error('Pasted content is not valid JSON')
           }
-
-          // Basic sanity (optional)
-          if (
-            !payload ||
-            typeof payload !== 'object' ||
-            !payload.type ||
-            !payload.content
-          ) {
+          if (!payload || typeof payload !== 'object' || !payload.type || !payload.content) {
             throw new Error('Pasted JSON is not a valid block payload')
           }
 
-          // 2) Resolve module + item id (your existing logic)
           const state = this.$store.state
           const path = window.location.pathname.replace(/\/+$/, '')
           const parts = path.split('/').filter(Boolean)
           const idxAdmin = parts.indexOf('admin')
-
           const moduleFromUrl =
             idxAdmin !== -1 && parts[idxAdmin + 1]
               ? parts[idxAdmin + 1]
@@ -207,7 +197,6 @@
             })
           })
 
-          // after `const res = await fetch(...);`
           if (!res.ok) {
             const txt = await res.text().catch(() => '')
             throw new Error(`Paste failed: ${res.status} ${txt}`)
@@ -217,15 +206,6 @@
           const newId = result?.id
 
           await this.$store.dispatch(ACTIONS.GET_CURRENT)
-
-          await this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, {
-            editorName: this.editorName
-          })
-
-          if (newId != null) {
-            this.$nextTick(() => this.scrollToId(String(newId)))
-          }
-
           await this.$store.dispatch(ACTIONS.GET_ALL_PREVIEWS, {
             editorName: this.editorName
           })
@@ -243,7 +223,6 @@
       },
       _captureNativePasteText() {
         return new Promise(resolve => {
-          // Create hidden editable catcher
           const ed = document.createElement('div')
           ed.setAttribute('contenteditable', 'true')
           ed.setAttribute('aria-hidden', 'true')
@@ -262,7 +241,6 @@
 
           const cleanup = () => {
             ed.removeEventListener('paste', onPaste)
-            // Delay removal a tick so some browsers don’t drop the paste
             setTimeout(() => document.body.removeChild(ed), 0)
           }
 
@@ -281,46 +259,33 @@
           ed.addEventListener('paste', onPaste)
           ed.focus()
 
-          // Optional: if user never pastes within N seconds, cancel gracefully
           setTimeout(() => {
             cleanup()
             resolve('')
           }, 15000)
         })
       },
-      // blocks management
       onAdd(add, edit, evt) {
         const { item } = evt
         const block = {}
-
         block.title = item.getAttribute('data-title')
         block.component = item.getAttribute('data-component')
         block.icon = item.getAttribute('data-icon')
-
         const index = Math.max(0, evt.newIndex)
-        this.addAndEditBlock(add, edit, {
-          block,
-          index
-        })
-
+        this.addAndEditBlock(add, edit, { block, index })
         this._selectBlock(null, index)
       },
       onUpdate({ oldIndex, newIndex }) {
-        this.$emit('blocks:move', {
-          oldIndex,
-          newIndex
-        })
+        this.$emit('blocks:move', { oldIndex, newIndex })
       },
       _selectBlock(fn = null, index) {
         if (fn) {
           this.selectBlock(fn, index)
         }
-
         if (this.blockSelectIndex !== index) {
           this.unSubscribe()
           this.blockSelectIndex = index
           this._unSubscribeInternal = this.$store.subscribe(mutation => {
-            // Don't trigger a refresh of the preview every single time, just when necessary
             if (PREVIEW.REFRESH_BLOCK_PREVIEW.includes(mutation.type)) {
               if (PREVIEW.REFRESH_BLOCK_PREVIEW_ALL.includes(mutation.type)) {
                 this.getAllPreviews()
@@ -342,18 +307,14 @@
         this.deleteBlock(fn)
       },
       _cloneBlock(fn, index) {
-        // Clone block and refresh preview
         this.cloneBlock(fn)
         this.getPreview(index + 1)
       },
       unSubscribe() {
         if (!this._unSubscribeInternal) return
-
         this._unSubscribeInternal()
         this._unSubscribeInternal = null
       },
-
-      // Previews management
       getAllPreviews() {
         this.loading = true
         this.$store
@@ -379,8 +340,6 @@
             })
           })
       },
-
-      // UI Management
       scrollToActive(target) {
         this.$refs.previewContent.$el.scrollTop = Math.max(0, target - 20)
       },
@@ -388,26 +347,18 @@
         if (id != null && this.scrollToId(String(id))) return
         if (typeof index === 'number') this.scrollToIndex(index)
       },
-
       scrollToId(id) {
-        // refs created via :ref="block.id"
-        const refEntry = this.$refs[id]
+        const refEntry = this.$refs[`block-${String(id)}`]
         const comp = Array.isArray(refEntry) ? refEntry[0] : refEntry
         if (!comp || !comp.$el || !this.$refs.previewContent) return false
-
-        const container =
-          this.$refs.previewContent.$el || this.$refs.previewContent
+        const container = this.$refs.previewContent.$el || this.$refs.previewContent
         const targetEl = comp.$el
-
         const containerBox = container.getBoundingClientRect()
         const targetBox = targetEl.getBoundingClientRect()
-        // position inside scroll container:
         const offsetTop = targetBox.top - containerBox.top + container.scrollTop
-
         this.scrollToActive(Math.max(0, offsetTop - 20))
         return true
       },
-
       scrollToIndex(index) {
         const b = this.blocks && this.blocks[index]
         if (b && b.id != null) {
@@ -428,86 +379,16 @@
       },
       dispose() {
         window.removeEventListener('resize', this._resize)
-      },
-      emitTopVisible() {
-        const container =
-          this.$refs.previewContent && this.$refs.previewContent.$el
-            ? this.$refs.previewContent.$el
-            : this.$refs.previewContent
-        if (!container || !Array.isArray(this.blocks) || !this.blocks.length)
-          return
-
-        const containerBox = container.getBoundingClientRect()
-        const scrollTop = container.scrollTop
-        const threshold = 40
-
-        let topIdx = -1
-        let topOffset = -Infinity
-        let nextIdx = -1
-        let nextOffset = Infinity
-
-        for (let i = 0; i < this.blocks.length; i++) {
-          const b = this.blocks[i]
-          const refEntry = this.$refs[String(b.id)]
-          const comp = Array.isArray(refEntry) ? refEntry[0] : refEntry
-          if (!comp || !comp.$el) continue
-          const box = comp.$el.getBoundingClientRect()
-          const offset = box.top - containerBox.top + scrollTop
-
-          if (offset <= scrollTop + threshold) {
-            if (offset > topOffset) {
-              topOffset = offset
-              topIdx = i
-            }
-          } else {
-            if (offset < nextOffset) {
-              nextOffset = offset
-              nextIdx = i
-            }
-          }
-        }
-        const bestIndex = topIdx !== -1 ? topIdx : nextIdx !== -1 ? nextIdx : 0
-        const topBlock = this.blocks[bestIndex]
-        this.$emit('visible:top', {
-          index: bestIndex,
-          id: topBlock && topBlock.id
-        })
       }
     },
     mounted() {
       this.init()
-      this.emitTopVisible()
       this.$nextTick(() => {
         this.getAllPreviews()
       })
-      // Scroll listener (rAF throttled)
-      const container =
-        this.$refs.previewContent && this.$refs.previewContent.$el
-          ? this.$refs.previewContent.$el
-          : this.$refs.previewContent
-      if (container) {
-        this._scrollRAF = null
-        this._onScroll = () => {
-          if (this._scrollRAF) return
-          this._scrollRAF = requestAnimationFrame(() => {
-            this._scrollRAF = null
-            this.emitTopVisible()
-          })
-        }
-        container.addEventListener('scroll', this._onScroll, { passive: true })
-        this.emitTopVisible()
-      }
     },
     beforeUnmount() {
       this.dispose()
-      const container =
-        this.$refs.previewContent && this.$refs.previewContent.$el
-          ? this.$refs.previewContent.$el
-          : this.$refs.previewContent
-      if (container && this._onScroll) {
-        container.removeEventListener('scroll', this._onScroll)
-      }
-      if (this._scrollRAF) cancelAnimationFrame(this._scrollRAF)
     },
     watch: {
       editorName() {
@@ -518,12 +399,6 @@
         if (active) return
         this.unSubscribe()
         this.blockSelectIndex = -1
-      },
-      blocks: {
-        handler() {
-          this.$nextTick(() => this.emitTopVisible())
-        },
-        deep: true
       }
     }
   }

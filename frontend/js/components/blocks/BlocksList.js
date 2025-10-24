@@ -17,16 +17,16 @@ export default {
       return this.getAvailableBlocks(editorName)
     },
     savedBlocks() {
-      return this.blocks(this.editorName)
+      const list = this.blocks(this.editorName)
+      return Array.isArray(list) ? list.filter(Boolean) : []
     },
     allSavedBlocks() {
-      return (
-        this.used &&
-        Object.keys(this.used).reduce(
-          (acc, editorName) => acc.concat(this.used[editorName]),
-          []
-        )
-      )
+      if (!this.used) return []
+      return Object.keys(this.used).reduce((acc, editorName) => {
+        const arr = this.used[editorName]
+        if (Array.isArray(arr)) acc.push(...arr.filter(Boolean))
+        return acc
+      }, [])
     },
     hasBlockActive() {
       return Object.keys(this.activeBlock).length > 0
