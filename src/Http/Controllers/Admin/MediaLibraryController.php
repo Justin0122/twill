@@ -293,14 +293,18 @@ class MediaLibraryController extends ModuleController implements SignUploadListe
     {
         $id = $this->request->input('id');
 
-        $this->repository->update(
-            $id,
-            array_merge([
-                'alt_text' => $this->request->get('alt_text', null),
-                'caption'  => $this->request->get('caption', null),
-                'tags'     => $this->request->get('tags', null),
-            ], $this->getExtraMetadatas()->toArray())
-        );
+        $payload = array_merge([
+            'alt_text' => $this->request->get('alt_text', null),
+            'caption'  => $this->request->get('caption', null),
+            'tags'     => $this->request->get('tags', null),
+        ], $this->getExtraMetadatas()->toArray());
+
+        $newName = trim((string) $this->request->get('name', ''));
+        if ($newName !== '') {
+            $payload['filename'] = $newName;
+        }
+
+        $this->repository->update($id, $payload);
 
         $items = $this->getIndexItems(['id' => $id]);
 

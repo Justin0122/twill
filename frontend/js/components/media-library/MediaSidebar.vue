@@ -57,7 +57,21 @@
             class="mediasidebar__img"
             :alt="firstMedia.original"
           />
-          <p class="mediasidebar__name">{{ firstMedia.name }}</p>
+
+          <a17-textfield
+            :label="$trans('media-library.sidebar.file-name', 'File name')"
+            name="name-visible"
+            :initialValue="firstMedia.name || ''"
+            size="small"
+            @input="val => { firstMedia.name = val }"
+            @change="val => { firstMedia.name = val }"
+            @focus="focus"
+            @blur="blur"
+          />
+          <teleport v-if="$refs.form" :to="$refs.form">
+            <input type="hidden" name="name" :value="firstMedia?.name || ''">
+          </teleport>
+
           <ul class="mediasidebar__metadatas">
             <li class="f--small" v-if="firstMedia.size">
               File size: {{ uppercase(firstMedia.size) }}
@@ -69,7 +83,9 @@
               {{ $trans('media-library.sidebar.dimensions', 'Dimensions') }}:
               {{ firstMedia.width }} &times; {{ firstMedia.height }}
             </li>
-            <li class="f--small" v-if="firstMedia.uploadedDate">{{ $trans('media-library.sidebar.uploaded-at', 'Uploaded at') }}: {{ firstMedia.uploadedDate }}</li>
+            <li class="f--small" v-if="firstMedia.uploadedDate">
+              {{ $trans('media-library.sidebar.uploaded-at', 'Uploaded at') }}: {{ firstMedia.uploadedDate }}
+            </li>
           </ul>
         </template>
         <template v-if="shouldShowRefs">
@@ -870,7 +886,6 @@
           [];
         return Array.isArray(owners) ? owners : [];
       },
-      // tiny helper if you want to avoid `.length` in templates
       ownersCount(m) {
         return this.ownersOf(m).length;
       },
@@ -902,6 +917,10 @@
         const data = this.getFormData(form)
 
         if (this.hasSingleMedia) {
+          if (Object.prototype.hasOwnProperty.call(data, 'name')) {
+            this.firstMedia.name = data.name
+          }
+
           const meta = this.ensureDefaultMeta(this.firstMedia)
 
           if (Object.prototype.hasOwnProperty.call(data, 'alt_text')) {

@@ -311,13 +311,27 @@ class FileLibraryController extends ModuleController implements SignUploadListen
      */
     public function singleUpdate()
     {
-        $this->repository->update(
-            $this->request->input('id'),
-            $this->request->only('tags')
-        );
+        $id = (int) $this->request->input('id');
 
-        return $this->responseFactory->json([], 200);
+        $payload = [
+            'tags' => $this->request->get('tags', null),
+        ];
+        $newName = trim((string) $this->request->get('name', ''));
+        if ($newName !== '') {
+            $payload['filename'] = function_exists('sanitizeFilename')
+                ? sanitizeFilename($newName)
+                : $newName;
+        }
+
+        $this->repository->update($id, $payload);
+        $items = $this->getIndexItems(['id' => $id]);
+
+        return $this->responseFactory->json([
+            'item' => optional($items->first())->toCmsArray(),
+            'tags' => $this->repository->getTagsList(),
+        ], 200);
     }
+
 
     /**
      * @return JsonResponse
