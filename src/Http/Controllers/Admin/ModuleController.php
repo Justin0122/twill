@@ -1833,7 +1833,7 @@ abstract class ModuleController extends Controller
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection|LengthAwarePaginator
      */
     protected function getIndexItems(array $scopes = [], bool $forcePagination = false)
     {

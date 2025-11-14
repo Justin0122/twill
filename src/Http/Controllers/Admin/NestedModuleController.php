@@ -41,19 +41,4 @@ abstract class NestedModuleController extends ModuleController
             'children' => $this->getIndexTableData($item->children),
         ] : [];
     }
-
-    protected function getBrowserItems($scopes = [])
-    {
-        if ($this->showOnlyParentItemsInBrowsers) {
-            return $this->getIndexItems($scopes, true);
-        }
-
-        return $this->repository->get(
-            $this->indexWith,
-            $scopes,
-            $this->orderScope(),
-            request('offset') ?? $this->perPage ?? 50,
-            true
-        );
-    }
 }
