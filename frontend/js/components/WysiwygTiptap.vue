@@ -522,7 +522,6 @@
   import TableHeader from '@tiptap/extension-table-header'
   import Subscript from '@tiptap/extension-subscript'
   import Superscript from '@tiptap/extension-superscript'
-  import Hardbreak from '@tiptap/extension-hard-break'
   import { mapState } from 'vuex'
 
   import StandaloneBrowser from '@/components/StandaloneBrowser.vue'
@@ -935,10 +934,6 @@
             extensions.push(Superscript)
             break;
           }
-          case 'hardbreak': {
-            extensions.push(Hardbreak)
-            break;
-          }
           case 'table': {
             extensions.push(
               Table.configure({
@@ -960,8 +955,7 @@
           listItem: this.toolbar.ordered || this.toolbar.bullet || false,
           code: this.toolbar.code ?? false,
           codeBlock: this.toolbar.codeBlock ?? false,
-          horizontalRule: this.toolbar.hr ?? false,
-          hardBreak: this.toolbar.hardBreak ?? false
+          horizontalRule: this.toolbar.hr ?? false
         })
       )
 
