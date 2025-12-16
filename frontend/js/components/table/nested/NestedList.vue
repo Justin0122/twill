@@ -107,6 +107,11 @@
         return {
           ...this.dragOptions,
           fallbackTolerance: 5,
+          forceFallback: true,
+          fallbackOnBody: true,
+          scrollSensitivity: 60,
+          scrollSpeed: 20,
+
           group: {
             name: this.name
           }
@@ -137,7 +142,6 @@
 <style lang="scss" scoped>
   .nested-datatable__item {
     border: 1px solid #F2F2F2;
-    // padding:10px 0 0 10px;
     margin-top: -1px;
 
     .nested-datatable__item {
@@ -159,7 +163,6 @@
   }
 
   .nested__dropArea {
-    // border:1px solid grey;
     padding: 15px 0px 15px 0px;
 
     * {
