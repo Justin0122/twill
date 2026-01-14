@@ -259,25 +259,37 @@ class BlockRenderer
         $modelType = $model->getMorphClass();
         $pageId = $model->getKey();
 
+        $useCache = (bool) config('twill.blocks.renderer_cache', false);
+        $ttl      = (int) config('twill.blocks.renderer_cache_ttl', 3600);
+
         $cacheKey = "block_renderer_{$modelType}_{$pageId}_{$editorName}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($model, $editorName, $blockRepository, $modelType, $pageId) {
+        $build = function () use ($model, $editorName, $blockRepository, $modelType, $pageId): self {
             $blockIds = $model->blocks
                 ->where('editor_name', $editorName)
                 ->where('parent_id', null)
                 ->pluck('id')
                 ->toArray();
 
-            $instance = new self([], false, $blockRepository);
+            $instance = new self([], false);
 
             foreach ($blockIds as $blockId) {
                 $cachedBlock = $blockRepository->getBlock($modelType, $pageId, $blockId);
-                $data = self::getNestedBlocksForBlock($cachedBlock, $model, $editorName, $blockRepository);
+                $data = self::getNestedBlocksForBlock(
+                    $cachedBlock,
+                    $model,
+                    $editorName,
+                    $blockRepository
+                );
                 $instance->rootBlocks[] = $data;
             }
 
             return $instance;
-        });
+        };
+
+        return $useCache
+            ? Cache::remember($cacheKey, $ttl, $build)
+            : $build();
     }
 
     public static function getNestedBlocksForBlock(
