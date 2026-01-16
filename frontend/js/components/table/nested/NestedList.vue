@@ -135,16 +135,45 @@
             name: this.name
           }
         }
+      },
+      collapsedStorageKey() {
+        return `a17:nested:collapsed:${this.name}:${this.parentId}:${this.depth}`
       }
     },
+
+    mounted() {
+      this.restoreCollapsedState()
+    },
+
     methods: {
       haveChildren(children) {
         return {
           'nested-datatable__item--empty': (children || []).length === 0 && this.depth < this.maxDepth
         }
       },
+
+      restoreCollapsedState() {
+        try {
+          const raw = localStorage.getItem(this.collapsedStorageKey)
+          this.collapsedRows = raw ? JSON.parse(raw) : {}
+        } catch (e) {
+          this.collapsedRows = {}
+        }
+      },
+      persistCollapsedState() {
+        try {
+          localStorage.setItem(this.collapsedStorageKey, JSON.stringify(this.collapsedRows || {}))
+        } catch (e) {
+
+        }
+      },
+
       toggleCollapse(row) {
-        this.collapsedRows[row.id] = !this.isCollapsed(row)
+        this.collapsedRows = {
+          ...this.collapsedRows,
+          [row.id]: !this.isCollapsed(row)
+        }
+        this.persistCollapsedState()
       },
       isCollapsed(row) {
         return !!this.collapsedRows[row.id]
