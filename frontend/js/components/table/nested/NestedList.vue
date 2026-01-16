@@ -9,7 +9,10 @@
     <li
       class="nested-datatable__item"
       v-for="(row, index) in rows"
-      :class="haveChildren(row.children)"
+      :class="[
+        haveChildren(row.children),
+        { 'nested-datatable__item--has-children': row.children && row.children.length }
+      ]"
       :key="depth + '-' + row.id"
     >
       <div
@@ -19,11 +22,26 @@
       >
         <button
           v-if="row.children && row.children.length"
-          class="collapse-indicator"
+          class="collapse-toggle"
+          :class="{ 'is-collapsed': isCollapsed(row) }"
+          :aria-expanded="!isCollapsed(row)"
+          aria-label="Toggle children"
           @click.stop="toggleCollapse(row)"
         >
-          {{ isCollapsed(row) ? '+' : '-' }}
+          <span class="collapse-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" focusable="false">
+              <path
+                d="M7.5 4.5 L13 10 L7.5 15.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
         </button>
+
         <a17-nested-item
           :index="index"
           :row="row"
@@ -31,6 +49,7 @@
           @click.stop
         />
       </div>
+
       <a17-nested-list
         v-if="row.children && depth < maxDepth && !isCollapsed(row)"
         :maxDepth="maxDepth"
@@ -125,7 +144,7 @@
         }
       },
       toggleCollapse(row) {
-        this.collapsedRows[row.id] = !this.isCollapsed(row);
+        this.collapsedRows[row.id] = !this.isCollapsed(row)
       },
       isCollapsed(row) {
         return !!this.collapsedRows[row.id]
@@ -244,14 +263,83 @@
 
     &.has-children {
       cursor: pointer;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
     }
   }
 
-  .collapse-indicator {
+  .nested__dropArea--depth > li.nested-datatable__item--has-children {
+    position: relative;
+  }
+
+  .nested__dropArea--depth > li.nested-datatable__item--has-children::before {
+    content: '';
     position: absolute;
-    left: -20px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
+
+    left: 20px;
+
+    width: 2px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+  }
+
+  .collapse-toggle {
+    background-color: #eb8004;
+    position: absolute;
+    left: -28px;
+    top: 0;
+    bottom: 0;
+    transition: background-color 200ms ease-in-out;
+
+    width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    border: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid rgba(0, 0, 0, 0.25);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+  }
+
+  .collapse-toggle.is-collapsed {
+    background-color: #009fda;
+  }
+
+  .collapse-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+    border-radius: 8px;
+
+    transition: transform 120ms ease, color 120ms ease, background 120ms ease;
+  }
+
+  .collapse-toggle:not(.is-collapsed) .collapse-icon {
+    transform: rotate(90deg);
+  }
+
+  .nested-item-header.has-children:hover .collapse-icon {
+    color: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .nested__dropArea--depth > li.nested-datatable__item--has-children:hover::before {
+    background: rgba(0, 0, 0, 0.18);
   }
 
   .nested-item {
