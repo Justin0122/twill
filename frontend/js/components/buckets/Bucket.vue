@@ -40,7 +40,7 @@
         <div class="buckets__container col--even">
           <a17-fieldset v-for="(bucket, index) in buckets" :class="'buckets__fieldset buckets__fieldset--'+(index+1)"
                         :key="bucket.id" :name="'bucket_'+bucket.id" :activeToggle="false">
-            <template v-slot:header>
+            <template #header>
               <h3 class="buckets__fieldset__header">
                 <span><span v-if="buckets.length > 1"
                             class="buckets__number">{{ (index + 1) }}</span> {{ bucket.name }}</span> <span

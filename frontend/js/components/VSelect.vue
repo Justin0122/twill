@@ -24,7 +24,7 @@
               @update:modelValue="updateValue"
               @search="getOptions"
           >
-            <template v-slot:no-options>
+            <template #no-options>
               <span>{{ emptyText }}</span>
             </template>
           </v-select>

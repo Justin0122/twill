@@ -8,7 +8,7 @@
       @click="$refs.rowSetupDropdown.toggle()">
       <span v-svg symbol="more-dots"></span>
     </a17-button>
-    <template v-slot:dropdown__content>
+    <template #dropdown__content>
       <div>
         <a v-if="row.hasOwnProperty('permalink')"
            :href="row['permalink']"

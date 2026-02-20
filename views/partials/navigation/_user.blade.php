@@ -20,7 +20,7 @@
                 </svg>
             </span>
         </a>
-        <template v-slot:dropdown__content>
+        <template #dropdown__content>
             <div>
                 @if ($currentUser->can('access-user-management'))
                     <a href="{{ route($user_management_route) }}">{{ twillTrans('twill::lang.nav.cms-users') }}</a>

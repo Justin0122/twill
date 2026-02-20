@@ -18,7 +18,7 @@
     <td class="activityCell activityCell--icon">
       <a17-dropdown ref="activityRowSetupDropdown" position="bottom-right">
         <a17-button variant="icon" @click="$refs.activityRowSetupDropdown.toggle()"><span v-svg symbol="more-dots"></span></a17-button>
-        <template v-slot:dropdown__content>
+        <template #dropdown__content>
           <div>
             <a v-if="row.hasOwnProperty('permalink')" :href="row['permalink']" target="_blank">{{ $trans('dashboard.activity-row.view-permalink', 'View Permalink') }}</a>
             <a v-if="row.hasOwnProperty('edit')" :href="row['edit']">{{ $trans('dashboard.activity-row.edit', 'Edit') }}</a>

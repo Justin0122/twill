@@ -10,7 +10,7 @@
               {{ $trans('dashboard.create-new', 'Create new') }}
               <span class="shortcutCreator__trigger"><span v-svg symbol="dropdown_module"></span></span>
             </a17-button>
-            <template v-slot:dropdown__content>
+            <template #dropdown__content>
               <div>
                 <ul>
                   <template v-for="(entity, index) in entities">

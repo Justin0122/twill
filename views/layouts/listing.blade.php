@@ -37,14 +37,14 @@
                 <a17-filter v-on:submit="filterListing" v-bind:closed="hasBulkIds"
                             initial-search-value="{{ $filters['search'] ?? '' }}" :clear-option="true"
                             v-on:clear="clearFiltersAndReloadDatas">
-                    <template v-slot:navigation>
+                    <template #navigation>
                         <a17-table-filters></a17-table-filters>
                     </template>
 
 
                     @php /** @var \A17\Twill\Services\Listings\Filters\BasicFilter $filter */ @endphp
                     @if (count($hiddenFilters) > 0)
-                        <template v-slot:hidden-filters>
+                        <template #hidden-filters>
                             <div>
                                 @foreach($hiddenFilters as $filter)
                                     @php
@@ -76,7 +76,7 @@
                         </template>
                     @else
                         @hasSection('hiddenFilters')
-                            <template v-slot:hidden-filters>
+                            <template #hidden-filters>
                                 <div>
                                     @yield('hiddenFilters')
                                 </div>
@@ -85,7 +85,7 @@
                     @endif
 
                     @if($create)
-                        <template v-slot:additional-actions>
+                        <template #additional-actions>
                             <div>
                                 <a17-button
                                     variant="validate"
@@ -104,7 +104,7 @@
                             </div>
                         </template>
                     @elseif(isset($filterLinks) && count($filterLinks))
-                        <template v-slot:additional-actions>
+                        <template #additional-actions>
                             <div>
                                 @foreach($filterLinks as $link)
                                     <a17-button el="a" href="{{ $link['url'] ?? '#' }}"
@@ -117,7 +117,7 @@
                     @endif
 
                     @if(isset($additionalTableActions) && count($additionalTableActions))
-                        <template v-slot:additional-actions>
+                        <template #additional-actions>
                             <div>
                                 @foreach($additionalTableActions as $additionalTableAction)
                                     <a17-button

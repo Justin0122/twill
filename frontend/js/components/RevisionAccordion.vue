@@ -1,9 +1,9 @@
 <template>
   <a17-accordion :open="open" @toggleVisibility="notifyOpen">
-    <template v-slot:accordion__title>
+    <template #accordion__title>
       <span><slot></slot> <span class="f--small f--note">({{ revisions.length }})</span></span>
     </template>
-    <template v-slot:accordion__value>
+    <template #accordion__value>
       <div>{{ $trans('publisher.last-edit') }} <timeago :auto-update="1" :datetime="new Date(revisions[0].datetime)"></timeago></div>
     </template>
     <div class="revaccordion__scroller">

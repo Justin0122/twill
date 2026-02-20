@@ -9,7 +9,7 @@
           :maxHeight="270">
             <span class="editorSidebar__counter f--tiny"
                   @click="toggleBlockDropdown">{{ blockIndex + 1 }}</span>
-          <template v-slot:dropdown__content>
+          <template #dropdown__content>
             <div>
               <button type="button"
                       v-for="n in blocksLength"

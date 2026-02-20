@@ -14,7 +14,7 @@
           </div>
           <div class="browser__search">
             <a17-filter @submit="submitFilter">
-              <template v-slot:additional-actions>
+              <template #additional-actions>
                 <div v-if="browserNote">
                   <span class="browser__note f--small">
                     {{ browserNote }}

@@ -30,7 +30,7 @@
                 <span v-svg
                       symbol="drag"></span>
           </button>
-          <template v-slot:dropdown__content>
+          <template #dropdown__content>
             <div>
               <button type="button"
                       v-for="n in blocksLength"

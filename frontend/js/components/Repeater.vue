@@ -11,13 +11,13 @@
               :size="blockSize"
               :opened="opened"
           >
-            <template v-slot:block-actions>
+            <template #block-actions>
               <a17-button variant="icon" data-action @click="duplicateBlock(index)"
                           v-if="hasRemainingBlocks">
                 <span v-svg symbol="add"></span>
               </a17-button>
             </template>
-            <template v-slot:dropdown-action>
+            <template #dropdown-action>
               <div>
                 <button type="button" @click="collapseAllBlocks()" v-if="opened">
                   {{ $trans('fields.block-editor.collapse-all', 'Collapse all') }}

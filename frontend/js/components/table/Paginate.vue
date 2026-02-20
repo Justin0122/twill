@@ -5,7 +5,7 @@
         <template v-if="availableOffsets.length > 1">
           <a17-dropdown ref="paginateDropdown" position="bottom-right">
             <button @click="$refs.paginateDropdown.toggle()" class="paginate__button">{{ newOffset }}</button>
-            <template v-slot:dropdown__content>
+            <template #dropdown__content>
               <div>
                 <button type="button" v-for="availableOffset in availableOffsets" :key="availableOffset" :class="{ 'dropdown__active' : availableOffset === newOffset }" @click="changeOffset(availableOffset)">{{ availableOffset }}</button>
               </div>

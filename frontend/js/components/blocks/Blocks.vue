@@ -22,7 +22,7 @@
                               :with-actions="!isSettings"
                               @expand="setOpened"
                               v-if="availableBlocks.length">
-                <template v-slot:dropdown-add>
+                <template #dropdown-add>
                   <!-- eslint-disable vue/no-v-for-template-key -->
                   <template v-for="availableBlock in availableBlocks"
                             :key="availableBlock.component">
@@ -41,7 +41,7 @@
                   </template>
                   <!-- eslint-enable -->
                 </template>
-                <template v-slot:dropdown-action>
+                <template #dropdown-action>
                   <div>
                     <button type="button"
                             v-if="opened"
@@ -72,7 +72,7 @@
                     </button>
                   </div>
                 </template>
-                <template v-slot:dropdown-numbers>
+                <template #dropdown-numbers>
                   <button type="button"
                           v-for="n in savedBlocks.length"
                           @click="move(n - 1)"
@@ -98,7 +98,7 @@
                       @click="$refs.blocksDropdown.toggle()">{{ trigger }}
           </a17-button>
 
-          <template v-slot:dropdown__content>
+          <template #dropdown__content>
             <div>
               <!-- eslint-disable vue/no-v-for-template-key -->
               <template v-for="availableBlock in availableBlocks"

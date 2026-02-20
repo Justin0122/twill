@@ -11,7 +11,7 @@
                             position="bottom-right" :title="$trans('listing.columns.show')" :clickable="true" :offset="-10">
                 <button class="datatable__setupButton" @click="$refs.setupDropdown.toggle()">
                   <span v-svg symbol="preferences"></span></button>
-                <template v-slot:dropdown__content>
+                <template #dropdown__content>
                   <div>
                     <a17-checkboxgroup name="visibleColumns" :options="checkboxesColumns" :selected="visibleColumnsNames"
                                        @change="updateActiveColumns" :min="2"/>

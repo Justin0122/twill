@@ -18,7 +18,7 @@
     in-store="value"
 >
     @if($addNew)
-        <template v-slot:addModal>
+        <template #addModal>
             <div>@partialView(($formModuleName ?? null), 'create', ['renderForModal' => true, 'fieldsInModal' => true])</div>
         </template>
     @endif

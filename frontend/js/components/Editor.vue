@@ -5,12 +5,12 @@
     :customClasses="htmlEditorClass"
     @close="close"
   >
-    <template v-slot:overlay__header v-if="editorNames.length > 1">
+    <template #overlay__header v-if="editorNames.length > 1">
       <a17-dropdown ref="editorDropdown" position="bottom-left" :maxWidth="400" :maxHeight="300">
             <a17-button class="editorDropdown__trigger" @click="$refs.editorDropdown.toggle()">
               {{ currentEditorLabel }} <span v-svg symbol="dropdown_module"></span>
             </a17-button>
-            <template v-slot:dropdown__content>
+            <template #dropdown__content>
               <div>
                 <button type="button" class="editorDropdown" @click="updateEditorName(editorName.value)" v-for="editorName in editorNames" :key="editorName.value">
                   {{ editorName.label }}

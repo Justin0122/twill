@@ -43,7 +43,7 @@
           <a17-dropdown ref="dropDown" position="right">
             <a17-button size="icon" variant="icon" @click="$refs.dropDown.toggle()">
               <span v-svg symbol="more-dots"></span></a17-button>
-            <template v-slot:dropdown__content>
+            <template #dropdown__content>
               <div>
                 <a :href="media.original" download><span v-svg symbol="download"></span>{{ $trans('fields.medias.download') }}</a>
                 <button type="button" @click="openCropMedia" v-if="activeCrop"><span v-svg symbol="crop"></span>{{ $trans('fields.medias.crop') }}

@@ -6,7 +6,7 @@
         <button class="multibutton__trigger" type="button" @click="$refs.submitDown.toggle()" v-if="hasValidOptions && otherOptions.length">
           <span v-svg symbol="dropdown_module"></span>
         </button>
-        <template v-slot:dropdown__content v-if="otherOptions.length">
+        <template #dropdown__content v-if="otherOptions.length">
           <div>
             <ul>
               <li v-for="option in otherOptions" :key="option.name">

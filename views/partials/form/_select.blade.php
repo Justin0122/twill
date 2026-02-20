@@ -15,7 +15,7 @@
         in-store="value"
     >
         @if($addNew)
-            <template v-slot:addModal>
+            <template #addModal>
                 @php
                     unset($note, $placeholder, $emptyText, $default, $required, $inModal, $addNew, $options);
                 @endphp
@@ -39,7 +39,7 @@
         in-store="value"
     >
         @if($addNew)
-            <template v-slot:addModal>
+            <template #addModal>
                 @php
                     unset($note, $placeholder, $emptyText, $default, $required, $inModal, $addNew, $options);
                 @endphp
@@ -68,7 +68,7 @@
         in-store="inputValue"
     >
         @if($addNew)
-            <template v-slot:addModal>
+            <template #addModal>
                 @php
                     unset($note, $placeholder, $emptyText, $default, $required, $inModal, $addNew, $options);
                 @endphp

@@ -55,7 +55,7 @@
                 }
             @endphp
             <a17-sticky-nav data-sticky-target="navbar" :items="{{ json_encode($additionalFieldsets) }}">
-                <template v-slot:title>
+                <template #title>
                     <a17-title-editor name="{{ $titleFormKey }}" thumbnail="{{ $titleThumbnail ?? '' }}"
                                       :editable-title="{{ json_encode($editableTitle ?? true) }}"
                                       :control-languages-publication="{{ json_encode($controlLanguagesPublication) }}"
@@ -65,12 +65,12 @@
                                       localized-custom-permalink="{{ json_encode($localizedCustomPermalink ?? '') }}"
                                       @if($createWithoutModal ?? false) :show-modal="true"
                                       @endif @if(isset($editModalTitle)) modal-title="{{ $editModalTitle }}" @endif>
-                        <template v-slot:modal-form>
+                        <template #modal-form>
                             @partialView(($moduleName ?? null), 'create')
                         </template>
                     </a17-title-editor>
                 </template>
-                <template v-slot:actions>
+                <template #actions>
                     <div>
                         <a17-langswitcher
                             :all-published="{{ json_encode(!$controlLanguagesPublication) }}"></a17-langswitcher>

@@ -9,7 +9,7 @@
             <div class="statFeed__dropdown">
               <a17-dropdown ref="statPeriodDropdown" position="bottom-right">
                 <a17-button variant="ghost" @click="$refs.statPeriodDropdown.toggle()">{{ selectedPeriodLabel }} <span v-svg class="statFeed__dropdownIcon" symbol="dropdown_module"></span></a17-button>
-                <template v-slot:dropdown__content>
+                <template #dropdown__content>
                   <div>
                     <template v-for="(period, index) in periods">
                       <button type="button"

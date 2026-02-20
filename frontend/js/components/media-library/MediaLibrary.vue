@@ -4,7 +4,7 @@
       <div class="medialibrary__frame">
         <div class="medialibrary__header" ref="form">
           <a17-filter @submit="submitFilter" :clearOption="true" @clear="clearFilters">
-            <template v-slot:navigation>
+            <template #navigation>
               <ul class="secondarynav secondarynav--desktop" v-if="types.length">
                 <li class="secondarynav__item" v-for="navType in types" :key="navType.value"
                     :class="{ 's--on': type === navType.value, 's--disabled' : type !== navType.value && strict }">
@@ -19,7 +19,7 @@
                               @click="$refs.secondaryNavDropdown.toggle()" v-if="selectedType">
                     <span class="secondarynav__link">{{ selectedType.text }}</span><span class="secondarynav__number">{{ selectedType.total }}</span>
                   </a17-button>
-                  <template v-slot:dropdown__content>
+                  <template #dropdown__content>
                     <div>
                       <ul>
                         <li v-for="navType in types" :key="navType.value" class="secondarynav__item">
@@ -33,7 +33,7 @@
               </div>
             </template>
 
-            <template v-slot:hidden-filters>
+            <template #hidden-filters>
               <div>
                 <a17-vselect class="medialibrary__filter-item" ref="filter" name="tag" :options="tags"
                              :placeholder="$trans('media-library.filter-select-label', 'Filter by tag')" :searchable="true" maxHeight="175px"/>

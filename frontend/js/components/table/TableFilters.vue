@@ -20,7 +20,7 @@
           <span class="secondarynav__link">{{ selectedNav.name }}</span><span
             class="secondarynav__number">({{ selectedNav.number }})</span>
         </a17-button>
-        <template v-slot:dropdown__content>
+        <template #dropdown__content>
           <div>
             <ul>
               <li v-for="(navItem, index) in navFilters" class="secondarynav__item"

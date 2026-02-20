@@ -9,7 +9,7 @@
           <a17-dropdown ref="bulkActionsDown" position="bottom-left" width="full" :offset="0">
             <a17-button variant="dropdown" size="small" @click="$refs.bulkActionsDown.toggle()">{{ $trans('listing.bulk-actions') }}</a17-button>
 
-            <template v-slot:dropdown__content>
+            <template #dropdown__content>
               <div>
                 <ul>
                   <li>
