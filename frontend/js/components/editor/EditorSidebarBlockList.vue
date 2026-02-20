@@ -3,8 +3,9 @@
     <!-- eslint-disable vue/no-mutating-props -->
     <draggable class="editorSidebar__blocks"
                :class="editorSidebarClasses"
-               v-model="blocks"
-               v-bind="{
+               :modelValue="blocks"
+               @update:modelValue="blocks = $event"
+               :options="{
                     group: {
                       name: 'editorBlocks',
                       pull: 'clone',
@@ -29,7 +30,7 @@
 </template>
 
 <script>
-  import draggable from 'vuedraggable'
+  import { VueDraggableNext } from 'vue-draggable-next'
 
   import { DraggableMixin } from '@/mixins'
 
@@ -47,7 +48,7 @@
     },
     mixins: [DraggableMixin],
     components: {
-      draggable
+      draggable: VueDraggableNext
     },
     computed: {
       editorSidebarClasses () {
