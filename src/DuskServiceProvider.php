@@ -94,7 +94,7 @@ class DuskServiceProvider extends ServiceProvider
 
             $this->press('Create');
 
-            $this->waitForReload();
+            $this->waitFor('.fieldset__content');
         });
 
         Browser::macro('assertVselectHasOptions', function (string $wrapperClass, array $optionLabels) {
