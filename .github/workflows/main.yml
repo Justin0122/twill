@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Checking for prtodo's.
         run: |
@@ -89,10 +89,10 @@ jobs:
       - name: Set timezone?
         uses: szenius/set-timezone@v1.0
         with:
-          timezoneLinux: "Europe/Paris"
+          timezoneLinux: 'Europe/Paris'
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -125,7 +125,7 @@ jobs:
           composer install --prefer-dist --no-interaction --no-plugins
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
 
@@ -152,7 +152,7 @@ jobs:
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v4
         with:
           files: .github/clover.xml
 
