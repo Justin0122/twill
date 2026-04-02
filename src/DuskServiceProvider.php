@@ -169,7 +169,7 @@ class DuskServiceProvider extends ServiceProvider
                     $mediaManager->pause(150);
                     $mediaManager->waitFor('.mediagrid__item');
                     $mediaManager->click('.mediagrid__item:nth-of-type(1)');
-                    $mediaManager->waitFor('.medialibrary__footer');
+                    $mediaManager->waitFor('.medialibrary__footer', 10);
                     $mediaManager->press('Insert image');
                 });
             });
