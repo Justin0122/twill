@@ -29,17 +29,8 @@
     $editModalTitle = ($createWithoutModal ?? false) ? twillTrans('twill::lang.modal.create.title') : null;
     $item = isset($item) ? $item : null;
 
-    // TODO: cache and move out of view
-    if (config('twill.enabled.permissions-management')) {
-        $users = app()->make('A17\Twill\Repositories\UserRepository')->published()->notSuperAdmin()->get();
-        $groups = app()->make('A17\Twill\Repositories\GroupRepository')->get()->map(function ($group) {
-            return [
-                'name' => $group->id . '_group_authorized',
-                'value' => $group->id,
-                'label' => $group->name
-            ];
-        });
-    }
+    $users = $users ?? [];
+    $groups = $groups ?? [];
 @endphp
 
 @section('content')

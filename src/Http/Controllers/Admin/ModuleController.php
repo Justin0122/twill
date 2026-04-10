@@ -45,6 +45,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2275,6 +2276,8 @@ abstract class ModuleController extends Controller
 
         $itemId = $this->getItemIdentifier($item);
 
+        $permissionFieldsetData = $this->getPermissionFieldsetData();
+
         $data = [
                 'item' => $item,
                 'moduleName' => $this->moduleName,
@@ -2309,6 +2312,8 @@ abstract class ModuleController extends Controller
                 'submitOptions' => $this->getSubmitOptions($item),
                 'groupUserMapping' => $this->getGroupUserMapping(),
                 'showPermissionFieldset' => $this->getShowPermissionFieldset($item),
+                'users' => $permissionFieldsetData['users'],
+                'groups' => $permissionFieldsetData['groups'],
             ] + (Route::has($previewRouteName) && $itemId ? [
                 'previewUrl' => moduleRoute($this->moduleName, $this->routePrefix, 'preview', [$itemId]),
             ] : [])
@@ -2759,5 +2764,43 @@ abstract class ModuleController extends Controller
     public function getSideFieldsets(TwillModelContract $model): Form
     {
         return new Form();
+    }
+    /**
+     * Get preloaded users and groups for the permission fieldset.
+     *
+     * @return array
+     */
+    protected function getPermissionFieldsetData(): array
+    {
+        if (! Config::get('twill.enabled.permissions-management')) {
+            return ['users' => [], 'groups' => []];
+        }
+
+        $users = App::make('A17\Twill\Repositories\UserRepository')
+            ->published()
+            ->notSuperAdmin()
+            ->get();
+
+        $cacheKey = 'twill.permissions.fieldset-groups';
+        $cacheTtl = 3600; // 1 hour
+
+        $groups = Cache::remember($cacheKey, $cacheTtl, function () {
+            $groups = App::make('A17\Twill\Repositories\GroupRepository')
+                ->get()
+                ->map(fn($group) => [
+                    'name' => $group->id . '_group_authorized',
+                    'value' => $group->id,
+                    'label' => $group->name,
+                ])
+                ->values()
+                ->toArray();
+
+            return ['groups' => $groups];
+        });
+
+        return [
+            'users' => $users,
+            'groups' => $groups['groups'] ?? [],
+        ];
     }
 }
