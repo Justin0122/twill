@@ -189,6 +189,40 @@ OR
 
 ```
 
+### Inline repeater item titles
+
+You can customize the collapsed inline repeater item title with `titleField()`.
+
+The single-field form works in >=2.5:
+
+```php
+InlineRepeater::make()
+    ->name('links')
+    ->titleField('title')
+    ->fields([
+        // ...
+    ]);
+```
+
+In Twill >= (insert version), you can pass an array to compose the title from multiple parts:
+
+```php
+InlineRepeater::make()
+    ->name('links')
+    ->titleField(['title', ['name' => 'highlight', 'crop' => 'default'], ['name' => 'page']])
+    ->fields([
+        // ...
+    ]);
+```
+
+In this example:
+
+- `title` adds a text value.
+- `['name' => 'highlight', 'crop' => 'default']` resolves a media field and uses its configured crop context.
+- `['name' => 'page']` resolves a browser field and displays its selected item label.
+
+Use `hideTitlePrefix()` if you only want dynamic values and not the static repeater title prefix.
+
 | Option         | Description                                  | Type    | Default value    |
 |:---------------|:---------------------------------------------|:--------|:-----------------|
 | type           | Type of repeater items                       | string  |                  |
@@ -198,6 +232,8 @@ OR
 | disableCreate  | Disables ability to add new items            | boolean | false            |
 | disableActions | Removes row item actions                     | boolean | false            |
 | disableReorder | Disables reordering of repeater items        | boolean | false            |
+| titleField     | Field(s) used to build item title text/media | string/array | null         |
+| hideTitlePrefix| Hide the static item title prefix            | boolean | false            |
 
 
 ## Blade repeater fields
@@ -340,3 +376,13 @@ of the repeater items. This directive also accepts a `hidePrefix` option to hide
     :required="true"
 />
 ```
+
+In Twill >= (insert version), it also supports a multipart array definition:
+
+```blade
+@twillRepeaterTitle('Person')
+@twillRepeaterTitleField(['title', ['name' => 'highlight', 'crop' => 'desktop'], ['name' => 'page']], ['hidePrefix' => true])
+@twillRepeaterTrigger('Add person')
+@twillRepeaterGroup('app')
+```
+

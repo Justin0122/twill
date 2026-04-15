@@ -33,7 +33,7 @@ class InlineRepeater implements CanHaveSubfields, CanRenderForBlocks
         private ?bool $allowBrowse = false,
         private ?array $browser = null,
         private ?int $max = null,
-        private ?string $titleField = null,
+        private string|array|null $titleField = null,
         private ?bool $hideTitlePrefix = false,
         private ?bool $buttonAsLink = false,
         protected ?array $connectedTo = null,
@@ -54,13 +54,25 @@ class InlineRepeater implements CanHaveSubfields, CanRenderForBlocks
         return $this;
     }
 
-    public function titleField(string $field): static
+    /**
+     * Configure which field(s) are used in the collapsed inline repeater item title.
+     *
+     * Supported formats:
+     * - `title`
+     * - `['title', 'subtitle']`
+     * - `[['name' => 'highlight', 'crop' => 'default'], ['name' => 'page']]`
+     * - `['title', ['name' => 'highlight', 'crop' => 'default'], ['name' => 'page']]`
+     */
+    public function titleField(string|array $field): static
     {
         $this->titleField = $field;
 
         return $this;
     }
 
+    /**
+     * Hide the inline repeater item label prefix and only display values from `titleField`.
+     */
     public function hideTitlePrefix(bool $hide = true): static
     {
         $this->hideTitlePrefix = $hide;

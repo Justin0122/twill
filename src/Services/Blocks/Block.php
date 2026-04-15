@@ -35,12 +35,15 @@ class Block
      */
     public $title;
 
-    /**
-     * @var string
+     /** Dynamic title source for block/repeater items.
+     *
+     * Can be a string field name or an array of field descriptors.
+     * @var string|array|null
      */
     public $titleField;
 
-    /**
+     /** Hide the static title prefix when rendering dynamic item titles.
+     * @var bool|null
      * @var bool
      */
     public $hideTitlePrefix;

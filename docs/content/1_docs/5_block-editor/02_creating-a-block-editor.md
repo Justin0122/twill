@@ -335,6 +335,34 @@ In Twill >= 2.5, you can use the `@twillBlockTitleField` directive to include th
 ...
 ```
 
+In Twill >= (insert version), `@twillBlockTitleField` also supports a multipart array syntax to compose the title from text, media, and browser fields:
+
+```blade
+@twillBlockTitle('Section')
+@twillBlockTitleField(['title', ['name' => 'highlight', 'crop' => 'default'], ['name' => 'page']], ['hidePrefix' => true])
+@twillBlockIcon('text')
+@twillBlockGroup('app')
+
+<x-twill::input
+    name="title"
+    label="Title"
+    :required="true"
+/>
+
+<x-twill::medias
+    name="highlight"
+    label="Highlight"
+/>
+
+<x-twill::browser
+    name="page"
+    label="Page"
+    module-name="pages"
+/>
+```
+
+This same multipart syntax is also available for inline repeaters via `InlineRepeater::titleField()`. See [Inline repeater item titles](../4_form-fields/11_repeater.md#inline-repeater-item-titles).
+
 ## Create a block from an existing block template
 
 Using `php artisan twill:make:block {name} {baseBlock} {icon}`, you can generate a new block based on a provided block as a base.
