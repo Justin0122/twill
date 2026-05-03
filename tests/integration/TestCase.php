@@ -69,6 +69,8 @@ abstract class TestCase extends OrchestraTestCase
 
     public static function setUpBeforeClass(): void
     {
+        self::prepareParallelTestbenchApplication();
+        self::configureParallelDatabase();
         cleanupTestState(self::applicationBasePath());
         parent::setUpBeforeClass();
     }
@@ -101,12 +103,13 @@ abstract class TestCase extends OrchestraTestCase
         }
 
         $loader = new ClassLoader();
-        $loader->addPsr4('App\\', 'vendor/orchestra/testbench-core/laravel/app');
+        $loader->addPsr4('App\\', $this->getBasePath() . '/app');
         $loader->register();
 
         // Enforce the url for testing to be 'http://twill.test' for certain assertions.
         // This is different from the one in phpunit.xml because that one is used for laravel dusk.
-        $_ENV['APP_URL'] = 'http://twill.test';
+        $_ENV['APP_URL'] = $_SERVER['APP_URL'] = 'http://twill.test';
+        putenv('APP_URL=http://twill.test');
         $_ENV['MEDIA_LIBRARY_LOCAL_PATH'] = "media-library";
         $_ENV["FILE_LIBRARY_LOCAL_PATH"] = "file-library";
         $_ENV["FILE_LIBRARY_ENDPOINT_TYPE"] = "local";
@@ -149,6 +152,7 @@ abstract class TestCase extends OrchestraTestCase
      */
     public function configTwill($app): void
     {
+        $app['config']->set('app.url', 'http://twill.test');
         $app['config']->set('twill.admin_app_url', '');
         $app['config']->set('twill.admin_app_path', 'twill');
         $app['config']->set('twill.auth_login_redirect_path', '/twill');
@@ -556,7 +560,13 @@ abstract class TestCase extends OrchestraTestCase
 
     protected static function getBasePathStatic(): string
     {
-        return __DIR__ . '/../../vendor/orchestra/testbench-core/laravel';
+        $basePath = __DIR__ . '/../../vendor/orchestra/testbench-core/laravel';
+
+        if ($token = self::parallelTestingToken()) {
+            return $basePath . '_' . $token;
+        }
+
+        return $basePath;
     }
 
     public static function applicationBasePath(): string
@@ -566,6 +576,65 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function getBasePath(): string
     {
-        return __DIR__ . '/../../vendor/orchestra/testbench-core/laravel';
+        return self::getBasePathStatic();
+    }
+
+    protected static function parallelTestingToken(): ?string
+    {
+        return $_SERVER['TEST_TOKEN'] ?? $_ENV['TEST_TOKEN'] ?? null;
+    }
+
+    protected static function prepareParallelTestbenchApplication(): void
+    {
+        if (! self::parallelTestingToken()) {
+            return;
+        }
+
+        $source = __DIR__ . '/../../vendor/orchestra/testbench-core/laravel';
+        $target = self::getBasePathStatic();
+
+        if (! is_dir($target)) {
+            self::copyDirectory($source, $target);
+        }
+    }
+
+    protected static function configureParallelDatabase(): void
+    {
+        if (! self::parallelTestingToken() || ($_ENV['DB_CONNECTION'] ?? null) !== 'mysql') {
+            return;
+        }
+
+        $database = preg_replace('/_\d+$/', '', $_ENV['DB_DATABASE']) . '_' . self::parallelTestingToken();
+        $_ENV['DB_DATABASE'] = $_SERVER['DB_DATABASE'] = $database;
+        putenv("DB_DATABASE={$database}");
+
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $port = $_ENV['DB_PORT'] ?? '3306';
+        $username = $_ENV['DB_USERNAME'] ?? 'root';
+        $password = $_ENV['DB_PASSWORD'] ?? '';
+
+        $pdo = new \PDO("mysql:host={$host};port={$port}", $username, $password);
+        $pdo->exec("DROP DATABASE IF EXISTS `{$database}`");
+        $pdo->exec("CREATE DATABASE `{$database}`");
+    }
+
+    protected static function copyDirectory(string $source, string $target): void
+    {
+        mkdir($target, 0777, true);
+
+        foreach (scandir($source) as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $sourcePath = $source . DIRECTORY_SEPARATOR . $item;
+            $targetPath = $target . DIRECTORY_SEPARATOR . $item;
+
+            if (is_dir($sourcePath) && ! is_link($sourcePath)) {
+                self::copyDirectory($sourcePath, $targetPath);
+            } else {
+                copy($sourcePath, $targetPath);
+            }
+        }
     }
 }
