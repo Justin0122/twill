@@ -5,9 +5,7 @@ namespace A17\Twill\Tests\Integration;
 use A17\Twill\Commands\Traits\HandlesPresets;
 use A17\Twill\Models\User;
 use A17\Twill\RouteServiceProvider;
-use A17\Twill\Services\Blocks\Block;
 use A17\Twill\Tests\Integration\Behaviors\CopyBlocks;
-use A17\Twill\Facades\TwillBlocks;
 use A17\Twill\TwillServiceProvider;
 use A17\Twill\ValidationServiceProvider;
 use Carbon\Carbon;
@@ -74,6 +72,7 @@ abstract class TestCase extends OrchestraTestCase
         self::prepareParallelTestbenchApplication();
         self::configureParallelDatabase();
         cleanupTestState(self::applicationBasePath());
+        self::copyTestBlockStubs(self::applicationBasePath());
         parent::setUpBeforeClass();
     }
 
@@ -138,7 +137,6 @@ abstract class TestCase extends OrchestraTestCase
         $this->instantiateFaker();
 
         $this->copyBlocks();
-        $this->registerCopiedBlocks();
 
         $this->installTwill();
 
@@ -561,21 +559,6 @@ abstract class TestCase extends OrchestraTestCase
     {
     }
 
-    protected function registerCopiedBlocks(): void
-    {
-        if (Block::getForComponent('a17-block-quote')) {
-            return;
-        }
-
-        foreach (config('twill.block_editor.directories.source.blocks') as $path) {
-            TwillBlocks::registerPackageBlocksDirectory($this->normalizeDir($path['path']));
-        }
-
-        foreach (config('twill.block_editor.directories.source.repeaters') as $path) {
-            TwillBlocks::registerPackageRepeatersDirectory($this->normalizeDir($path['path']));
-        }
-    }
-
     protected static function getBasePathStatic(): string
     {
         $basePath = __DIR__ . '/../../vendor/orchestra/testbench-core/laravel';
@@ -659,5 +642,32 @@ abstract class TestCase extends OrchestraTestCase
                 copy($sourcePath, $targetPath);
             }
         }
+    }
+
+    protected static function copyTestBlockStubs(string $basePath): void
+    {
+        $blockPath = $basePath . '/resources/views/twill/blocks';
+        $repeaterPath = $basePath . '/resources/views/twill/repeaters';
+
+        foreach (['carousel', 'footnote', 'gallery', 'image', 'quote'] as $block) {
+            self::copyTestStub(
+                __DIR__ . "/../../src/Commands/stubs/blocks/{$block}.blade.php",
+                "{$blockPath}/{$block}.blade.php"
+            );
+        }
+
+        self::copyTestStub(
+            __DIR__ . '/../../src/Commands/stubs/repeaters/carousel-item.blade.php',
+            "{$repeaterPath}/carousel-item.blade.php"
+        );
+    }
+
+    protected static function copyTestStub(string $source, string $target): void
+    {
+        if (! is_dir(dirname($target))) {
+            mkdir(dirname($target), 0755, true);
+        }
+
+        copy($source, $target);
     }
 }
