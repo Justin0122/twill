@@ -5,7 +5,9 @@ namespace A17\Twill\Tests\Integration;
 use A17\Twill\Commands\Traits\HandlesPresets;
 use A17\Twill\Models\User;
 use A17\Twill\RouteServiceProvider;
+use A17\Twill\Services\Blocks\Block;
 use A17\Twill\Tests\Integration\Behaviors\CopyBlocks;
+use A17\Twill\Facades\TwillBlocks;
 use A17\Twill\TwillServiceProvider;
 use A17\Twill\ValidationServiceProvider;
 use Carbon\Carbon;
@@ -136,6 +138,7 @@ abstract class TestCase extends OrchestraTestCase
         $this->instantiateFaker();
 
         $this->copyBlocks();
+        $this->registerCopiedBlocks();
 
         $this->installTwill();
 
@@ -556,6 +559,21 @@ abstract class TestCase extends OrchestraTestCase
 
     public function loadConfig()
     {
+    }
+
+    protected function registerCopiedBlocks(): void
+    {
+        if (Block::getForComponent('a17-block-quote')) {
+            return;
+        }
+
+        foreach (config('twill.block_editor.directories.source.blocks') as $path) {
+            TwillBlocks::registerPackageBlocksDirectory($this->normalizeDir($path['path']));
+        }
+
+        foreach (config('twill.block_editor.directories.source.repeaters') as $path) {
+            TwillBlocks::registerPackageRepeatersDirectory($this->normalizeDir($path['path']));
+        }
     }
 
     protected static function getBasePathStatic(): string
