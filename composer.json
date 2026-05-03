@@ -46,7 +46,7 @@
   },
   "require-dev": {
     "area17/phptorch": "dev-main",
-    "brianium/paratest": "^7.8",
+    "brianium/paratest": "^6.0 | ^7.0",
     "chillerlan/php-qrcode": "~4.0",
     "friendsofphp/php-cs-fixer": "^3.0",
     "larastan/larastan": "^2.9 | ^3.0",

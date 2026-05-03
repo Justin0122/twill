@@ -600,22 +600,27 @@ abstract class TestCase extends OrchestraTestCase
 
     protected static function configureParallelDatabase(): void
     {
-        if (! self::parallelTestingToken() || ($_ENV['DB_CONNECTION'] ?? null) !== 'mysql') {
+        if (! self::parallelTestingToken() || self::env('DB_CONNECTION') !== 'mysql') {
             return;
         }
 
-        $database = preg_replace('/_\d+$/', '', $_ENV['DB_DATABASE']) . '_' . self::parallelTestingToken();
+        $database = preg_replace('/_\d+$/', '', self::env('DB_DATABASE')) . '_' . self::parallelTestingToken();
         $_ENV['DB_DATABASE'] = $_SERVER['DB_DATABASE'] = $database;
         putenv("DB_DATABASE={$database}");
 
-        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $username = $_ENV['DB_USERNAME'] ?? 'root';
-        $password = $_ENV['DB_PASSWORD'] ?? '';
+        $host = self::env('DB_HOST', '127.0.0.1');
+        $port = self::env('DB_PORT', '3306');
+        $username = self::env('DB_USERNAME', 'root');
+        $password = self::env('DB_PASSWORD', '');
 
         $pdo = new \PDO("mysql:host={$host};port={$port}", $username, $password);
         $pdo->exec("DROP DATABASE IF EXISTS `{$database}`");
         $pdo->exec("CREATE DATABASE `{$database}`");
+    }
+
+    protected static function env(string $key, ?string $default = null): ?string
+    {
+        return getenv($key) ?: $_SERVER[$key] ?? $_ENV[$key] ?? $default;
     }
 
     protected static function copyDirectory(string $source, string $target): void
