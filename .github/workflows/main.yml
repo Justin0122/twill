@@ -148,7 +148,7 @@ jobs:
         run: ./vendor/bin/testbench-dusk package:discover
 
       - name: Execute all tests
-        run: vendor/bin/paratest --testsuite Unit,Integration --stop-on-error && vendor/bin/phpunit --testsuite Browser --stop-on-error
+        run: vendor/bin/paratest --testsuite Unit,Integration --stop-on-error && vendor/bin/phpunit --testsuite Browser --stop-on-error --no-coverage
         env:
           DB_HOST: 127.0.0.1
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
