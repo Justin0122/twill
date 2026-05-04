@@ -60,6 +60,9 @@
     "squizlabs/php_codesniffer": "*",
     "torchlight/torchlight-commonmark": "^0.6.0"
   },
+  "conflict": {
+    "kalnoy/nestedset": "7.0.1"
+  },
   "autoload": {
     "psr-4": {
       "A17\\Twill\\": "src/",
