@@ -41,7 +41,6 @@ use A17\Twill\Models\User;
 use A17\Twill\Services\FileLibrary\FileService;
 use A17\Twill\Services\MediaLibrary\ImageService;
 use Astrotomic\Translatable\TranslatableServiceProvider;
-use Cartalyst\Tags\TagsServiceProvider;
 use Exception;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
@@ -65,7 +64,7 @@ class TwillServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const VERSION = '3.5.3';
+    public const VERSION = '3.6.0';
 
     /**
      * Service providers to be registered.
@@ -76,7 +75,6 @@ class TwillServiceProvider extends ServiceProvider
         RouteServiceProvider::class,
         ValidationServiceProvider::class,
         TranslatableServiceProvider::class,
-        TagsServiceProvider::class,
         ActivitylogServiceProvider::class,
         CapsulesServiceProvider::class,
     ];

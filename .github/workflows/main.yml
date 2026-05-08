@@ -66,7 +66,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         php: [8.5, 8.4, 8.3, 8.2]
-        laravel: [10.*, 11.*, 12.*]
+        laravel: [10.*, 11.*, 12.*, 13.*]
         dbal: [3.*, 4.*]
         exclude:
           - laravel: 10.*
@@ -77,6 +77,12 @@ jobs:
             php: 8.5
           - laravel: 11.*
             dbal: 3.*
+          - laravel: 12.*
+            dbal: 3.*
+          - laravel: 13.*
+            dbal: 3.*
+          - laravel: 13.*
+            php: 8.2
         include:
           - laravel: 10.*
             testbench: 8.*
@@ -84,6 +90,8 @@ jobs:
             testbench: 9.*
           - laravel: 12.*
             testbench: 10.*
+          - laravel: 13.*
+            testbench: 11.*
 
     steps:
       - name: Set timezone?
@@ -148,9 +156,11 @@ jobs:
         run: ./vendor/bin/testbench-dusk package:discover
 
       - name: Execute all tests
-        run: vendor/bin/phpunit --stop-on-error
+        run: vendor/bin/paratest --testsuite Unit,Integration --stop-on-error && vendor/bin/phpunit --testsuite Browser --stop-on-error --no-coverage
         env:
+          DB_HOST: 127.0.0.1
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          DB_PASSWORD: root
 
       - uses: codecov/codecov-action@v6
         with:

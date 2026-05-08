@@ -1,6 +1,6 @@
 # BelongsToMany with pivot data
 
-[BelongsToMany](https://laravel.com/docs/10.x/eloquent-relationships#many-to-many) is a great way to make one model refer to many others.
+[BelongsToMany](https://laravel.com/docs/eloquent-relationships#many-to-many) is a great way to make one model refer to many others.
 
 Examples could be:
 
@@ -8,7 +8,7 @@ Examples could be:
 - An artwork having multiple artists
 - A project having multiple contributors
 
-In addition to that we could use [pivot](https://laravel.com/docs/10.x/eloquent-relationships#retrieving-intermediate-table-columns) data to further extend this relation, to complete the examples above:
+In addition to that we could use [pivot](https://laravel.com/docs/eloquent-relationships#retrieving-intermediate-table-columns) data to further extend this relation, to complete the examples above:
 
 - Each product in the order can have an order specific price
 - Each artwork artist may have focused on something specific
@@ -39,7 +39,7 @@ In the **Partner** migration we add a relational table that we will use for our 
 {
   "file": "../../../../examples/portfolio/database/migrations/2022_04_01_071748_create_partners_tables.php",
   "collapseAll": "",
-  "focusMethods": "up",
+  "focusMethods": ["up"],
   "focusImports": ["App\\Models\\Partner", "App\\Models\\Project"],
   "diffImports": ["App\\Models\\Partner", "App\\Models\\Project"],
   "diffInMethod": {
@@ -66,7 +66,7 @@ Now with the migration setup we can set up our relation in the `Project` model:
 {
   "file": "../../../../examples/portfolio/app/Models/Project.php",
   "collapseAll": "",
-  "focusMethods": "partners"
+  "focusMethods": ["partners"]
 }
 ```
 
@@ -84,7 +84,7 @@ To expose the relation in the ui, we will use an inline repeater. We will name t
   "collapseAll": "",
   "focusImports": ["A17\\Twill\\Services\\Forms\\InlineRepeater"],
   "diffImports": ["A17\\Twill\\Services\\Forms\\InlineRepeater"],
-  "focusMethods": "getForm",
+  "focusMethods": ["getForm"],
   "diffInMethod": {
     "method": "getForm",
     "start": 6,
