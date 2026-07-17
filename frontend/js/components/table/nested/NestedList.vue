@@ -11,7 +11,9 @@
         :key="depth + '-' +  row.id">
       <a17-nested-item :index="index"
                        :row="row"
-                       :columns="columns"/>
+                       :columns="columns"
+                       :parentId="parentId"
+                       :insertable="insertable"/>
       <a17-nested-list v-if="row.children && depth < maxDepth"
                        :maxDepth="maxDepth"
                        :depth="depth + 1"
@@ -20,12 +22,18 @@
                        :nested="true"
                        :draggable="true"/>
     </li>
+    <template slot="footer">
+      <li v-if="showChildAdder" class="nested-datatable__childAdder" @click.stop>
+        <a17-table-row-adder class="tableRowAdder--standalone" :index="0" :parent-id="parentId" :nested="true"/>
+      </li>
+    </template>
   </draggable>
 </template>
 
 <script>
   import draggable from 'vuedraggable'
 
+  import a17TableRowAdder from '@/components/table/TableRowAdder.vue'
   import { DatatableMixin, DraggableMixin, NestedDraggableMixin } from '@/mixins/index'
   import { DATATABLE } from '@/store/mutations'
 
@@ -35,6 +43,7 @@
     name: 'a17-nested-list',
     components: {
       'a17-nested-item': NestedItem,
+      'a17-table-row-adder': a17TableRowAdder,
       draggable
     },
     mixins: [DatatableMixin, DraggableMixin, NestedDraggableMixin],
@@ -54,6 +63,12 @@
       }
     },
     computed: {
+      insertable: function () {
+        return this.draggable && this.visibleColumns.some(column => column.name === 'draggable')
+      },
+      showChildAdder: function () {
+        return this.insertable && this.depth > 0 && this.rows.length === 0
+      },
       styleDepth: function () {
         return {
           marginLeft: this.depth === 0 ? '0px' : '60px'
@@ -132,6 +147,12 @@
     &.sortable-drag {
       display: block;
     }
+  }
+
+  .nested-datatable__childAdder {
+    position: relative;
+    height: 20px;
+    list-style: none;
   }
 
   .nested__dropArea {

@@ -1,5 +1,5 @@
 <template>
-  <a17-modal ref="modal" class="modal--form" :title="modalTitle" :forceClose="true">
+  <a17-modal ref="modal" class="modal--form" :title="modalTitle" :forceClose="true" @close="onModalClose">
     <form :action="actionForm" @submit.prevent="submit">
       <slot></slot>
       <a17-modal-validation
@@ -72,6 +72,7 @@
         action: state => state.modalEdition.action,
         mode: state => state.modalEdition.mode,
         columns: state => state.datatable.columns,
+        insertContext: state => state.datatable.insertContext,
         language: state => state.language.active
       }),
       ...mapGetters([
@@ -93,6 +94,13 @@
 
         this.$refs.modal.open()
       },
+      onModalClose: function () {
+        if (this._keepInsertContext) return
+
+        if (this.insertContext) {
+          this.$store.commit(DATATABLE.UPDATE_DATATABLE_INSERT_CONTEXT, null)
+        }
+      },
       submit: function () {
         if (this.isSubmitPrevented) {
           this.shouldRetrySubmitWhenAllowed = true
@@ -108,18 +116,26 @@
         const submitMode = document.activeElement.name
 
         this.$nextTick(function () {
+          const isInserting = this.createMode && !!this.insertContext
+
           this.$store.dispatch(ACTIONS.UPDATE_FORM_IN_LISTING, {
             endpoint: this.actionForm,
             method: this.mode === 'create' ? 'post' : 'put',
-            redirect: submitMode !== 'create-another'
-          }).then(() => {
+            redirect: submitMode !== 'create-another' && !isInserting
+          }).then((successResponse) => {
+            if (isInserting && successResponse && successResponse.data && successResponse.data.id !== undefined) {
+              self.$store.dispatch(ACTIONS.INSERT_CREATED_ROW, successResponse.data.id)
+            }
+
+            self._keepInsertContext = submitMode === 'create-another'
             if (self.$refs.modal) self.$refs.modal.close()
 
             self.$nextTick(function () {
               if (submitMode === 'create-another' && self.$refs.modal) self.$refs.modal.open()
-              if (this.mode === 'create') this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
+              self._keepInsertContext = false
+              if (this.mode === 'create' && !isInserting) this.$store.commit(DATATABLE.UPDATE_DATATABLE_PAGE, 1)
               this.$store.commit(FORM.REMOVE_FORM_FIELD, 'published')
-              this.$emit('reload')
+              if (!isInserting) this.$emit('reload')
             })
           }, (errorResponse) => {
             self.$store.commit(NOTIFICATION.SET_NOTIF, {

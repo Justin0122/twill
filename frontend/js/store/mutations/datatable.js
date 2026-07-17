@@ -19,6 +19,7 @@ export const UPDATE_DATATABLE_MESSAGE = 'updateDatableMessage'
 export const UPDATE_DATATABLE_LOADING = 'updateDatableLoading'
 export const UPDATE_DATATABLE_NESTED = 'updateDatatableNestedDatas'
 export const UPDATE_DATATABLE_TRACKER = 'updateDatableTracker'
+export const UPDATE_DATATABLE_INSERT_CONTEXT = 'updateDatatableInsertContext'
 
 export default {
   UPDATE_DATATABLE_DATA,
@@ -40,5 +41,6 @@ export default {
   UPDATE_DATATABLE_MESSAGE,
   UPDATE_DATATABLE_LOADING,
   UPDATE_DATATABLE_NESTED,
-  UPDATE_DATATABLE_TRACKER
+  UPDATE_DATATABLE_TRACKER,
+  UPDATE_DATATABLE_INSERT_CONTEXT
 }

@@ -27,6 +27,17 @@ const deepRemoveFromObj = (items, keys = ['id', 'children'], deep = 'children') 
   return deepItems
 }
 
+const insertInTree = (items, parentId, index, node) => {
+  if (parentId === -1) {
+    items.splice(index, 0, node)
+    return
+  }
+  getObject(items, parentId, (item) => {
+    if (!Array.isArray(item.children)) item.children = []
+    item.children.splice(index, 0, node)
+  })
+}
+
 const state = {
   baseUrl: window[process.env.VUE_APP_NAME].STORE.datatable.baseUrl || '',
   data: window[process.env.VUE_APP_NAME].STORE.datatable.data || [],
@@ -43,7 +54,8 @@ const state = {
   bulk: [],
   localStorageKey: window[process.env.VUE_APP_NAME].STORE.datatable.localStorageKey || window.location.pathname,
   loading: false,
-  updateTracker: 0
+  updateTracker: 0,
+  insertContext: null
 }
 
 // getters
@@ -218,6 +230,9 @@ const mutations = {
   },
   [DATATABLE.UPDATE_DATATABLE_TRACKER] (state, newTracker) {
     state.updateTracker = newTracker ? state.updateTracker + 1 : 0
+  },
+  [DATATABLE.UPDATE_DATATABLE_INSERT_CONTEXT] (state, context) {
+    state.insertContext = context
   }
 }
 
@@ -254,6 +269,30 @@ const actions = {
 
     api.reorder(ids, function (resp) {
       commit(NOTIFICATION.SET_NOTIF, { message: resp.data.message, variant: resp.data.variant })
+    })
+  },
+  [ACTIONS.INSERT_CREATED_ROW] ({ commit, state, dispatch }, id) {
+    const context = state.insertContext
+    if (!context || id === undefined || id === null) return
+
+    let ids
+
+    if (context.nested) {
+      ids = deepRemoveFromObj(state.data)
+      insertInTree(ids, context.parentId, context.index, { id, children: [] })
+    } else {
+      ids = state.data.map((row) => row.id)
+      ids.splice(context.index, 0, id)
+    }
+
+    commit(DATATABLE.UPDATE_DATATABLE_INSERT_CONTEXT, {
+      ...context,
+      index: context.index + 1
+    })
+
+    api.reorder(ids, function (resp) {
+      commit(NOTIFICATION.SET_NOTIF, { message: resp.data.message, variant: resp.data.variant })
+      dispatch(ACTIONS.GET_DATATABLE)
     })
   },
   [ACTIONS.TOGGLE_PUBLISH] ({ commit, state, dispatch }, row) {

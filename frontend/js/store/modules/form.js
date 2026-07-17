@@ -276,7 +276,7 @@ const actions = {
         }
 
         commit(NOTIFICATION.SET_NOTIF, { message: successResponse.data.message, variant: successResponse.data.variant })
-        resolve()
+        resolve(successResponse)
       }, function (errorResponse) {
         commit(FORM.UPDATE_FORM_LOADING, false)
         commit(FORM.SET_FORM_ERRORS, errorResponse.response.data)

@@ -1131,7 +1131,11 @@ abstract class ModuleController extends Controller
         Session::put($this->moduleName . '_retain', true);
 
         if ($this->getIndexOption('editInModal')) {
-            return $this->respondWithSuccess(twillTrans('twill::lang.publisher.save-success'));
+            return Response::json([
+                'message' => twillTrans('twill::lang.publisher.save-success'),
+                'variant' => FlashLevel::SUCCESS,
+                'id' => $this->getItemIdentifier($item),
+            ]);
         }
 
         if (isset($input['cmsSaveType']) && Str::endsWith($input['cmsSaveType'], '-close')) {
@@ -1148,14 +1152,15 @@ abstract class ModuleController extends Controller
             );
         }
 
-        return $this->respondWithRedirect(
-            moduleRoute(
+        return Response::json([
+            'redirect' => moduleRoute(
                 $this->moduleName,
                 $this->routePrefix,
                 'edit',
                 [Str::singular(last(explode('.', $this->moduleName))) => $this->getItemIdentifier($item)]
-            )
-        );
+            ),
+            'id' => $this->getItemIdentifier($item),
+        ]);
     }
 
     /**

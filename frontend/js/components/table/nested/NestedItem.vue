@@ -1,5 +1,6 @@
 <template>
   <div class="nested-item">
+    <a17-table-row-adder v-if="insertable" :index="index" :parent-id="parentId" :nested="true"/>
     <span v-for="col in columns" :key="col.name" class="nested-item__cell" :class="cellClasses(col, 'nested-item__cell')">
       <template v-if="isSpecificColumn(col)">
         <component :is="currentComponent(col)"
@@ -17,13 +18,25 @@
 
 <script>
   import TableCellComponents from '@/components/table/tableCell'
+  import a17TableRowAdder from '@/components/table/TableRowAdder.vue'
   import { DatatableRowMixin } from '@/mixins'
 
   export default {
     name: 'A17-nested-item',
     mixins: [DatatableRowMixin],
     components: {
-      ...TableCellComponents
+      ...TableCellComponents,
+      'a17-table-row-adder': a17TableRowAdder
+    },
+    props: {
+      parentId: {
+        type: Number,
+        default: -1
+      },
+      insertable: {
+        type: Boolean,
+        default: false
+      }
     }
   }
 </script>

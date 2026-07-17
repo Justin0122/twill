@@ -31,7 +31,7 @@
 
     <!-- Actual table content -->
     <div class="container">
-      <div class="datatable__table" :class="isEmptyDatable">
+      <div class="datatable__table" :class="[isEmptyDatable, { 'datatable__table--insertable': insertable }]">
         <a17-table :xScroll="xScroll" @scroll="updateScroll">
           <thead>
           <a17-tablehead :columns="visibleColumns" ref="thead"/>
@@ -39,7 +39,7 @@
           <template v-if="draggable">
             <draggable class="datatable__drag" :tag="'tbody'" v-model="rows" v-bind="dragOptions">
               <template v-for="(row, index) in rows">
-                <a17-tablerow :row="row" :index="index" :columns="visibleColumns" :key="row.id"/>
+                <a17-tablerow :row="row" :index="index" :columns="visibleColumns" :key="row.id" :insertable="insertable"/>
               </template>
             </draggable>
           </template>
@@ -100,6 +100,9 @@
       }
     },
     computed: {
+      insertable: function () {
+        return this.draggable && this.visibleColumns.some(column => column.name === 'draggable')
+      },
       checkboxesColumns: function () {
         const checkboxes = []
 
@@ -355,6 +358,14 @@
   .datatable__table {
     .table {
       margin-top: -60px; // hide the other thead
+    }
+  }
+
+  .datatable__table--insertable {
+    .datatable__drag::before {
+      content: '';
+      display: table-row;
+      height: 12px;
     }
   }
 </style>

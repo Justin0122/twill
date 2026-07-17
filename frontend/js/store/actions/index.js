@@ -15,6 +15,7 @@ export const SAVE_BUCKETS = 'saveBuckets'
 export const GET_DATATABLE = 'getDatatableDatas'
 export const SET_DATATABLE_NESTED = 'setDatatableNestedDatas'
 export const SET_DATATABLE = 'setDatatableDatas'
+export const INSERT_CREATED_ROW = 'insertCreatedRowData'
 export const TOGGLE_PUBLISH = 'togglePublishedData'
 export const DELETE_ROW = 'deleteData'
 export const DUPLICATE_ROW = 'duplicateData'
@@ -52,6 +53,7 @@ export default {
   GET_DATATABLE,
   SET_DATATABLE_NESTED,
   SET_DATATABLE,
+  INSERT_CREATED_ROW,
   TOGGLE_PUBLISH,
   DELETE_ROW,
   DUPLICATE_ROW,

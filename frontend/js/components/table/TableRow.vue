@@ -1,5 +1,8 @@
 <template>
   <tr class="tablerow">
+    <td v-if="insertable" class="tablecell tablecell--adder">
+      <a17-table-row-adder :index="index"/>
+    </td>
     <td v-for="col in columns" :key="col.name" class="tablecell" :class="cellClasses(col, 'tablecell')" :style="nestedStyle(col)">
       <template v-if="isSpecificColumn(col)">
         <component :is="currentComponent(col)"
@@ -19,15 +22,21 @@
 
 <script>
   import TableCellComponents from '@/components/table/tableCell'
+  import a17TableRowAdder from '@/components/table/TableRowAdder.vue'
   import { DatatableRowMixin } from '@/mixins'
 
   export default {
     name: 'A17Tablerow',
     mixins: [DatatableRowMixin],
     components: {
-      ...TableCellComponents
+      ...TableCellComponents,
+      'a17-table-row-adder': a17TableRowAdder
     },
     props: {
+      insertable: {
+        type: Boolean,
+        default: false
+      },
       draggable: {
         type: Boolean,
         default: false
@@ -104,6 +113,19 @@
       padding-left: 0;
       padding-right: 0;
     }
+  }
+
+  /* Row adder */
+  .tablecell.tablecell--adder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    padding: 0;
+    border: 0 none;
+    background: none;
+    overflow: visible;
   }
 
   /* Spacer */
